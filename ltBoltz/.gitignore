@@ -1,0 +1,6 @@
+fdata*
+plt*
+tmp_build_dir
+Backtrace*
+*.ex
+*.visit

@@ -1,0 +1,27 @@
+#ifndef EB_H
+#define EB_H
+#include <AMReX_ParmParse.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_EB2.H>
+#include <AMReX_EB2_IF_Union.H>
+#include <AMReX_EB2_IF_Intersection.H>
+#include <AMReX_EB2_IF_Complement.H>
+#include <AMReX_EB2_IF_Scale.H>
+#include <AMReX_EB2_IF_Translation.H>
+#include <AMReX_EB2_IF_Lathe.H>
+#include <AMReX_EB2_IF_Box.H>
+#include <AMReX_EB2_IF_Cylinder.H>
+#include <AMReX_EB2_IF_Ellipsoid.H>
+#include <AMReX_EB2_IF_Sphere.H>
+#include <AMReX_EB2_IF_Plane.H>
+#include <AMReX_EB2_IF_Extrusion.H>
+#include <AMReX_EB2_GeometryShop.H>
+#include <AMReX_EB2_IF_Difference.H>
+#include <AMReX_EBFArrayBox.H>
+#include <AMReX_EBCellFlag.H>
+
+namespace lbm {
+void initialize_eb(const amrex::Geometry& geom, const int max_level);
+
+}
+#endif
