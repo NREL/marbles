@@ -19,6 +19,7 @@
 #include <AMReX_EB2_IF_Difference.H>
 #include <AMReX_EBFArrayBox.H>
 #include <AMReX_EBCellFlag.H>
+#include <AMReX_EBSupport.H>
 
 namespace lbm {
 void initialize_eb(const amrex::Geometry& geom, const int max_level);

@@ -1,2 +1,2 @@
-CEXE_sources += main.cpp Geometry.cpp EB.cpp IO.cpp Utilities.cpp
-CEXE_headers += constants.H lbm_specs.H Factory.H Geometry.H EB.H IO.H Utilities.H
+CEXE_sources += main.cpp Geometry.cpp EB.cpp LBM.cpp
+CEXE_headers += constants.H Factory.H Geometry.H EB.H LBM.H BC.H

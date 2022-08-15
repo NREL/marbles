@@ -6,13 +6,12 @@ void initialize_eb(const amrex::Geometry& geom, const int max_level)
 {
     BL_PROFILE("LBM::initialize_eb()");
 
-    amrex::Print() << "Initializing EB" << std::endl;
     amrex::ParmParse ppeb2("eb2");
 
     std::string geom_type("all_regular");
     ppeb2.query("geom_type", geom_type);
 
-    int max_coarsening_level = 0;
+    int max_coarsening_level = max_level;
     amrex::ParmParse ppamr("amr");
     amrex::Vector<int> ref_ratio(max_level, 2);
     ppamr.queryarr("ref_ratio", ref_ratio, 0, max_level);

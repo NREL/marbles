@@ -1,16 +1,14 @@
-#geometry parameters
-lbm.prob_lo = 0.0 0.0 0.0
-lbm.prob_hi = 1.0 1.0 1.0
-lbm.ncells  = 32 32 32
-lbm.max_grid_size = 32
-lbm.is_it_periodic = 0  0  0
+max_step = 1000
 
-#timestepping
-lbm.max_steps=1000
-lbm.final_time=1.0
-lbm.write_output_time=0.01
-lbm.gravity = 0.0 -9.81 0.0
-lbm.CFL=0.1
+geometry.prob_lo = 0.0 0.0 0.0
+geometry.prob_hi = 1.0 1.0 1.0
+geometry.is_periodic = 0 0 0
+
+amr.n_cell  = 32 32 32
+amr.max_level = 0
+amr.max_grid_size = 16
+
+amr.plot_int = 10
 
 eb2.geom_type = "sphere"
 eb2.sphere_radius = 0.1
