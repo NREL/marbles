@@ -9,6 +9,59 @@
 
 namespace lbm::bc {
 
+struct NoOp
+{
+    struct DeviceOp
+    {
+        AMREX_GPU_DEVICE
+        inline void operator()(
+            const amrex::IntVect& /*iv*/,
+            const int /*idir*/,
+            const int /*ndir*/,
+            const amrex::Real /*time*/,
+            amrex::GeometryData const& /*geom*/,
+            amrex::RealVect& /*vel*/) const
+        {}
+    };
+
+    using DeviceType = DeviceOp;
+
+    explicit NoOp();
+
+    DeviceType device_instance() const { return m_op; }
+
+    DeviceOp m_op;
+};
+
+struct Constant
+{
+    struct DeviceOp
+    {
+        int dir{1};
+        amrex::Real u0{0.0};
+
+        AMREX_GPU_DEVICE
+        inline void operator()(
+            const amrex::IntVect& /*iv*/,
+            const int /*idir*/,
+            const int /*ndir*/,
+            const amrex::Real /*time*/,
+            amrex::GeometryData const& /*geom*/,
+            amrex::RealVect& vel) const
+        {
+            vel[dir] = u0;
+        }
+    };
+
+    using DeviceType = DeviceOp;
+
+    explicit Constant();
+
+    DeviceType device_instance() const { return m_op; }
+
+    DeviceOp m_op;
+};
+
 struct Channel
 {
     struct DeviceOp
@@ -18,13 +71,16 @@ struct Channel
         AMREX_GPU_DEVICE
         inline void operator()(
             const amrex::IntVect& iv,
+            const int /*idir*/,
+            const int /*ndir*/,
+            const amrex::Real /*time*/,
             amrex::GeometryData const& geom,
-            amrex::RealVect& vel_bc) const
+            amrex::RealVect& vel) const
         {
             const int* domhi = geom.Domain().hiVect();
             const amrex::Real c1 = iv[1] * (domhi[1] - iv[1]);
             const amrex::Real c2 = iv[2] * (domhi[2] - iv[2]);
-            vel_bc[0] = 16.0 * u_ref * c1 * c2 / std::pow((domhi[2] + 1), 4);
+            vel[0] = 16.0 * u_ref * c1 * c2 / std::pow((domhi[2] + 1), 4);
         }
     };
 

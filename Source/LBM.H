@@ -82,6 +82,9 @@ public:
     // Stream the information to the neighbor particles
     void Stream(const int lev);
 
+    // Collide the particles
+    void Collide(const int lev);
+
     // Relax the particles toward the equilibrium state
     void RelaxFToEquilibrium(const int lev);
 
@@ -91,8 +94,8 @@ public:
     // Initialize is_fluid
     void InitializeIsFluid(const int lev);
 
-    // Fill covered microdata
-    void FillCoveredF(const int lev);
+    // Fill microdata inside the EB
+    void FillFInsideEB(const int lev);
 
     // get a field based on a variable name
     std::unique_ptr<amrex::MultiFab>
@@ -105,11 +108,14 @@ private:
     // read parameters
     void ReadParameters();
 
+    // read tagging parameters
+    void ReadTaggingParameters();
+
     // a wrapper for EstTimeStep(0
     void ComputeDt();
 
     // advance a level by dt
-    void timeStep(const int lev, const amrex::Real time, const int iteration);
+    void TimeStep(const int lev, const amrex::Real time, const int iteration);
 
     // advance a single level for a single time step, updates flux registers
     void Advance(
@@ -182,13 +188,12 @@ private:
     amrex::Vector<amrex::iMultiFab> is_fluid;
     amrex::Vector<amrex::MultiFab> plt_mf;
 
-    const int f_nghost =
-        1; // TODO : what happens if this is set to 2, does it break?
+    const int f_nghost = 2;
 
     amrex::Vector<int> bc_lo{0, 0, 0};
     amrex::Vector<int> bc_hi{0, 0, 0};
     amrex::GpuArray<int, AMREX_SPACEDIM* 2> bc_type = {0};
-    std::string velocity_bc_type;
+    std::string velocity_bc_type{"noop"};
 
     // this is essentially a 2*DIM integer array storing the physical boundary
     // condition types at the lo/hi walls in each direction
@@ -230,7 +235,6 @@ private:
     amrex::Real mesh_speed = 1.0;
     amrex::Real cs = 1.0;
     amrex::Real cs_2 = 1.0;
-    amrex::Real tau = 1.0;
 
     std::unique_ptr<ic::InitializerBase> ic_op;
     std::string ic_type;

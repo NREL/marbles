@@ -3,6 +3,8 @@
 
 #include <AMReX.H>
 #include <AMReX_RealVect.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_MultiFabUtil.H>
 #include "Constants.H"
 
 namespace lbm {
@@ -15,7 +17,6 @@ AMREX_GPU_DEVICE AMREX_INLINE void SetEquilibriumValue(
     const amrex::IntVect& ev,
     amrex::Real& eq)
 {
-    // const amrex::Real e_dot_u = ev[0] * u + ev[1] * v + ev[2] * w;
     const amrex::Real e_dot_u =
         mesh_speed * (ev[0] * vel[0] + ev[1] * vel[1] + ev[2] * vel[2]);
     const amrex::Real umag_2 =
@@ -38,5 +39,11 @@ AMREX_GPU_DEVICE AMREX_INLINE void SetEquilibriumValue(
     eq = rho * wt * (1.0 + c1 + c2 + c3);
 }
 
+// Version of average_down that also averages down fine ghost cells
+void average_down(
+    const amrex::MultiFab& fine,
+    amrex::MultiFab& crse,
+    const amrex::IntVect ng,
+    const amrex::IntVect ref_ratio);
 } // namespace lbm
 #endif

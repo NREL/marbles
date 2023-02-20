@@ -72,9 +72,8 @@ struct BCFill
         const amrex::IntVect& iv,
         const int q,
         const amrex::IntVect& ev,
-        const int idim,
-        const int lohi,
-        const amrex::GpuArray<int, 2>& wall_normal_unit,
+        const int idir,
+        const int ndir,
         const amrex::RealVect& vel_bc,
         amrex::Array4<amrex::Real> const& data) const
     {
@@ -103,15 +102,15 @@ struct BCFill
             const int bounce_qq = m_bounce_dirs[qq];
             const auto& evn_in = m_evs[bounce_qq];
 
-            if (evn_in[idim] == -wall_normal_unit[lohi]) {
+            if (evn_in[idir] == -ndir) {
                 rho_out += 2.0 * data(ivn + evn_out, bounce_qq);
-            } else if (evn_in[idim] == 0) {
+            } else if (evn_in[idir] == 0) {
                 rho_tan += 1.0 * data(ivn + evn_out, bounce_qq);
             }
         }
 
         const amrex::Real rho_bc =
-            (rho_out + rho_tan) / (1.0 - wall_normal_unit[lohi] * vel_bc[idim]);
+            (rho_out + rho_tan) / (1.0 - ndir * vel_bc[idir]);
 
         SetEquilibriumValue(
             rho_bc, vel_bc, m_mesh_speed, m_weights[q], ev, data(iv, q));
@@ -123,9 +122,8 @@ struct BCFill
         const amrex::IntVect& iv,
         const int q,
         const amrex::IntVect& ev,
-        const int idim,
-        const int lohi,
-        const amrex::GpuArray<int, 2>& wall_normal_unit,
+        const int idir,
+        const int ndir,
         const amrex::Real rho_bc,
         amrex::Array4<amrex::Real> const& data) const
     {
@@ -151,16 +149,15 @@ struct BCFill
             const int bounce_qq = m_bounce_dirs[qq];
             const auto& evn_in = m_evs[bounce_qq];
 
-            if (evn_in[idim] == -wall_normal_unit[lohi]) {
+            if (evn_in[idir] == -ndir) {
                 rho_out += 2.0 * data(ivn + evn_out, bounce_qq);
-            } else if (evn_in[idim] == 0) {
+            } else if (evn_in[idir] == 0) {
                 rho_tan += 1.0 * data(ivn + evn_out, bounce_qq);
             }
         }
 
         amrex::RealVect vel_bc(0.0, 0.0, 0.0);
-        vel_bc[idim] =
-            wall_normal_unit[lohi] * (1.0 - (rho_out + rho_tan) / rho_bc);
+        vel_bc[idir] = ndir * (1.0 - (rho_out + rho_tan) / rho_bc);
 
         SetEquilibriumValue(
             rho_bc, vel_bc, m_mesh_speed, m_weights[q], ev, data(iv, q));
@@ -172,9 +169,8 @@ struct BCFill
         const amrex::IntVect& iv,
         const int q,
         const amrex::IntVect& ev,
-        const int idim,
-        const int lohi,
-        const amrex::GpuArray<int, 2>& wall_normal_unit,
+        const int idir,
+        const int ndir,
         amrex::Array4<amrex::Real> const& data) const
     {
         // Prepare the ghost cell layer of f_ for
@@ -183,23 +179,19 @@ struct BCFill
         // interior cell onto the ghost layer such that
         // when streaming you have the effect of "no
         // change" in the direction across the boundary.
-        amrex::IntVect iv_shift(amrex::IntVect::TheDimensionVector(idim));
+        amrex::IntVect iv_shift(amrex::IntVect::TheDimensionVector(idir));
 
-        if (wall_normal_unit[lohi] * iv_shift[0] == ev[0] &&
-            wall_normal_unit[lohi] * iv_shift[1] == ev[1] &&
-            wall_normal_unit[lohi] * iv_shift[2] == ev[2]) {
+        if (ndir * iv_shift[0] == ev[0] && ndir * iv_shift[1] == ev[1] &&
+            ndir * iv_shift[2] == ev[2]) {
 
             amrex::Real rho = 0.0;
             amrex::RealVect vel(0.0, 0.0, 0.0);
             for (int qq = 0; qq < constants::n_micro_states; qq++) {
-                rho += data(iv + wall_normal_unit[lohi] * iv_shift, qq);
+                rho += data(iv + ndir * iv_shift, qq);
                 const auto& ev_qq = m_evs[qq];
-                vel[0] +=
-                    ev_qq[0] * data(iv + wall_normal_unit[lohi] * iv_shift, qq);
-                vel[1] +=
-                    ev_qq[1] * data(iv + wall_normal_unit[lohi] * iv_shift, qq);
-                vel[2] +=
-                    ev_qq[2] * data(iv + wall_normal_unit[lohi] * iv_shift, qq);
+                vel[0] += ev_qq[0] * data(iv + ndir * iv_shift, qq);
+                vel[1] += ev_qq[1] * data(iv + ndir * iv_shift, qq);
+                vel[2] += ev_qq[2] * data(iv + ndir * iv_shift, qq);
             }
 
             vel *= m_mesh_speed / rho;
@@ -217,13 +209,11 @@ struct BCFill
                 f_star_eq);
 
             data(iv, q) =
-                f_eq + data(iv + wall_normal_unit[lohi] * iv_shift, bounce_q) -
-                f_star_eq;
+                f_eq + data(iv + ndir * iv_shift, bounce_q) - f_star_eq;
 
         } else {
-            data(iv, q) =
-                2.0 * data(iv + 1 * wall_normal_unit[lohi] * iv_shift, q) -
-                data(iv + 2 * wall_normal_unit[lohi] * iv_shift, q);
+            data(iv, q) = 2.0 * data(iv + 1 * ndir * iv_shift, q) -
+                          data(iv + 2 * ndir * iv_shift, q);
         }
     }
 
@@ -234,7 +224,7 @@ struct BCFill
         const int /*dcomp*/,
         const int /*numcomp*/,
         amrex::GeometryData const& geom,
-        const amrex::Real /*time*/,
+        const amrex::Real time,
         const amrex::BCRec* /*bcr*/,
         const int /*bcomp*/,
         const int /*orig_comp*/) const
@@ -246,15 +236,16 @@ struct BCFill
         // Define an inward-pointing normal vector
         // that is, positive on the x-, y-, z- wall and
         // negative on the x+, y+, z+ wall
-        const amrex::GpuArray<int, 2> wall_normal_unit = {1, -1};
+        const amrex::GpuArray<int, 2> normal_dirs = {1, -1};
 
-        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+        for (int idir = 0; idir < AMREX_SPACEDIM; ++idir) {
             for (int lohi = 0; lohi < 2; lohi++) {
 
-                const int bc_idx = idim + lohi * AMREX_SPACEDIM;
+                const int normal_dir = normal_dirs[lohi];
+                const int bc_idx = idir + lohi * AMREX_SPACEDIM;
 
-                if ((((lohi == 0) && (iv[idim] < domlo[idim])) ||
-                     ((lohi == 1) && (iv[idim] > domhi[idim])))) {
+                if ((((lohi == 0) && (iv[idir] < domlo[idir])) ||
+                     ((lohi == 1) && (iv[idir] > domhi[idir])))) {
 
                     const auto& lb = amrex::lbound(data);
                     const auto& ub = amrex::ubound(data);
@@ -272,26 +263,23 @@ struct BCFill
                         // If this distribution points into (enters) the
                         // domain, and we are accessing a cell within the data
                         // bounds
-                        if ((ev[idim] == wall_normal_unit[lohi]) &&
+                        if ((ev[idir] == normal_dir) &&
                             (inside.contains(ivn))) {
 
                             if (m_bc_type[bc_idx] == 1) {
                                 bounce_back_bc(iv, q, ev, data);
                             } else if (m_bc_type[bc_idx] == 2) {
                                 amrex::RealVect vel_bc(0.0, 0.0, 0.0);
-                                m_vel_bc_op(iv, geom, vel_bc);
+                                m_vel_bc_op(
+                                    iv, idir, normal_dir, time, geom, vel_bc);
                                 velocity_bc(
-                                    iv, q, ev, idim, lohi, wall_normal_unit,
-                                    vel_bc, data);
+                                    iv, q, ev, idir, normal_dir, vel_bc, data);
                             } else if (m_bc_type[bc_idx] == 3) {
                                 const amrex::Real rho_bc = 1.0;
                                 pressure_bc(
-                                    iv, q, ev, idim, lohi, wall_normal_unit,
-                                    rho_bc, data);
+                                    iv, q, ev, idir, normal_dir, rho_bc, data);
                             } else if (m_bc_type[bc_idx] == 4) {
-                                outflow_bc(
-                                    iv, q, ev, idim, lohi, wall_normal_unit,
-                                    data);
+                                outflow_bc(iv, q, ev, idir, normal_dir, data);
                             }
                         }
                     }

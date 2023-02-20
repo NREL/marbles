@@ -20,7 +20,7 @@ lbm.dt_outer = 0.5
 lbm.nu = 0.01733333333333333
 lbm.save_streaming = 1
 
-lbm.ic_type = "taylogreen"
+lbm.ic_type = "taylorgreen"
 taylorgreen.rho0 = 1.0
 taylorgreen.v0 = 1.0
 
