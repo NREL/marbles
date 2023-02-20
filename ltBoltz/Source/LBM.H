@@ -8,12 +8,16 @@
 #include <AMReX_REAL.H>
 #include <AMReX_ParmParse.H>
 #include <AMReX_FluxRegister.H>
-#include <AMReX_FillPatchUtil.H>
 #include <AMReX_PlotFileUtil.H>
 #include <AMReX_PhysBCFunct.H>
+#include <AMReX_ErrorList.H>
 #include "EB.H"
 #include "BC.H"
 #include "Constants.H"
+#include "FillPatchOps.H"
+#include "IC.H"
+#include "Utilities.H"
+#include "Stencil.H"
 
 namespace lbm {
 
@@ -69,6 +73,34 @@ public:
     // compute dt
     amrex::Real EstTimeStep(const int lev);
 
+    // convert macrodata to equilibrium
+    void MacrodataToEquilibrium(const int lev);
+
+    // calculate the macro fluid properties from the distributions
+    void FToMacrodata(const int lev);
+
+    // Stream the information to the neighbor particles
+    void Stream(const int lev);
+
+    // Relax the particles toward the equilibrium state
+    void RelaxFToEquilibrium(const int lev);
+
+    // Initialize microdata
+    void InitializeF(const int lev);
+
+    // Initialize is_fluid
+    void InitializeIsFluid(const int lev);
+
+    // Fill covered microdata
+    void FillCoveredF(const int lev);
+
+    // get a field based on a variable name
+    std::unique_ptr<amrex::MultiFab>
+    GetField(const std::string name, const int lev, const int ngrow);
+
+    // put together an array of multifabs for writing
+    amrex::Vector<const amrex::MultiFab*> PlotFileMF();
+
 private:
     // read parameters
     void ReadParameters();
@@ -87,12 +119,12 @@ private:
         const int iteration,
         const int ncycle);
 
-    // utility to copy in data from macrodata into another multifab
-    void GetData(
-        int lev,
-        amrex::Real time,
-        amrex::Vector<amrex::MultiFab*>& data,
-        amrex::Vector<amrex::Real>& datatime);
+    // Check if a field exists
+    bool CheckFieldExistence(const std::string name);
+
+    // Get field component
+    int GetFieldComponent(
+        const std::string name, const amrex::Vector<std::string>& varnames);
 
     // set covered coarse cells to be the average of overlying fine cells
     void AverageDown();
@@ -101,40 +133,29 @@ private:
     // multiple levels
     void AverageDownTo(int crse_lev);
 
-    // convert equilibrium to macrodata
-    void MacrodataToEquilibrium(const int lev);
+    // Set the user defined BC functions
+    void SetBCs();
 
-    // calculate the macro fluid properties from the distributions
-    void FToMacrodata(const int lev);
-
-    // Stream the information to the neighbor particles
-    void Stream(const int lev);
-
-    // Relax the particles toward the equilibrium state
-    void RelaxFToEquilibrium(const int lev);
-
-    // compute a new multifab by coping in phi from valid region and filling
-    // ghost cells works for single level and 2-level cases (fill fine grid
-    // ghost by interpolating from coarse)
-    void FillPatch(
-        int lev, amrex::Real time, amrex::MultiFab& mf, int icomp, int ncomp);
-
-    // fill an entire multifab by interpolating from the coarser level
-    // this comes into play when a new level of refinement appears
-    void FillCoarsePatch(
-        int lev, amrex::Real time, amrex::MultiFab& mf, int icomp, int ncomp);
+    // Set the user defined IC functions
+    void SetICs();
 
     // get plotfile name
     std::string PlotFileName(int lev) const;
-
-    // put together an array of multifabs for writing
-    amrex::Vector<const amrex::MultiFab*> PlotFileMF();
 
     // set plotfile variables names
     amrex::Vector<std::string> PlotFileVarNames() const;
 
     // write plotfile to disk
     void WritePlotFile();
+
+    // write checkpoint file to disk
+    void WriteCheckpointFile() const;
+
+    // read checkpoint file from disk
+    void ReadCheckpointFile();
+
+    // utility to skip to next line in Header
+    void GotoNextLine(std::istream& is);
 
     amrex::Vector<int> istep;     // which step?
     amrex::Vector<int> nsubsteps; // how many substeps on each level?
@@ -150,6 +171,9 @@ private:
 
     // variable names for output
     amrex::Vector<std::string> lbm_varnames;
+    amrex::Vector<std::string> macrodata_varnames;
+    amrex::Vector<std::string> microdata_varnames;
+    amrex::Vector<std::string> idata_varnames;
 
     // array of multifabs to store the solution at each level of refinement
     amrex::Vector<amrex::MultiFab> macrodata;
@@ -158,18 +182,19 @@ private:
     amrex::Vector<amrex::iMultiFab> is_fluid;
     amrex::Vector<amrex::MultiFab> plt_mf;
 
-    amrex::Vector<int> bc_lo{
-        amrex::BCType::foextrap, amrex::BCType::foextrap,
-        amrex::BCType::foextrap};
-    amrex::Vector<int> bc_hi{
-        amrex::BCType::foextrap, amrex::BCType::foextrap,
-        amrex::BCType::foextrap};
+    const int f_nghost =
+        1; // TODO : what happens if this is set to 2, does it break?
+
+    amrex::Vector<int> bc_lo{0, 0, 0};
+    amrex::Vector<int> bc_hi{0, 0, 0};
+    amrex::GpuArray<int, AMREX_SPACEDIM* 2> bc_type = {0};
+    std::string velocity_bc_type;
 
     // this is essentially a 2*DIM integer array storing the physical boundary
     // condition types at the lo/hi walls in each direction
     amrex::Vector<amrex::BCRec> bcs; // 1-component
 
-    amrex::Vector<std::unique_ptr<amrex::FluxRegister>> flux_reg;
+    std::unique_ptr<FillPatchOpsBase> fillpatch_op;
 
     amrex::Vector<std::unique_ptr<amrex::FabFactory<amrex::FArrayBox>>>
         m_factory;
@@ -183,35 +208,32 @@ private:
 
     // plotfile prefix and frequency
     std::string plot_file{"plt"};
-    int plot_int = -1;
 
-    int do_reflux = 1;
+    int plot_int = -1;
 
     // checkpoint prefix and frequency
     std::string chk_file{"chk"};
     int chk_int = -1;
 
-    const amrex::GpuArray<int, NUM_MICRO_STATES* 3> e = {
-        0, 0, 0,  1,  0,  0, -1, 0,  0,  0,  1,  0,  0, -1, 0,  0,  0,
-        1, 0, 0,  -1, 1,  1, 0,  -1, -1, 0,  1,  -1, 0, -1, 1,  0,  1,
-        0, 1, -1, 0,  -1, 1, 0,  -1, -1, 0,  1,  0,  1, 1,  0,  -1, -1,
-        0, 1, -1, 0,  -1, 1, 1,  1,  1,  -1, -1, -1, 1, 1,  -1, -1, -1,
-        1, 1, -1, 1,  -1, 1, -1, -1, 1,  1,  1,  -1, -1};
+    // error tags
+    amrex::Vector<amrex::AMRErrorTag> err_tags;
 
-    const amrex::GpuArray<int, NUM_MICRO_STATES> bounce_dir = {
-        0,  2,  1,  4,  3,  6,  5,  8,  7,  10, 9,  12, 11, 14,
-        13, 16, 15, 18, 17, 20, 19, 22, 21, 24, 23, 26, 25};
+    // User-input quantities (will be overridden by ParmParse)
+    amrex::Real dx_outer = 1.0;
+    amrex::Real dt_outer = 1.0;
+    // amrex::Real reynolds = 1.0;
+    amrex::Real nu = 1.0;
 
-    const amrex::GpuArray<amrex::Real, NUM_MICRO_STATES> weight = {
-        8.0 / 27.0,  2.0 / 27.0,  2.0 / 27.0,  2.0 / 27.0,  2.0 / 27.0,
-        2.0 / 27.0,  2.0 / 27.0,  1.0 / 54.0,  1.0 / 54.0,  1.0 / 54.0,
-        1.0 / 54.0,  1.0 / 54.0,  1.0 / 54.0,  1.0 / 54.0,  1.0 / 54.0,
-        1.0 / 54.0,  1.0 / 54.0,  1.0 / 54.0,  1.0 / 54.0,  1.0 / 216.0,
-        1.0 / 216.0, 1.0 / 216.0, 1.0 / 216.0, 1.0 / 216.0, 1.0 / 216.0,
-        1.0 / 216.0, 1.0 / 216.0};
+    int save_streaming = 1;
 
-    amrex::Real m_tau{0.7};
-    amrex::Real m_mesh_speed{1.0};
+    // Derived values (will be updated after reading in user inputs)
+    amrex::Real mesh_speed = 1.0;
+    amrex::Real cs = 1.0;
+    amrex::Real cs_2 = 1.0;
+    amrex::Real tau = 1.0;
+
+    std::unique_ptr<ic::InitializerBase> ic_op;
+    std::string ic_type;
 };
 } // namespace lbm
 #endif

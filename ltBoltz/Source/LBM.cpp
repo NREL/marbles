@@ -11,19 +11,36 @@ LBM::LBM()
     int nlevs_max = max_level + 1;
     initialize_eb(Geom(maxLevel()), maxLevel());
 
+    macrodata_varnames.push_back("rho");
+    macrodata_varnames.push_back("vel_x");
+    macrodata_varnames.push_back("vel_y");
+    macrodata_varnames.push_back("vel_z");
+    macrodata_varnames.push_back("vel_mag");
     const size_t n_zero = 2;
-    lbm_varnames.push_back("rho");
-    lbm_varnames.push_back("vel_x");
-    lbm_varnames.push_back("vel_y");
-    lbm_varnames.push_back("vel_z");
-    for (int q = 0; q < NUM_MICRO_STATES; q++) {
+    for (int q = 0; q < constants::n_micro_states; q++) {
         const auto num_str = std::to_string(q);
         const auto zero_padded_str =
             std::string(n_zero - std::min(n_zero, num_str.length()), '0') +
             num_str;
-        lbm_varnames.push_back("f_" + zero_padded_str);
+        microdata_varnames.push_back("f_" + zero_padded_str);
     }
-    lbm_varnames.push_back("is_fluid");
+    idata_varnames.push_back("is_fluid");
+    for (const auto& vname : macrodata_varnames) {
+        lbm_varnames.push_back(vname);
+    }
+    if (save_streaming == 1) {
+        for (const auto& vname : microdata_varnames) {
+            lbm_varnames.push_back(vname);
+        }
+    }
+    for (const auto& vname : idata_varnames) {
+        lbm_varnames.push_back(vname);
+    }
+
+    macrodata_varnames.push_back("rho");
+    macrodata_varnames.push_back("vel_x");
+    macrodata_varnames.push_back("vel_y");
+    macrodata_varnames.push_back("vel_z");
 
     istep.resize(nlevs_max, 0);
     nsubsteps.resize(nlevs_max, 1);
@@ -43,57 +60,39 @@ LBM::LBM()
 
     m_factory.resize(nlevs_max);
 
-    // FIXME all this
-    bcs.resize(NUM_MACRO_STATES); // Setup 1-component
+    // BCs
+    bcs.resize(constants::n_micro_states);
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
         // lo-side BCs
-        if (bc_lo[idim] ==
-                amrex::BCType::int_dir || // periodic uses "internal Dirichlet"
-            bc_lo[idim] ==
-                amrex::BCType::foextrap || // first-order extrapolation
-            bc_lo[idim] == amrex::BCType::ext_dir) {
-            for (int comp = 0; comp < NUM_MACRO_STATES; comp++) {
-                bcs[comp].setLo(idim, bc_lo[idim]);
+        if (bc_lo[idim] == bc::periodic) {
+            for (auto& bc : bcs) {
+                bc.setLo(idim, amrex::BCType::int_dir);
             }
-        } else if (bc_lo[idim] == BC_NOSLIPWALL) {
-            for (int comp = 0; comp < NUM_MACRO_STATES; comp++) {
-                bcs[comp].setLo(idim, amrex::BCType::reflect_even);
+        } else if (
+            (bc_lo[idim] == bc::noslipwall) || (bc_lo[idim] == bc::velocity) ||
+            (bc_lo[idim] == bc::pressure) || (bc_lo[idim] == bc::outflow)) {
+            for (auto& bc : bcs) {
+                bc.setLo(idim, amrex::BCType::ext_dir);
             }
-            // bcs[RHOU_INDX].setLo(idim, amrex::BCType::reflect_odd);
-            // bcs[RHOV_INDX].setLo(idim, amrex::BCType::reflect_odd);
-            // bcs[RHOW_INDX].setLo(idim, amrex::BCType::reflect_odd);
-            // bcs[VELX_INDX].setLo(idim, amrex::BCType::reflect_odd);
-            // bcs[VELY_INDX].setLo(idim, amrex::BCType::reflect_odd);
-            // bcs[VELZ_INDX].setLo(idim, amrex::BCType::reflect_odd);
         } else {
             amrex::Abort("Invalid bc_lo");
         }
 
-        // hi-side BCSs
-        if (bc_hi[idim] ==
-                amrex::BCType::int_dir || // periodic uses "internal Dirichlet"
-            bc_hi[idim] ==
-                amrex::BCType::foextrap || // first-order extrapolation
-            bc_hi[idim] == amrex::BCType::ext_dir) {
-            for (int comp = 0; comp < NUM_MACRO_STATES; comp++) {
-                bcs[comp].setHi(idim, bc_hi[idim]);
+        // hi-side BCs
+        if (bc_hi[idim] == bc::periodic) {
+            for (auto& bc : bcs) {
+                bc.setHi(idim, amrex::BCType::int_dir);
             }
-        } else if (bc_hi[idim] == BC_NOSLIPWALL) {
-            for (int comp = 0; comp < NUM_MACRO_STATES; comp++) {
-                bcs[comp].setHi(idim, amrex::BCType::reflect_even);
+        } else if (
+            (bc_hi[idim] == bc::noslipwall) || (bc_hi[idim] == bc::velocity) ||
+            (bc_hi[idim] == bc::pressure) || (bc_hi[idim] == bc::outflow)) {
+            for (auto& bc : bcs) {
+                bc.setHi(idim, amrex::BCType::ext_dir);
             }
-            // bcs[RHOU_INDX].setHi(idim, amrex::BCType::reflect_odd);
-            // bcs[RHOV_INDX].setHi(idim, amrex::BCType::reflect_odd);
-            // bcs[RHOW_INDX].setHi(idim, amrex::BCType::reflect_odd);
-            // bcs[VELX_INDX].setHi(idim, amrex::BCType::reflect_odd);
-            // bcs[VELY_INDX].setHi(idim, amrex::BCType::reflect_odd);
-            // bcs[VELZ_INDX].setHi(idim, amrex::BCType::reflect_odd);
         } else {
             amrex::Abort("Invalid bc_hi");
         }
     }
-
-    flux_reg.resize(nlevs_max + 1);
 }
 
 LBM::~LBM() {}
@@ -101,26 +100,32 @@ LBM::~LBM() {}
 void LBM::InitData()
 {
     BL_PROFILE("LBM::InitData()");
+
+    stencil::CheckStencil();
+
     if (restart_chkfile == "") {
         // start simulation from the beginning
         const amrex::Real time = 0.0;
+        SetICs();
         InitFromScratch(time);
         // AverageDown(); // FIXME
 
+        ComputeDt();
+
         if (chk_int > 0) {
-            amrex::Abort("No support for writing checkpoint yet.");
-            // WriteCheckpointFile();
+            WriteCheckpointFile();
         }
 
     } else {
         // restart from a checkpoint
-        amrex::Abort("No support for restarting from checkpoint yet.");
-        // ReadCheckpointFile();
+        ReadCheckpointFile();
     }
 
     if (plot_int > 0) {
         WritePlotFile();
     }
+
+    SetBCs();
 }
 
 void LBM::ReadParameters()
@@ -146,11 +151,169 @@ void LBM::ReadParameters()
 
     {
         amrex::ParmParse pp("lbm");
-        pp.queryarr("lo_bc", bc_lo, 0, AMREX_SPACEDIM);
-        pp.queryarr("hi_bc", bc_hi, 0, AMREX_SPACEDIM);
-        pp.query("do_reflux", do_reflux);
-        pp.query("tau", m_tau);
-        pp.query("mesh_speed", m_mesh_speed);
+        pp.queryarr("bc_lo", bc_lo, 0, AMREX_SPACEDIM);
+        pp.queryarr("bc_hi", bc_hi, 0, AMREX_SPACEDIM);
+        for (int i = 0; i < AMREX_SPACEDIM; i++) {
+            bc_type[i] = bc_lo[i];
+            bc_type[i + AMREX_SPACEDIM] = bc_hi[i];
+        }
+
+        // Check bcs against possible periodic geometry
+        for (int dir = 0; dir < AMREX_SPACEDIM; dir++) {
+            // if it's periodic, it must have internal BC marked.
+            if (amrex::DefaultGeometry().isPeriodic(dir)) {
+                if (bc_lo[dir] != bc::periodic) {
+                    amrex::Abort(
+                        "BC is periodic in direction " + std::to_string(dir) +
+                        " but low BC is not 0");
+                }
+                if (bc_hi[dir] != bc::periodic) {
+                    amrex::Abort(
+                        "BC is periodic in direction " + std::to_string(dir) +
+                        " but high BC is not 0");
+                }
+            } else {
+                // If not periodic, should not be interior.
+                if (bc_lo[dir] == bc::periodic) {
+                    amrex::Abort(
+                        "BC is interior in direction " + std::to_string(dir) +
+                        " but not periodic");
+                }
+                if (bc_hi[dir] == bc::periodic) {
+                    amrex::Abort(
+                        "BC is interior in direction " + std::to_string(dir) +
+                        " but not periodic");
+                }
+            }
+        }
+
+        const std::string vel_bc_key = "velocity_bc_type";
+        bool has_vel_bc = false;
+        // if it is velocity BC, make sure you have a velocity BC type
+        for (int dir = 0; dir < AMREX_SPACEDIM; dir++) {
+            if ((bc_lo[dir] == bc::velocity) || (bc_hi[dir] == bc::velocity)) {
+                has_vel_bc = true;
+            }
+        }
+        if (!(pp.contains(vel_bc_key.c_str())) && has_vel_bc) {
+            amrex::Abort(
+                "LBM::ReadParameters: velocity BC is used without specifying "
+                "the type to be used");
+        }
+        pp.query(vel_bc_key.c_str(), velocity_bc_type);
+
+        pp.get("ic_type", ic_type);
+
+        // const amrex::Real reynolds = 20.0;
+        // const amrex::Real u_max = 0.1;
+        // const amrex::Real diam = 3.9*2.0;
+        // const amrex::Real nu = u_max*(4.0/9.0)*diam/reynolds;
+        // const amrex::Real dim_tau = 3.0*nu + 0.5;
+        // tau = dim_tau;
+
+        pp.query("dx_outer", dx_outer);
+        pp.query("dt_outer", dt_outer);
+        // pp.query("reynolds", reynolds);
+        pp.query("nu", nu);
+
+        pp.query("save_streaming", save_streaming);
+
+        mesh_speed = dx_outer / dt_outer;
+        cs = mesh_speed / constants::root3;
+        cs_2 = cs * cs;
+        tau = nu / (dt_outer * cs_2) + 0.5;
+    }
+
+    {
+        const std::string tag_prefix = "tagging";
+        amrex::ParmParse pp(tag_prefix);
+        amrex::Vector<std::string> refinement_indicators;
+        pp.queryarr(
+            "refinement_indicators", refinement_indicators, 0,
+            pp.countval("refinement_indicators"));
+        for (int n = 0; n < refinement_indicators.size(); ++n) {
+            const std::string ref_prefix =
+                tag_prefix + "." + refinement_indicators[n];
+            amrex::ParmParse ppr(ref_prefix);
+
+            // Tag a given box
+            amrex::RealBox realbox;
+            if (ppr.countval("in_box_lo") > 0) {
+                amrex::Vector<amrex::Real> box_lo(AMREX_SPACEDIM);
+                amrex::Vector<amrex::Real> box_hi(AMREX_SPACEDIM);
+                ppr.getarr(
+                    "in_box_lo", box_lo, 0, static_cast<int>(box_lo.size()));
+                ppr.getarr(
+                    "in_box_hi", box_hi, 0, static_cast<int>(box_hi.size()));
+                realbox = amrex::RealBox(box_lo.data(), box_hi.data());
+            }
+
+            amrex::AMRErrorTagInfo info;
+
+            if (realbox.ok()) {
+                info.SetRealBox(realbox);
+            }
+
+            if (ppr.countval("start_time") > 0) {
+                amrex::Real min_time;
+                ppr.get("start_time", min_time);
+                info.SetMinTime(min_time);
+            }
+
+            if (ppr.countval("end_time") > 0) {
+                amrex::Real max_time;
+                ppr.get("end_time", max_time);
+                info.SetMaxTime(max_time);
+            }
+
+            if (ppr.countval("max_level") > 0) {
+                int tag_max_level;
+                ppr.get("max_level", tag_max_level);
+                info.SetMaxLevel(tag_max_level);
+            }
+
+            bool itexists = false;
+            if (ppr.countval("value_greater") > 0) {
+                amrex::Real value;
+                ppr.get("value_greater", value);
+                std::string field;
+                ppr.get("field_name", field);
+                err_tags.push_back(amrex::AMRErrorTag(
+                    value, amrex::AMRErrorTag::GREATER, field, info));
+                itexists = CheckFieldExistence(field);
+            } else if (ppr.countval("value_less") > 0) {
+                amrex::Real value;
+                ppr.get("value_less", value);
+                std::string field;
+                ppr.get("field_name", field);
+                err_tags.push_back(amrex::AMRErrorTag(
+                    value, amrex::AMRErrorTag::LESS, field, info));
+                itexists = CheckFieldExistence(field);
+            } else if (ppr.countval("adjacent_difference_greater") > 0) {
+                amrex::Real value;
+                ppr.get("adjacent_difference_greater", value);
+                std::string field;
+                ppr.get("field_name", field);
+                err_tags.push_back(amrex::AMRErrorTag(
+                    value, amrex::AMRErrorTag::GRAD, field, info));
+                itexists = CheckFieldExistence(field);
+            } else if (realbox.ok()) {
+                err_tags.push_back(amrex::AMRErrorTag(info));
+                itexists = true;
+            } else {
+                amrex::Abort(
+                    "Unrecognized refinement indicator for " +
+                    refinement_indicators[n]);
+            }
+
+            if (!itexists) {
+                amrex::Error(
+                    "LBM::ReadParameters(): unknown variable field for "
+                    "tagging "
+                    "criteria " +
+                    refinement_indicators[n]);
+            }
+        }
     }
 }
 
@@ -186,8 +349,7 @@ void LBM::Evolve()
         }
 
         if (chk_int > 0 && (step + 1) % chk_int == 0) {
-            amrex::Abort("Chk not supported yet.");
-            // FIXME WriteCheckpointFile();
+            WriteCheckpointFile();
         }
 
         if (cur_time >= stop_time - 1.e-6 * dt[0]) break;
@@ -225,6 +387,7 @@ void LBM::timeStep(const int lev, const amrex::Real time, const int iteration)
                 }
 
                 // if there are newly created levels, set the time step
+                // dt gets halved here
                 for (int k = old_finest + 1; k <= finest_level; ++k) {
                     dt[k] = dt[k - 1] / MaxRefRatio(k - 1);
                 }
@@ -253,13 +416,8 @@ void LBM::timeStep(const int lev, const amrex::Real time, const int iteration)
     if (lev < finest_level) {
         // recursive call for next-finer level
         for (int i = 1; i <= nsubsteps[lev + 1]; ++i) {
+            // halve dt and dx before calling
             timeStep(lev + 1, time + (i - 1) * dt[lev + 1], i);
-        }
-
-        if (do_reflux) {
-            // update lev based on coarse-fine flux mismatch
-            flux_reg[lev + 1]->Reflux(
-                macrodata[lev], 1.0, 0, 0, macrodata[lev].nComp(), geom[lev]);
         }
 
         AverageDownTo(lev); // average lev+1 down to lev
@@ -268,15 +426,19 @@ void LBM::timeStep(const int lev, const amrex::Real time, const int iteration)
 
 void LBM::Advance(
     const int lev,
-    const amrex::Real time,
+    const amrex::Real /*time*/,
     const amrex::Real dt_lev,
-    const int iteration,
-    const int ncycle)
+    const int /*iteration*/,
+    const int /*ncycle*/)
 {
     BL_PROFILE("LBM::Advance()");
 
     t_old[lev] = t_new[lev]; // old time is now current time (time)
     t_new[lev] += dt_lev;    // new time is ahead
+
+    if (fillpatch_op) {
+        fillpatch_op->fillpatch(lev, t_new[lev], f_[lev]);
+    }
 
     Stream(lev);
 
@@ -286,7 +448,8 @@ void LBM::Advance(
 
     RelaxFToEquilibrium(lev);
 
-    f_[lev].FillBoundary(Geom(lev).periodicity()); // FIXME check if needed
+    // Copy n-1 neighbor to n
+    f_[lev].FillBoundary(Geom(lev).periodicity());
 }
 
 // Stream the information to the neighbor particles
@@ -294,7 +457,7 @@ void LBM::Stream(const int lev)
 {
     BL_PROFILE("LBM::Stream()");
     amrex::MultiFab f_star(
-        boxArray(lev), DistributionMap(lev), NUM_MICRO_STATES,
+        boxArray(lev), DistributionMap(lev), constants::n_micro_states,
         f_[lev].nGrow() + 1, amrex::MFInfo(), *(m_factory[lev]));
     f_star.setVal(0.0);
 
@@ -302,38 +465,44 @@ void LBM::Stream(const int lev)
     auto const& is_fluid_arrs = is_fluid[lev].const_arrays();
     auto const& f_arrs = f_[lev].const_arrays();
 
+    const stencil::Stencil stencil;
+    const auto& evs = stencil.evs;
+    const auto& bounce_dirs = stencil.bounce_dirs;
     amrex::ParallelFor(
-        f_[lev], f_[lev].nGrowVect(), NUM_MICRO_STATES,
+        f_[lev], f_[lev].nGrowVect(), constants::n_micro_states,
         [=] AMREX_GPU_DEVICE(int nbx, int i, int j, int k, int q) noexcept {
             const amrex::IntVect iv(i, j, k);
-            const amrex::IntVect ivn(
-                i + e[q * 3 + 0], j + e[q * 3 + 1], k + e[q * 3 + 2]);
+            const auto& ev = evs[q];
+            const amrex::IntVect ivn(iv + ev);
             if (is_fluid_arrs[nbx](iv) == 1) {
                 const auto f_arr = f_arrs[nbx];
                 const auto fs_arr = fs_arrs[nbx];
-                if (is_fluid_arrs[nbx](ivn) == 1) {
+                if (is_fluid_arrs[nbx](ivn)) {
                     fs_arr(ivn, q) = f_arr(iv, q);
                 } else {
-                    fs_arr(iv, bounce_dir[q]) = f_arr(iv, q);
+                    fs_arr(iv, bounce_dirs[q]) = f_arr(iv, q);
                 }
             }
         });
     amrex::Gpu::synchronize();
 
-    amrex::MultiFab::Copy(f_[lev], f_star, 0, 0, NUM_MICRO_STATES, 0);
+    amrex::MultiFab::Copy(f_[lev], f_star, 0, 0, constants::n_micro_states, 0);
 }
 
-// convert equilibrium to macrodata
+// convert macrodata to equilibrium
 void LBM::MacrodataToEquilibrium(const int lev)
 {
     BL_PROFILE("LBM::MacrodataToEquilibrium()");
     auto const& md_arrs = macrodata[lev].const_arrays();
     auto const& is_fluid_arrs = is_fluid[lev].const_arrays();
     auto const& eq_arrs = eq[lev].arrays();
-    const amrex::Real mesh_speed = m_mesh_speed;
+    const amrex::Real l_mesh_speed = mesh_speed;
 
+    const stencil::Stencil stencil;
+    const auto& evs = stencil.evs;
+    const auto& weight = stencil.weights;
     amrex::ParallelFor(
-        eq[lev], macrodata[lev].nGrowVect(), NUM_MICRO_STATES,
+        eq[lev], macrodata[lev].nGrowVect(), constants::n_micro_states,
         [=] AMREX_GPU_DEVICE(int nbx, int i, int j, int k, int q) noexcept {
             const amrex::IntVect iv(i, j, k);
             if (is_fluid_arrs[nbx](iv) == 1) {
@@ -341,21 +510,18 @@ void LBM::MacrodataToEquilibrium(const int lev)
                 const auto md_arr = md_arrs[nbx];
                 const auto eq_arr = eq_arrs[nbx];
 
-                const amrex::Real rho = md_arr(iv, RHO_INDEX);
-                const amrex::Real u = md_arr(iv, VELX_INDEX);
-                const amrex::Real v = md_arr(iv, VELY_INDEX);
-                const amrex::Real w = md_arr(iv, VELZ_INDEX);
+                const amrex::Real rho = md_arr(iv, constants::rho_idx);
+                const amrex::RealVect vel = {
+                    md_arr(iv, constants::velx_idx),
+                    md_arr(iv, constants::vely_idx),
+                    md_arr(iv, constants::velz_idx)};
 
-                const amrex::Real umag2 = u * u + v * v + w * w;
-                const amrex::Real c3 = -1.5 * umag2 / (mesh_speed * mesh_speed);
+                const amrex::Real wt = weight[q];
 
-                const amrex::Real e_dot_u =
-                    e[q * 3 + 0] * u + e[q * 3 + 1] * v + e[q * 3 + 2] * w;
-                const amrex::Real e_div_c = e_dot_u / mesh_speed;
-                const amrex::Real c1 = 3.0 * e_div_c;
-                const amrex::Real c2 = 4.5 * (e_div_c * e_div_c);
+                const auto& ev = evs[q];
 
-                eq_arr(iv, q) = rho * weight[q] * (1.0 + c1 + c2 + c3);
+                SetEquilibriumValue(
+                    rho, vel, l_mesh_speed, wt, ev, eq_arr(iv, q));
             }
         });
     amrex::Gpu::synchronize();
@@ -368,15 +534,15 @@ void LBM::RelaxFToEquilibrium(const int lev)
     auto const& is_fluid_arrs = is_fluid[lev].const_arrays();
     auto const& eq_arrs = eq[lev].const_arrays();
     auto const& f_arrs = f_[lev].arrays();
-    const amrex::Real tau = m_tau;
+    const amrex::Real l_tau = tau;
     amrex::ParallelFor(
-        f_[lev], macrodata[lev].nGrowVect(), NUM_MICRO_STATES,
+        f_[lev], macrodata[lev].nGrowVect(), constants::n_micro_states,
         [=] AMREX_GPU_DEVICE(int nbx, int i, int j, int k, int q) noexcept {
             const amrex::IntVect iv(i, j, k);
             if (is_fluid_arrs[nbx](iv) == 1) {
                 const auto f_arr = f_arrs[nbx];
                 const auto eq_arr = eq_arrs[nbx];
-                f_arr(iv, q) -= 1.0 / tau * (f_arr(iv, q) - eq_arr(iv, q));
+                f_arr(iv, q) -= 1.0 / l_tau * (f_arr(iv, q) - eq_arr(iv, q));
             }
         });
     amrex::Gpu::synchronize();
@@ -389,9 +555,10 @@ void LBM::FToMacrodata(const int lev)
     auto const& md_arrs = macrodata[lev].arrays();
     auto const& is_fluid_arrs = is_fluid[lev].const_arrays();
     auto const& f_arrs = f_[lev].const_arrays();
-    const amrex::Real mesh_speed = m_mesh_speed;
-    const int* domhi = Geom(lev).Domain().hiVect();
+    const amrex::Real l_mesh_speed = mesh_speed;
 
+    const stencil::Stencil stencil;
+    const auto& evs = stencil.evs;
     amrex::ParallelFor(
         macrodata[lev], macrodata[lev].nGrowVect(),
         [=] AMREX_GPU_DEVICE(int nbx, int i, int j, int k) noexcept {
@@ -402,26 +569,23 @@ void LBM::FToMacrodata(const int lev)
                 const auto md_arr = md_arrs[nbx];
 
                 amrex::Real rho = 0.0, u = 0.0, v = 0.0, w = 0.0;
-                for (int q = 0; q < NUM_MICRO_STATES; q++) {
+                for (int q = 0; q < constants::n_micro_states; q++) {
                     rho += f_arr(iv, q);
-                    u += mesh_speed * e[q * 3 + 0] * f_arr(iv, q);
-                    v += mesh_speed * e[q * 3 + 1] * f_arr(iv, q);
-                    w += mesh_speed * e[q * 3 + 2] * f_arr(iv, q);
+                    const auto& ev = evs[q];
+                    u += ev[0] * f_arr(iv, q);
+                    v += ev[1] * f_arr(iv, q);
+                    w += ev[2] * f_arr(iv, q);
                 }
-                u /= rho;
-                v /= rho;
-                w /= rho;
+                u *= l_mesh_speed / rho;
+                v *= l_mesh_speed / rho;
+                w *= l_mesh_speed / rho;
 
-                if (k >= domhi[2] - 1) {
-                    u = 0.1;
-                    v = 0.0;
-                    w = 0.0;
-                }
-
-                md_arr(iv, RHO_INDEX) = rho;
-                md_arr(iv, VELX_INDEX) = u;
-                md_arr(iv, VELY_INDEX) = v;
-                md_arr(iv, VELZ_INDEX) = w;
+                md_arr(iv, constants::rho_idx) = rho;
+                md_arr(iv, constants::velx_idx) = u;
+                md_arr(iv, constants::vely_idx) = v;
+                md_arr(iv, constants::velz_idx) = w;
+                md_arr(iv, constants::vmag_idx) =
+                    std::sqrt(u * u + v * v + w * w);
             }
         });
     amrex::Gpu::synchronize();
@@ -460,7 +624,7 @@ void LBM::ComputeDt()
 }
 
 // compute dt
-amrex::Real LBM::EstTimeStep(const int lev)
+amrex::Real LBM::EstTimeStep(const int /*lev*/)
 {
     BL_PROFILE("LBM::EstTimeStep()");
     return 1.0;
@@ -484,12 +648,9 @@ void LBM::MakeNewLevelFromCoarse(
     t_new[lev] = time;
     t_old[lev] = time - 1.e200;
 
-    if (lev > 0 && do_reflux) {
-        flux_reg[lev].reset(
-            new amrex::FluxRegister(ba, dm, refRatio(lev - 1), lev, ncomp));
+    if (fillpatch_op) {
+        fillpatch_op->fillpatch_from_coarse(lev, time, f_[lev]);
     }
-
-    FillCoarsePatch(lev, time, macrodata[lev], 0, ncomp);
 }
 
 // Make a new level from scratch using provided BoxArray and
@@ -502,66 +663,89 @@ void LBM::MakeNewLevelFromScratch(
     const amrex::DistributionMapping& dm)
 {
     BL_PROFILE("LBM::MakeNewLevelFromScratch()");
-    const int nghost = 1;
 
     m_factory[lev] = amrex::makeEBFabFactory(
         Geom(lev), ba, dm, {5, 5, 5}, amrex::EBSupport::basic);
 
     macrodata[lev].define(
-        ba, dm, NUM_MACRO_STATES, 0, amrex::MFInfo(), *(m_factory[lev]));
+        ba, dm, constants::n_macro_states, 0, amrex::MFInfo(),
+        *(m_factory[lev]));
     f_[lev].define(
-        ba, dm, NUM_MICRO_STATES, nghost, amrex::MFInfo(), *(m_factory[lev]));
+        ba, dm, constants::n_micro_states, f_nghost, amrex::MFInfo(),
+        *(m_factory[lev]));
     is_fluid[lev].define(ba, dm, 1, f_[lev].nGrow() + 1);
     eq[lev].define(
-        ba, dm, NUM_MICRO_STATES, f_[lev].nGrow(), amrex::MFInfo(),
+        ba, dm, constants::n_micro_states, f_[lev].nGrow(), amrex::MFInfo(),
         *(m_factory[lev]));
 
     t_new[lev] = time;
     t_old[lev] = time - 1.e200;
 
-    if (lev > 0 && do_reflux) {
-        amrex::Abort("Not supported yet");
-        flux_reg[lev].reset(new amrex::FluxRegister(
-            ba, dm, refRatio(lev - 1), lev, macrodata[lev].nComp()));
-    }
-
-    amrex::Real cur_time = t_new[lev];
-
     // Initialize the data
     macrodata[lev].setVal(0.0);
+    InitializeIsFluid(lev);
+    InitializeF(lev);
+    FToMacrodata(lev);
+}
 
-    const int* domlo = Geom(lev).Domain().loVect();
-    const int* domhi = Geom(lev).Domain().hiVect();
+void LBM::InitializeF(const int lev)
+{
+    BL_PROFILE("LBM::InitializeF()");
 
-    auto const& f_arrs = f_[lev].arrays();
-    auto const& is_fluid_arrs = is_fluid[lev].arrays();
+    ic_op->initialize(lev, geom[lev].data());
+
+    FillCoveredF(lev);
+
+    f_[lev].FillBoundary(Geom(lev).periodicity());
+}
+
+void LBM::InitializeIsFluid(const int lev)
+{
+    BL_PROFILE("LBM::InitializeIsFluid()");
     auto factory =
         static_cast<amrex::EBFArrayBoxFactory*>(m_factory[lev].get());
-
     auto const& flags = factory->getMultiEBCellFlagFab();
     auto const& flag_arrs = flags.const_arrays();
-    amrex::ParallelFor(
-        f_[lev], f_[lev].nGrowVect(), NUM_MICRO_STATES,
-        [=] AMREX_GPU_DEVICE(int nbx, int i, int j, int k, int q) noexcept {
-            f_arrs[nbx](i, j, k, q) = weight[q];
-        });
+    auto const& is_fluid_arrs = is_fluid[lev].arrays();
     amrex::ParallelFor(
         is_fluid[lev], is_fluid[lev].nGrowVect(),
         [=] AMREX_GPU_DEVICE(int nbx, int i, int j, int k) noexcept {
             is_fluid_arrs[nbx](i, j, k) =
-                ((i < domlo[0] || i > domhi[0] || j < domlo[1] ||
-                  j > domhi[1] || k < domlo[2] || k > domhi[2]) ||
-                 (!flag_arrs[nbx](i, j, k).isRegular()))
-                    ? 0
-                    : 1;
+                !flag_arrs[nbx](i, j, k).isRegular() ? 0 : 1;
         });
     amrex::Gpu::synchronize();
-    f_[lev].FillBoundary(Geom(lev).periodicity());
     is_fluid[lev].FillBoundary(Geom(lev).periodicity());
 }
 
-// Remake an existing level using provided BoxArray and DistributionMapping and
-// fill with existing fine and coarse data.
+void LBM::FillCoveredF(const int lev)
+{
+    BL_PROFILE("LBM::FillCoveredF()");
+    const amrex::Real rho_covered = 0.0;
+    const amrex::RealVect vel_covered(0.0, 0.0, 0.0);
+    const amrex::Real l_mesh_speed = mesh_speed;
+
+    auto const& f_arrs = f_[lev].arrays();
+    auto const& is_fluid_arrs = is_fluid[lev].arrays();
+    const stencil::Stencil stencil;
+    const auto& evs = stencil.evs;
+    const auto& weight = stencil.weights;
+    amrex::ParallelFor(
+        f_[lev], f_[lev].nGrowVect(), constants::n_micro_states,
+        [=] AMREX_GPU_DEVICE(int nbx, int i, int j, int k, int q) noexcept {
+            if (!is_fluid_arrs[nbx](i, j, k)) {
+                const amrex::Real wt = weight[q];
+                const auto& ev = evs[q];
+
+                SetEquilibriumValue(
+                    rho_covered, vel_covered, l_mesh_speed, wt, ev,
+                    f_arrs[nbx](i, j, k, q));
+            }
+        });
+    amrex::Gpu::synchronize();
+}
+
+// Remake an existing level using provided BoxArray and DistributionMapping
+// and fill with existing fine and coarse data.
 void LBM::RemakeLevel(
     int lev,
     amrex::Real time,
@@ -572,17 +756,10 @@ void LBM::RemakeLevel(
     amrex::MultiFab new_state(
         ba, dm, macrodata[lev].nComp(), macrodata[lev].nGrow());
 
-    FillPatch(lev, time, new_state, 0, new_state.nComp());
-
     std::swap(new_state, macrodata[lev]);
 
     t_new[lev] = time;
     t_old[lev] = time - 1.e200;
-
-    if (lev > 0 && do_reflux) {
-        flux_reg[lev].reset(new amrex::FluxRegister(
-            ba, dm, refRatio(lev - 1), lev, macrodata[lev].nComp()));
-    }
 }
 
 // Delete level data
@@ -593,108 +770,104 @@ void LBM::ClearLevel(int lev)
     f_[lev].clear();
     eq[lev].clear();
     is_fluid[lev].clear();
-    flux_reg[lev].reset(nullptr);
+    plt_mf[lev].clear();
 }
 
-// compute a new multifab by coping in phi from valid region and filling ghost
-// cells works for single level and 2-level cases (fill fine grid ghost by
-// interpolating from coarse)
-void LBM::FillPatch(
-    int lev, amrex::Real time, amrex::MultiFab& mf, int icomp, int ncomp)
+// Set the user defined BC functions
+void LBM::SetBCs()
 {
-    BL_PROFILE("LBM::FillPatch()");
-    amrex::Abort("FillPatch not implemented");
-    if (lev == 0) {
-        amrex::Vector<amrex::MultiFab*> smf;
-        amrex::Vector<amrex::Real> stime;
-        GetData(0, time, smf, stime);
+    BL_PROFILE("LBM::SetBCs()");
+    if (velocity_bc_type == "channel") {
+        using VelBCOp = bc::BCOpCreator<bc::Channel>;
+        fillpatch_op.reset(new FillPatchOps<VelBCOp>(
+            geom, refRatio(), bcs,
+            VelBCOp(mesh_speed, bc_type, f_[0].nGrowVect()), f_));
+    }
+}
 
-        amrex::GpuBndryFuncFab<AmrCoreFill> gpu_bndry_func(amrcore_fill_func);
-        amrex::PhysBCFunct<amrex::GpuBndryFuncFab<AmrCoreFill>> physbc(
-            geom[lev], bcs, gpu_bndry_func);
-        amrex::FillPatchSingleLevel(
-            mf, time, smf, stime, 0, icomp, ncomp, geom[lev], physbc, 0);
+void LBM::SetICs()
+{
+    BL_PROFILE("LBM::SetICs()");
+    if (ic_type == "constant") {
+        ic_op.reset(new ic::Initializer<ic::Constant>(
+            mesh_speed, ic::Constant(ic::Constant()), f_));
+    } else if (ic_type == "taylogreen") {
+        ic_op.reset(new ic::Initializer<ic::TaylorGreen>(
+            mesh_speed, ic::TaylorGreen(ic::TaylorGreen()), f_));
     } else {
-        amrex::Vector<amrex::MultiFab*> cmf, fmf;
-        amrex::Vector<amrex::Real> ctime, ftime;
-        GetData(lev - 1, time, cmf, ctime);
-        GetData(lev, time, fmf, ftime);
-
-        amrex::Interpolater* mapper = &amrex::cell_cons_interp;
-
-        amrex::GpuBndryFuncFab<AmrCoreFill> gpu_bndry_func(amrcore_fill_func);
-        amrex::PhysBCFunct<amrex::GpuBndryFuncFab<AmrCoreFill>> cphysbc(
-            geom[lev - 1], bcs, gpu_bndry_func);
-        amrex::PhysBCFunct<amrex::GpuBndryFuncFab<AmrCoreFill>> fphysbc(
-            geom[lev], bcs, gpu_bndry_func);
-
-        amrex::FillPatchTwoLevels(
-            mf, time, cmf, ctime, fmf, ftime, 0, icomp, ncomp, geom[lev - 1],
-            geom[lev], cphysbc, 0, fphysbc, 0, refRatio(lev - 1), mapper, bcs,
-            0);
+        amrex::Abort(
+            "LBM::SetICs(): User must specify a valid initial condition");
     }
 }
 
-// fill an entire multifab by interpolating from the coarser level
-// this comes into play when a new level of refinement appears
-void LBM::FillCoarsePatch(
-    int lev, amrex::Real time, amrex::MultiFab& mf, int icomp, int ncomp)
+// Check if a field exists
+bool LBM::CheckFieldExistence(const std::string name)
 {
-    BL_PROFILE("LBM::FillCoarsePatch()");
-    AMREX_ASSERT(lev > 0);
-
-    amrex::Abort("FillCoarsePatch not implemented");
-    amrex::Vector<amrex::MultiFab*> cmf;
-    amrex::Vector<amrex::Real> ctime;
-    GetData(lev - 1, time, cmf, ctime);
-    amrex::Interpolater* mapper = &amrex::cell_cons_interp;
-
-    if (cmf.size() != 1) {
-        amrex::Abort("FillCoarsePatch: how did this happen?");
+    BL_PROFILE("LBM::CheckFieldExistence()");
+    for (const auto& vn :
+         {macrodata_varnames, microdata_varnames, idata_varnames}) {
+        if (GetFieldComponent(name, vn) != -1) {
+            return true;
+        }
     }
-
-    amrex::GpuBndryFuncFab<AmrCoreFill> gpu_bndry_func(amrcore_fill_func);
-    amrex::PhysBCFunct<amrex::GpuBndryFuncFab<AmrCoreFill>> cphysbc(
-        geom[lev - 1], bcs, gpu_bndry_func);
-    amrex::PhysBCFunct<amrex::GpuBndryFuncFab<AmrCoreFill>> fphysbc(
-        geom[lev], bcs, gpu_bndry_func);
-
-    amrex::InterpFromCoarseLevel(
-        mf, time, *cmf[0], 0, icomp, ncomp, geom[lev - 1], geom[lev], cphysbc,
-        0, fphysbc, 0, refRatio(lev - 1), mapper, bcs, 0);
+    return false;
 }
 
-// utility to copy in data from macrodata into another multifab
-void LBM::GetData(
-    int lev,
-    amrex::Real time,
-    amrex::Vector<amrex::MultiFab*>& data,
-    amrex::Vector<amrex::Real>& datatime)
+// Get field component
+int LBM::GetFieldComponent(
+    const std::string name, const amrex::Vector<std::string>& varnames)
 {
-    BL_PROFILE("LBM::GetData()");
-    amrex::Abort("GetData not implemented");
-    data.clear();
-    datatime.clear();
-
-    const amrex::Real teps = (t_new[lev] - t_old[lev]) * 1.e-3;
-
-    if (time > t_new[lev] - teps && time < t_new[lev] + teps) {
-        data.push_back(&macrodata[lev]);
-        datatime.push_back(t_new[lev]);
-    } else if (time > t_old[lev] - teps && time < t_old[lev] + teps) {
-        data.push_back(&macrodata[lev]);
-        datatime.push_back(t_old[lev]);
+    BL_PROFILE("LBM::GetFieldComponent()");
+    const auto itr = std::find(varnames.begin(), varnames.end(), name);
+    if (itr != varnames.cend()) {
+        return std::distance(varnames.begin(), itr);
     } else {
-        data.push_back(&macrodata[lev]);
-        data.push_back(&macrodata[lev]);
-        datatime.push_back(t_old[lev]);
-        datatime.push_back(t_new[lev]);
+        return -1;
     }
+}
+
+// get a field based on a variable name
+std::unique_ptr<amrex::MultiFab>
+LBM::GetField(const std::string name, const int lev, const int ngrow)
+{
+    BL_PROFILE("LBM::GetField()");
+
+    if (!CheckFieldExistence(name)) {
+        amrex::Abort("LBM::GetField(): this field was not found: " + name);
+    }
+
+    const int nc = 1;
+    std::unique_ptr<amrex::MultiFab> mf = std::make_unique<amrex::MultiFab>(
+        boxArray(lev), DistributionMap(lev), nc, ngrow);
+
+    const int srccomp_mad = GetFieldComponent(name, macrodata_varnames);
+    if (srccomp_mad != -1) {
+        amrex::MultiFab::Copy(*mf, macrodata[lev], srccomp_mad, 0, nc, ngrow);
+    }
+    const int srccomp_mid = GetFieldComponent(name, microdata_varnames);
+    if (srccomp_mid != -1) {
+        amrex::MultiFab::Copy(*mf, f_[lev], srccomp_mid, 0, nc, ngrow);
+    }
+    const int srccomp_id = GetFieldComponent(name, idata_varnames);
+    if (srccomp_id != -1) {
+        auto const& is_fluid_arrs = is_fluid[lev].const_arrays();
+        auto const& mf_arrs = mf->arrays();
+        amrex::ParallelFor(
+            *mf, mf->nGrowVect(), is_fluid[lev].nComp(),
+            [=] AMREX_GPU_DEVICE(int nbx, int i, int j, int k, int n) noexcept {
+                mf_arrs[nbx](i, j, k, n) = is_fluid_arrs[nbx](i, j, k, n);
+            });
+        amrex::Gpu::synchronize();
+    }
+
+    return mf;
 }
 
 // set covered coarse cells to be the average of overlying fine cells
 void LBM::AverageDown()
 {
+    // Remove abort, make sure we're communicating the right things, change
+    // to microdata
     BL_PROFILE("LBM::AverageDown()");
     amrex::Abort("AverageDown not implemented");
     for (int lev = finest_level - 1; lev >= 0; --lev) {
@@ -708,6 +881,8 @@ void LBM::AverageDown()
 // multiple levels
 void LBM::AverageDownTo(int crse_lev)
 {
+    // Remove abort, make sure we're communicating the right things, change
+    // to microdata
     BL_PROFILE("LBM::AverageDownTo()");
     amrex::Abort("AverageDownTo not implemented");
     amrex::average_down(
@@ -717,9 +892,19 @@ void LBM::AverageDownTo(int crse_lev)
 
 // tag cells for refinement
 void LBM::ErrorEst(
-    int lev, amrex::TagBoxArray& tags, amrex::Real time, int ngrow)
+    int lev, amrex::TagBoxArray& tags, amrex::Real time, int /*ngrow*/)
 {
     BL_PROFILE("LBM::ErrorEst()");
+
+    for (int n = 0; n < err_tags.size(); ++n) {
+        std::unique_ptr<amrex::MultiFab> mf;
+        if (!err_tags[n].Field().empty()) {
+            mf = GetField(err_tags[n].Field(), lev, err_tags[n].NGrow());
+        }
+        err_tags[n](
+            tags, mf.get(), amrex::TagBox::CLEAR, amrex::TagBox::SET, time, lev,
+            Geom(lev));
+    }
 }
 
 amrex::Vector<std::string> LBM::PlotFileVarNames() const
@@ -744,8 +929,10 @@ amrex::Vector<const amrex::MultiFab*> LBM::PlotFileMF()
         amrex::MultiFab::Copy(
             plt_mf[i], macrodata[i], 0, cnt, macrodata[i].nComp(), 0);
         cnt += macrodata[i].nComp();
-        amrex::MultiFab::Copy(plt_mf[i], f_[i], 0, cnt, f_[i].nComp(), 0);
-        cnt += f_[i].nComp();
+        if (save_streaming == 1) {
+            amrex::MultiFab::Copy(plt_mf[i], f_[i], 0, cnt, f_[i].nComp(), 0);
+            cnt += f_[i].nComp();
+        }
         auto const& is_fluid_arrs = is_fluid[i].const_arrays();
         auto const& plt_mf_arrs = plt_mf[i].arrays();
         amrex::ParallelFor(
@@ -777,4 +964,200 @@ void LBM::WritePlotFile()
         refRatio());
 }
 
+void LBM::WriteCheckpointFile() const
+{
+    BL_PROFILE("LBM::WriteCheckpointFile()");
+    const auto& varnames = microdata_varnames;
+
+    // chk00010            write a checkpoint file with this root directory
+    // chk00010/Header     this contains information you need to save (e.g.,
+    // finest_level, t_new, etc.) and also
+    //                     the BoxArrays at each level
+    // chk00010/Level_0/
+    // chk00010/Level_1/
+    // etc.                these subdirectories will hold the MultiFab data
+    // at each level of refinement
+
+    // checkpoint file name, e.g., chk00010
+    const std::string& checkpointname = amrex::Concatenate(chk_file, istep[0]);
+
+    amrex::Print() << "Writing checkpoint file " << checkpointname
+                   << " at time " << t_new[0] << std::endl;
+
+    const int nlevels = finest_level + 1;
+
+    // ---- prebuild a hierarchy of directories
+    // ---- dirName is built first.  if dirName exists, it is renamed.  then
+    // build
+    // ---- dirName/subDirPrefix_0 .. dirName/subDirPrefix_nlevels-1
+    // ---- if callBarrier is true, call ParallelDescriptor::Barrier()
+    // ---- after all directories are built
+    // ---- ParallelDescriptor::IOProcessor() creates the directories
+    amrex::PreBuildDirectorHierarchy(checkpointname, "Level_", nlevels, true);
+
+    // write Header file
+    if (amrex::ParallelDescriptor::IOProcessor()) {
+
+        const std::string HeaderFileName(checkpointname + "/Header");
+        amrex::VisMF::IO_Buffer io_buffer(amrex::VisMF::IO_Buffer_Size);
+        std::ofstream HeaderFile;
+        HeaderFile.rdbuf()->pubsetbuf(io_buffer.dataPtr(), io_buffer.size());
+        HeaderFile.open(
+            HeaderFileName.c_str(),
+            std::ofstream::out | std::ofstream::trunc | std::ofstream::binary);
+
+        if (!HeaderFile.good()) {
+            amrex::FileOpenFailed(HeaderFileName);
+        }
+
+        HeaderFile.precision(17);
+
+        // write out title line
+        HeaderFile << "Checkpoint file for LBM\n";
+
+        // write out finest_level
+        HeaderFile << finest_level << "\n";
+
+        // write out array of istep
+        for (int i = 0; i < istep.size(); ++i) {
+            HeaderFile << istep[i] << " ";
+        }
+        HeaderFile << "\n";
+
+        // write out array of dt
+        for (int i = 0; i < dt.size(); ++i) {
+            HeaderFile << dt[i] << " ";
+        }
+        HeaderFile << "\n";
+
+        // write out array of t_new
+        for (int i = 0; i < t_new.size(); ++i) {
+            HeaderFile << t_new[i] << " ";
+        }
+        HeaderFile << "\n";
+
+        // write the BoxArray at each level
+        for (int lev = 0; lev <= finest_level; ++lev) {
+            boxArray(lev).writeOn(HeaderFile);
+            HeaderFile << '\n';
+        }
+    }
+
+    // write the MultiFab data to, e.g., chk00010/Level_0/
+    for (int lev = 0; lev <= finest_level; ++lev) {
+        amrex::VisMF::Write(
+            f_[lev], amrex::MultiFabFileFullPrefix(
+                         lev, checkpointname, "Level_", varnames[0]));
+    }
+}
+
+void LBM::ReadCheckpointFile()
+{
+    BL_PROFILE("LBM::ReadCheckpointFile()");
+    const auto& varnames = microdata_varnames;
+
+    amrex::Print() << "Restarting from checkpoint file " << restart_chkfile
+                   << std::endl;
+
+    // Header
+    const std::string File(restart_chkfile + "/Header");
+
+    amrex::VisMF::IO_Buffer io_buffer(amrex::VisMF::GetIOBufferSize());
+
+    amrex::Vector<char> fileCharPtr;
+    amrex::ParallelDescriptor::ReadAndBcastFile(File, fileCharPtr);
+    std::string fileCharPtrString(fileCharPtr.dataPtr());
+    std::istringstream is(fileCharPtrString, std::istringstream::in);
+
+    std::string line, word;
+
+    // read in title line
+    std::getline(is, line);
+
+    // read in finest_level
+    is >> finest_level;
+    GotoNextLine(is);
+
+    // read in array of istep
+    std::getline(is, line);
+    {
+        std::istringstream lis(line);
+        int i = 0;
+        while (lis >> word) {
+            istep[i++] = std::stoi(word);
+        }
+    }
+
+    // read in array of dt
+    std::getline(is, line);
+    {
+        std::istringstream lis(line);
+        int i = 0;
+        while (lis >> word) {
+            dt[i++] = std::stod(word);
+        }
+    }
+
+    // read in array of t_new
+    std::getline(is, line);
+    {
+        std::istringstream lis(line);
+        int i = 0;
+        while (lis >> word) {
+            t_new[i++] = std::stod(word);
+        }
+    }
+
+    for (int lev = 0; lev <= finest_level; ++lev) {
+
+        // read in level 'lev' BoxArray from Header
+        amrex::BoxArray ba;
+        ba.readFrom(is);
+        GotoNextLine(is);
+
+        // create a distribution mapping
+        amrex::DistributionMapping dm{ba, amrex::ParallelDescriptor::NProcs()};
+
+        // set BoxArray grids and DistributionMapping dmap in
+        // AMReX_AmrMesh.H class
+        SetBoxArray(lev, ba);
+        SetDistributionMap(lev, dm);
+
+        // build MultiFab and FluxRegister data
+        int ncomp = varnames.size();
+        m_factory[lev] = amrex::makeEBFabFactory(
+            Geom(lev), ba, dm, {5, 5, 5}, amrex::EBSupport::basic);
+        f_[lev].define(
+            ba, dm, ncomp, f_nghost, amrex::MFInfo(), *(m_factory[lev]));
+        macrodata[lev].define(
+            ba, dm, constants::n_macro_states, 0, amrex::MFInfo(),
+            *(m_factory[lev]));
+        is_fluid[lev].define(ba, dm, 1, f_[lev].nGrow() + 1);
+        eq[lev].define(
+            ba, dm, constants::n_micro_states, f_[lev].nGrow(), amrex::MFInfo(),
+            *(m_factory[lev]));
+    }
+
+    // read in the MultiFab data
+    for (int lev = 0; lev <= finest_level; ++lev) {
+        amrex::VisMF::Read(
+            f_[lev], amrex::MultiFabFileFullPrefix(
+                         lev, restart_chkfile, "Level_", varnames[0]));
+    }
+
+    // Populate the other data, including the covered cells
+    for (int lev = 0; lev <= finest_level; ++lev) {
+        macrodata[lev].setVal(0.0);
+        InitializeIsFluid(lev);
+        FillCoveredF(lev);
+        FToMacrodata(lev);
+    }
+}
+
+// utility to skip to next line in Header
+void LBM::GotoNextLine(std::istream& is)
+{
+    constexpr std::streamsize bl_ignore_max{100000};
+    is.ignore(bl_ignore_max, '\n');
+}
 } // namespace lbm

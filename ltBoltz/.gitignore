@@ -1,4 +1,3 @@
-fdata*
 plt*
 chk*
 tmp_build_dir
@@ -6,3 +5,7 @@ Backtrace*
 *.ex
 *.visit
 .DS_Store
+Docs/build/
+html/
+doctrees/
+*.ipynb

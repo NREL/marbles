@@ -1,21 +1,20 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
-#define XDIR 0
-#define YDIR 1
-#define ZDIR 2
+#include <AMReX_REAL.H>
 
-#define NUM_MACRO_STATES 4
-#define RHO_INDEX 0
-#define VELX_INDEX 1
-#define VELY_INDEX 2
-#define VELZ_INDEX 3
+namespace lbm::constants {
+static constexpr int n_macro_states = 5;
+static constexpr int rho_idx = 0;
+static constexpr int velx_idx = 1;
+static constexpr int vely_idx = 2;
+static constexpr int velz_idx = 3;
+static constexpr int vmag_idx = 4;
 
-#define NUM_MICRO_STATES 27
+static constexpr int n_micro_states = 27;
 
-#define BC_PERIODIC 0
-#define BC_NOSLIPWALL 1
-#define BC_SLIPWALL 2
-#define BC_OUTFLOW 3
+static constexpr amrex::Real root3 = 1.732050807568877293527446341;
+
+} // namespace lbm::constants
 
 #endif

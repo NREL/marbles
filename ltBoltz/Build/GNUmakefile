@@ -17,6 +17,8 @@ USE_EB    = TRUE
 TINY_PROFILE = TRUE
 USE_PARTICLES = FALSE
 
+BL_NO_FORT = TRUE
+
 include $(AMREX_HOME)/Tools/GNUMake/Make.defs
 
 include $(AMREX_HOME)/Src/Base/Make.package
@@ -29,7 +31,6 @@ include $(LBM_HOME)/Source/Make.package
 INCLUDE_LOCATIONS += $(LBM_HOME)/Source
 VPATH_LOCATIONS   += $(LBM_HOME)/Source
 
-BL_NO_FORT = TRUE
 include $(AMREX_HOME)/Tools/GNUMake/Make.rules
 
 
