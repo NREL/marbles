@@ -4,4 +4,4 @@
 Correctness - Verification and Validation
 =========================================
 
-`ltBoltz` undergoes significant testing to ensure correct operation.
+`MARBLES` undergoes significant testing to ensure correct operation.

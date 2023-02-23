@@ -5,10 +5,10 @@ The input file specified on the command line is a free-format text file, one ent
 
 This file needs to specified along with the executable as an `argv` option, for example::
 
-  mpirun -np 64 ./ltBoltz.xxx,yyy.ex inputs
+  mpirun -np 64 ./marbles.xxx,yyy.ex inputs
 
 
-Entries can be overwritten on the command line: ``./ltBoltz.xxx,yyy.ex inputs amr.plot_int=10``.
+Entries can be overwritten on the command line: ``./marbles.xxx,yyy.ex inputs amr.plot_int=10``.
 
 Here is an example input file::
 

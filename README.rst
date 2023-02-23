@@ -1,19 +1,32 @@
-ltBoltz
+MARBLES
 -------
 
-`Documentation <https://ltboltz.github.io>`_
+|Documentation Badge| |License Badge| |AMReX Badge| |C++ Badge|
+
+.. |AMReX Badge| image:: https://img.shields.io/static/v1?label=%22powered%20by%22&message=%22AMReX%22&color=%22blue%22
+   :target: https://amrex-codes.github.io/amrex/
+
+.. |C++ Badge| image:: https://img.shields.io/badge/language-C%2B%2B17-blue
+   :target: https://isocpp.org/
+
+.. |License Badge| image:: https://img.shields.io/badge/License-Apache%20v2.0-blue.svg
+   :target: https://www.apache.org/licenses/LICENSE-2.0
+
+.. |Documentation Badge| image:: https://img.shields.io/badge/Docs-github.io-blue.svg
+   :target: https://marbles.github.io
+
 
 Getting Started
 ~~~~~~~~~~~~~~~
 
-* To compile and run `ltBoltz`, one needs a C++ compiler that supports the C++17 standard:
+* To compile and run `MARBLES`, one needs a C++ compiler that supports the C++17 standard:
 
-1. Have `ltBoltz` use the default submodules for AMReX ::
+1. Have `MARBLES` use the default submodules for AMReX ::
 
-    git clone --recursive git@github.com:ltBoltz.git
+    git clone --recursive git@github.com:NREL/marbles.git
     cd Build
     make realclean && make -j
-    ./ltBoltz.xxx.yyy.ex example.inp
+    ./marbles.xxx.yyy.ex example.inp
 
 * Notes
 
@@ -28,13 +41,13 @@ Getting Started
 Dependencies
 ~~~~~~~~~~~~
 
-`ltBoltz` is built on the `AMReX` library.
+`MARBLES` is built on the `AMReX` library.
 
 
 Documentation
 ~~~~~~~~~~~~~
 
-The full documentation for `ltBoltz` exists in the Docs directory; at present this is maintained inline using Sphinx  `Sphinx <http://www.sphinx-doc.org>`_. 
+The full documentation for `MARBLES` exists in the Docs directory; at present this is maintained inline using Sphinx  `Sphinx <http://www.sphinx-doc.org>`_.
 
     cd Docs && mkdir build && cd build && sphinx-build -M html ../sphinx .
 
