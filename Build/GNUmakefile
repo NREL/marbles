@@ -1,7 +1,7 @@
-AMREX_HOME ?= ../../submods/amrex
 LBM_HOME = ../
+AMREX_HOME ?= $(LBM_HOME)/Submodules/AMReX
 
-EBASE = ltBoltz
+EBASE = marbles
 
 DEBUG	= FALSE
 
