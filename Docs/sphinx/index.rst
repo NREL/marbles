@@ -1,6 +1,6 @@
-=======
-MARBLES
-=======
+=================================================================
+MARBLES: Multi-scale Adaptively Refined Boltzmann LatticE Solvers
+=================================================================
 
 .. toctree::
    :maxdepth: 2
