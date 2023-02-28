@@ -19,3 +19,364 @@ jobs:
         exclude: '.'
         extensions: 'H,cpp'
         clangFormatVersion: 14
+  CPU-GNUmake:
+    needs: Formatting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cancel previous runs
+        uses: styfle/cancel-workflow-action@0.6.0
+        with:
+          access_token: ${{github.token}}
+      - name: Clone
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+      - name: Setup
+        run: |
+          echo "NPROCS=$(nproc)" >> $GITHUB_ENV
+      - name: TG
+        working-directory: ./Build
+        run: |
+          echo "::add-matcher::.github/problem-matchers/gcc.json"
+          make -j ${{env.NPROCS}} COMP=gnu USE_MPI=FALSE DEBUG=TRUE 2>&1 | tee -a build-output.txt
+      - name: TG debug test
+        working-directory: ./Build
+        run: ./marbles3d.gnu.DEBUG.TPROF.ex ../Tests/test_files/tg/tg.inp max_step=2 amr.plot_files_output=0 amr.checkpoint_files_output=0
+      - name: TG debug report
+        working-directory: ./Build
+        run: |
+          egrep "warning:|error:" build-output.txt \
+            | egrep -v "Submodules/AMReX|GNUmakefile" \
+            | egrep -v "ld: warning:" | sort | uniq \
+            | awk 'BEGIN{i=0}{print $0}{i++}END{print "Warnings: "i}' > warnings.txt
+          cat warnings.txt
+          export return=$(tail -n 1 warnings.txt | awk '{print $2}')
+          exit ${return}
+      - name: TG debug single precision build
+        working-directory: ./Build
+        run: |
+          echo "::add-matcher::.github/problem-matchers/gcc.json"
+          make realclean
+          make -j ${{env.NPROCS}} COMP=llvm USE_MPI=FALSE DEBUG=TRUE PRECISION=FLOAT 2>&1 | tee -a build-output.txt
+      - name: TG debug single precision test
+        working-directory: ./Build
+        run: ./marbles3d.llvm.FLOAT.DEBUG.TPROF.ex ../Tests/test_files/tg/tg.inp max_step=2 amr.plot_files_output=0 amr.checkpoint_files_output=0
+      - name: TG debug single precision report
+        working-directory: ./Build
+        run: |
+          egrep "warning:|error:" build-output.txt \
+            | egrep -v "Submodules/AMReX|GNUmakefile" \
+            | egrep -v "ld: warning:" | sort | uniq \
+            | awk 'BEGIN{i=0}{print $0}{i++}END{print "Warnings: "i}' > warnings.txt
+          cat warnings.txt
+          export return=$(tail -n 1 warnings.txt | awk '{print $2}')
+          exit ${return}
+  CPU-CMake:
+    needs: Formatting
+    runs-on: ${{matrix.os}}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        build_type: [RelWithDebInfo, Debug]
+        include:
+          - os: macos-latest
+            install_deps: brew install mpich ninja
+            comp: llvm
+            procs: $(sysctl -n hw.ncpu)
+          - os: ubuntu-latest
+            install_deps: sudo apt-get install -y --no-install-recommends mpich libmpich-dev ninja-build
+            comp: gnu
+            procs: $(nproc)
+          - build_type: RelWithDebInfo
+            ctest_args: -LE no_ci
+          - build_type: Debug
+            ctest_args: -L unit
+        exclude:
+          - os: macos-latest
+            build_type: Debug
+    steps:
+    - name: Cancel previous runs
+      uses: styfle/cancel-workflow-action@0.6.0
+      with:
+        access_token: ${{github.token}}
+    - name: Clone
+      uses: actions/checkout@v3
+      with: 
+        submodules: true
+    - name: Dependencies
+      run: ${{matrix.install_deps}}
+    - name: Setup
+      run: |
+        echo "NUM_PROCS=${{matrix.procs}}" >> $GITHUB_ENV
+    - name: Configure
+      run: |
+        cmake -G Ninja \
+          -B ${{runner.workspace}}/build-ci-${{matrix.build_type}} \
+          -DCMAKE_INSTALL_PREFIX:PATH=${{runner.workspace}}/install-${{matrix.build_type}} \
+          -DCMAKE_BUILD_TYPE:STRING=${{matrix.build_type}} \
+          -DMARBLES_ENABLE_MPI:BOOL=ON \
+          -DMARBLES_TEST_WITH_FCOMPARE:BOOL=OFF \
+          ${{github.workspace}}
+    - name: Build
+      working-directory: ${{runner.workspace}}/build-ci-${{matrix.build_type}}
+      run: |
+        echo "::add-matcher::.github/problem-matchers/gcc.json"
+        cmake --build . -- -j ${{env.NUM_PROCS}} 2>&1 | tee -a build-output.txt
+    - name: Report
+      working-directory: ${{runner.workspace}}/build-ci-${{matrix.build_type}}
+      run: |
+        echo "::add-matcher::.github/problem-matchers/gcc.json"
+        egrep "warning:|error:" build-output.txt | egrep -v "Submodules" | sort | uniq | \
+          awk 'BEGIN{i=0}{print $0}{i++}END{print "Warnings: "i}' > build-output-warnings.txt
+        cat build-output-warnings.txt
+        exit $(tail -n 1 build-output-warnings.txt | awk '{print $2}')
+    - name: Test
+      working-directory: ${{runner.workspace}}/build-ci-${{matrix.build_type}}
+      run: |
+        ctest ${{matrix.ctest_args}} --output-on-failure
+  GPU-Nvidia:
+    name: GPU-CUDA
+    needs: Formatting
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        cuda_ver: [11.4]
+        include:
+          - cuda_ver: "11.4"
+            cuda_pkg: 11-4
+            cuda_extra: libcurand-dev-11-4 cuda-cupti-dev-11-4
+    steps:
+      - name: Cancel previous runs
+        uses: styfle/cancel-workflow-action@0.6.0
+        with:
+          access_token: ${{github.token}}
+      - name: Clone
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+      - name: Prepare CUDA environment
+        run: |
+          sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/3bf863cc.pub
+          echo "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64 /" | sudo tee /etc/apt/sources.list.d/cuda.list
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ninja-build \
+              cuda-command-line-tools-${{matrix.cuda_pkg}} cuda-compiler-${{matrix.cuda_pkg}} cuda-minimal-build-${{matrix.cuda_pkg}} cuda-nvml-dev-${{matrix.cuda_pkg}} cuda-nvtx-${{matrix.cuda_pkg}} ${{matrix.cuda_extra}}
+      - name: Configure and build
+        run: |
+          export PATH=/usr/local/nvidia/bin:/usr/local/cuda-${{matrix.cuda_ver}}/bin:${PATH}
+          export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:/usr/local/cuda-${{matrix.cuda_ver}}/lib:${LD_LIBRARY_PATH}
+          cmake -G Ninja -B build-${{matrix.cuda_pkg}} \
+            -DCMAKE_BUILD_TYPE:STRING=Release \
+            -DMARBLES_ENABLE_MPI:BOOL=OFF \
+            -DMARBLES_ENABLE_CUDA:BOOL=ON \
+            -DAMReX_CUDA_ERROR_CAPTURE_THIS:BOOL=ON \
+            -DCMAKE_CUDA_COMPILE_SEPARABLE_COMPILATION:BOOL=ON \
+            -DCMAKE_CUDA_ARCHITECTURES=70 \
+            ${{github.workspace}}
+          cmake --build build-${{matrix.cuda_pkg}} -- -j $(nproc)
+  GPU-AMD:
+    name: GPU-HIP
+    needs: Formatting
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Cancel previous runs
+        uses: styfle/cancel-workflow-action@0.6.0
+        with:
+          access_token: ${{github.token}}
+      - name: Clone
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+      - name: Prepare HIP environment
+        run: |
+          wget -q -O - https://repo.radeon.com/rocm/rocm.gpg.key | sudo apt-key add -
+          echo 'deb [arch=amd64] https://repo.radeon.com/rocm/apt/debian/ ubuntu main' | sudo tee /etc/apt/sources.list.d/rocm.list
+          echo 'export PATH=/opt/rocm/llvm/bin:/opt/rocm/bin:/opt/rocm/profiler/bin:/opt/rocm/opencl/bin:$PATH' | sudo tee -a /etc/profile.d/rocm.sh
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ninja-build \
+              build-essential rocm-dev roctracer-dev rocprofiler-dev rocrand-dev rocprim-dev rocm-libs
+      - name: Configure and build
+        run: |
+          source /etc/profile.d/rocm.sh
+          which clang
+          which clang++
+          cmake -G Ninja -B build \
+            -DCMAKE_BUILD_TYPE:STRING=Release \
+            -DMARBLES_ENABLE_MPI:BOOL=OFF \
+            -DMARBLES_ENABLE_ROCM:BOOL=ON \
+            -DCMAKE_CXX_COMPILER:STRING=$(which clang++) \
+            -DCMAKE_C_COMPILER:STRING=$(which clang) \
+            -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON \
+            -DAMReX_AMD_ARCH:STRING=gfx908 \
+            -DCMAKE_HIP_ARCHITECTURES:STRING=gfx908 \
+            -DAMDGPU_TARGETS:STRING=gfx908 \
+            -DGPU_TARGETS:STRING=gfx908 \
+            ${{github.workspace}}
+          cmake --build build -- -j $(nproc)
+  GPU-Intel:
+    name: GPU-SYCL
+    needs: Formatting
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Cancel previous runs
+        uses: styfle/cancel-workflow-action@0.6.0
+        with:
+          access_token: ${{github.token}}
+      - name: Clone
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+      - name: Prepare SyCL environment
+        run: |
+          export DEBIAN_FRONTEND=noninteractive
+          sudo wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
+          sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
+          echo "deb https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ninja-build intel-oneapi-dpcpp-cpp-compiler intel-oneapi-mkl-devel
+      - name: Configure and build
+        run: |
+          set +e
+          source /opt/intel/oneapi/setvars.sh
+          set -e
+          cmake -G Ninja -B build-SYCL \
+            -DCMAKE_BUILD_TYPE:STRING=Release \
+            -DCMAKE_CXX_COMPILER:STRING=$(which dpcpp) \
+            -DCMAKE_C_COMPILER:STRING=$(which clang) \
+            -DMARBLES_ENABLE_MPI:BOOL=OFF \
+            -DMARBLES_ENABLE_SYCL:BOOL=ON \
+            ${{github.workspace}}
+          cmake --build build-SYCL -- -j $(nproc)
+  Lint-cppcheck:
+    needs: Formatting
+    runs-on: macos-latest
+    steps:
+      - name: Cancel previous runs
+        uses: styfle/cancel-workflow-action@0.6.0
+        with:
+          access_token: ${{github.token}}
+      - name: Clone
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+      - name: Dependencies
+        run: brew install cppcheck
+      - name: Configure
+        run: |
+          echo "NPROCS=$(sysctl -n hw.ncpu)" >> $GITHUB_ENV
+          cmake \
+          -B ${{runner.workspace}}/build-cppcheck \
+          -DMARBLES_ENABLE_MPI:BOOL=OFF \
+          -DMARBLES_TEST_WITH_FCOMPARE:BOOL=OFF \
+          -DMARBLES_ENABLE_CPPCHECK:BOOL=ON \
+          ${{github.workspace}}
+      - name: Check
+        working-directory: ${{runner.workspace}}/build-cppcheck
+        run: make cppcheck-ci
+      - name: Full report
+        working-directory: ${{runner.workspace}}/build-cppcheck
+        run: cat cppcheck/cppcheck-full-report.txt
+      - name: Short report
+        working-directory: ${{runner.workspace}}/build-cppcheck
+        run: |
+          echo "::add-matcher::.github/problem-matchers/cppcheck.json"
+          cat cppcheck-ci-report.txt
+          exit $(tail -n 1 cppcheck-ci-report.txt | awk '{print $2}')
+  Lint-clang-tidy:
+    needs: Formatting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cancel previous runs
+        uses: styfle/cancel-workflow-action@0.6.0
+        with:
+          access_token: ${{github.token}}
+      - name: Clone
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+      - name: Dependencies
+        run: |
+          sudo apt-get install -y ninja-build
+      - name: Configure
+        run: |
+          echo "NPROCS=$(nproc)" >> $GITHUB_ENV
+          cmake -G Ninja \
+          -B ${{runner.workspace}}/build-clang-tidy \
+          -DCMAKE_BUILD_TYPE:STRING=Debug \
+          -DCMAKE_CXX_COMPILER:STRING=clang++ \
+          -DCMAKE_C_COMPILER:STRING=clang \
+          -DMARBLES_ENABLE_MPI:BOOL=OFF \
+          -DMARBLES_TEST_WITH_FCOMPARE:BOOL=OFF \
+          -DMARBLES_ENABLE_ALL_WARNINGS:BOOL=ON \
+          -DMARBLES_ENABLE_CLANG_TIDY:BOOL=ON \
+          ${{github.workspace}}
+      - name: Check
+        working-directory: ${{runner.workspace}}/build-clang-tidy
+        run: |
+          cmake --build . --parallel ${{env.NPROCS}} 2>&1 | tee -a clang-tidy-full-report.txt
+          cat clang-tidy-full-report.txt | grep "warning:" | grep -v "Submodules" | sort | uniq | \
+            awk 'BEGIN{i=0}{print $0}{i++}END{print "Warnings: "i}' > clang-tidy-ci-report.txt
+      - name: Full report
+        working-directory: ${{runner.workspace}}/build-clang-tidy
+        run: cat clang-tidy-full-report.txt
+      - name: Short report
+        working-directory: ${{runner.workspace}}/build-clang-tidy
+        run: |
+          echo "::add-matcher::.github/problem-matchers/gcc.json"
+          cat clang-tidy-ci-report.txt
+          exit $(tail -n 1 clang-tidy-ci-report.txt | awk '{print $2}')
+  Lint-codeql:
+    needs: Formatting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cancel previous runs
+        uses: styfle/cancel-workflow-action@0.6.0
+        with:
+          access_token: ${{github.token}}
+      - name: Clone
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+      - name: Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: cpp
+          queries: +security-and-quality
+          config-file: ./.github/codeql/codeql-config.yml
+      - name: Configure
+        run: |
+          echo "NPROCS=$(nproc)" >> $GITHUB_ENV
+          cmake -G Ninja \
+            -B ${{runner.workspace}}/build-ci-codeql \
+            -DCMAKE_INSTALL_PREFIX:PATH=${{runner.workspace}}/install-codeql \
+            -DCMAKE_BUILD_TYPE:STRING=Debug \
+            -DCMAKE_CXX_COMPILER:STRING=clang++ \
+            -DCMAKE_C_COMPILER:STRING=clang \
+            -DMARBLES_ENABLE_MPI:BOOL=OFF \
+            -DMARBLES_TEST_WITH_FCOMPARE:BOOL=OFF \
+            ${{github.workspace}}
+      - name: Build
+        working-directory: ${{runner.workspace}}/build-ci-codeql
+        run: |
+          cmake --build . --parallel ${{env.NPROCS}}
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+        with:
+          category: "/language:cpp"
+          upload: False
+          output: sarif-results
+      - name: Filter CodeQL sarif
+        uses: advanced-security/filter-sarif@v1
+        with:
+          patterns: |
+            -**/Submodules/**
+          input: sarif-results/cpp.sarif
+          output: sarif-results/cpp.sarif
+      - name: Upload CodeQL sarif
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: sarif-results/cpp.sarif

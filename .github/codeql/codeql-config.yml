@@ -1,0 +1,6 @@
+name: "MARBLES CodeQL config"
+
+query-filters:
+  - exclude:
+      id: cpp/poorly-documented-function
+
