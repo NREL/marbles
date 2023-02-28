@@ -1,7 +1,7 @@
 cmake_minimum_required (VERSION 3.18 FATAL_ERROR)
 project(Marbles CXX)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake")
 include(CMakePackageConfigHelpers)
 include(GNUInstallDirs)
 include(marbles-utils)
