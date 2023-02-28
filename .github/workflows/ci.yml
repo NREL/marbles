@@ -19,7 +19,59 @@ jobs:
         exclude: '.'
         extensions: 'H,cpp'
         clangFormatVersion: 14
-  CPU:
+  CPU-GNUmake:
+    needs: Formatting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cancel previous runs
+        uses: styfle/cancel-workflow-action@0.6.0
+        with:
+          access_token: ${{github.token}}
+      - name: Clone
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+      - name: Setup
+        run: |
+          echo "NPROCS=$(nproc)" >> $GITHUB_ENV
+      - name: TG
+        working-directory: ./Build
+        run: |
+          echo "::add-matcher::.github/problem-matchers/gcc.json"
+          make -j ${{env.NPROCS}} COMP=gnu USE_MPI=FALSE DEBUG=TRUE 2>&1 | tee -a build-output.txt
+      - name: TG debug test
+        working-directory: ./Build
+        run: ./marbles.gnu.DEBUG.ex ../Tests/test_files/tg/tg.inp max_step=2 amr.plot_files_output=0 amr.checkpoint_files_output=0
+      - name: TG debug report
+        working-directory: ./Build
+        run: |
+          egrep "warning:|error:" build-output.txt \
+            | egrep -v "Submodules/AMReX|GNUmakefile" \
+            | egrep -v "ld: warning:" | sort | uniq \
+            | awk 'BEGIN{i=0}{print $0}{i++}END{print "Warnings: "i}' > warnings.txt
+          cat warnings.txt
+          export return=$(tail -n 1 warnings.txt | awk '{print $2}')
+          exit ${return}
+      - name: TG debug single precision build
+        working-directory: ./Build
+        run: |
+          echo "::add-matcher::.github/problem-matchers/gcc.json"
+          make realclean
+          make -j ${{env.NPROCS}} COMP=llvm USE_MPI=FALSE DEBUG=TRUE PRECISION=FLOAT 2>&1 | tee -a build-output.txt
+      - name: TG debug single precision test
+        working-directory: ./Build
+        run: ./marbles.llvm.FLOAT.DEBUG.ex ../Tests/test_files/tg/tg.inp max_step=2 amr.plot_files_output=0 amr.checkpoint_files_output=0
+      - name: TG debug single precision report
+        working-directory: ./Build
+        run: |
+          egrep "warning:|error:" build-output.txt \
+            | egrep -v "Submodules/AMReX|GNUmakefile" \
+            | egrep -v "ld: warning:" | sort | uniq \
+            | awk 'BEGIN{i=0}{print $0}{i++}END{print "Warnings: "i}' > warnings.txt
+          cat warnings.txt
+          export return=$(tail -n 1 warnings.txt | awk '{print $2}')
+          exit ${return}
+  CPU-CMake:
     needs: Formatting
     runs-on: ${{matrix.os}}
     strategy:
