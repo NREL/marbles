@@ -30,7 +30,7 @@ target_include_directories(${marbles_lib_name} PUBLIC
 include(AMReXBuildInfo)
 generate_buildinfo(${marbles_lib_name} ${CMAKE_SOURCE_DIR})
 
-configure_file("${CMAKE_SOURCE_DIR}/cmake/MarblesVersion.H.in"
+configure_file("${CMAKE_SOURCE_DIR}/CMake/MarblesVersion.H.in"
   "${CMAKE_CURRENT_BINARY_DIR}/MarblesVersion.H" @ONLY)
 
 target_link_libraries_system(${marbles_lib_name} PUBLIC AMReX::amrex)

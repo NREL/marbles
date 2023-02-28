@@ -38,12 +38,6 @@ macro(init_amrex)
     CACHE INTERNAL "Path to fcompare executable for regression tests")
 endmacro(init_amrex)
 
-macro(init_amrex_hydro)
-  set(AMREX_HYDRO_SUBMOD_LOCATION "${CMAKE_SOURCE_DIR}/Submodules/AMReX-Hydro")
-  include(${CMAKE_SOURCE_DIR}/cmake/set_amrex_hydro_options.cmake)
-  add_subdirectory(${AMREX_HYDRO_SUBMOD_LOCATION})
-endmacro(init_amrex_hydro)
-
 macro(init_code_checks)
   if(MARBLES_ENABLE_CLANG_TIDY)
     find_program(CLANG_TIDY_EXE NAMES "clang-tidy")
