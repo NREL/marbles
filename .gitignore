@@ -9,3 +9,4 @@ Docs/build/
 html/
 doctrees/
 *.ipynb
+.ccls-cache

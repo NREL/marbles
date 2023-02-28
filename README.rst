@@ -1,7 +1,16 @@
 MARBLES: Multi-scale Adaptively Refined Boltzmann LatticE Solvers
 -----------------------------------------------------------------
 
-|Documentation Badge| |License Badge| |AMReX Badge| |C++ Badge|
+|CI Badge| |Documentation Badge| |License Badge| |AMReX Badge| |C++ Badge|
+
+.. |CI Badge| image:: https://github.com/Exawind/amr-wind/workflows/MARBLES-CI/badge.svg
+   :target: https://github.com/NREL/marbles/actions
+
+.. |Documentation Badge| image:: https://img.shields.io/badge/Docs-github.io-blue.svg
+   :target: https://marbles.github.io
+
+.. |License Badge| image:: https://img.shields.io/badge/License-Apache%20v2.0-blue.svg
+   :target: https://www.apache.org/licenses/LICENSE-2.0
 
 .. |AMReX Badge| image:: https://img.shields.io/static/v1?label=%22powered%20by%22&message=%22AMReX%22&color=%22blue%22
    :target: https://amrex-codes.github.io/amrex/
@@ -9,11 +18,6 @@ MARBLES: Multi-scale Adaptively Refined Boltzmann LatticE Solvers
 .. |C++ Badge| image:: https://img.shields.io/badge/language-C%2B%2B17-blue
    :target: https://isocpp.org/
 
-.. |License Badge| image:: https://img.shields.io/badge/License-Apache%20v2.0-blue.svg
-   :target: https://www.apache.org/licenses/LICENSE-2.0
-
-.. |Documentation Badge| image:: https://img.shields.io/badge/Docs-github.io-blue.svg
-   :target: https://marbles.github.io
 
 
 Getting Started

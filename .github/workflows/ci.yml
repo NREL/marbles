@@ -1,0 +1,21 @@
+name: MARBLES-CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  Formatting:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Clone
+      uses: actions/checkout@v3
+    - name: Check formatting
+      uses: DoozyX/clang-format-lint-action@v0.14
+      with:
+        source: './Source'
+        exclude: '.'
+        extensions: 'H,cpp'
+        clangFormatVersion: 14
