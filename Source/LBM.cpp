@@ -956,30 +956,31 @@ std::string LBM::PlotFileName(const int step) const
 amrex::Vector<const amrex::MultiFab*> LBM::PlotFileMF()
 {
     amrex::Vector<const amrex::MultiFab*> r;
-    for (int i = 0; i <= finest_level; ++i) {
+    for (int lev = 0; lev <= finest_level; ++lev) {
 
-        plt_mf[i].define(
-            boxArray(i), DistributionMap(i), PlotFileVarNames().size(), 0);
+        plt_mf[lev].define(
+            boxArray(lev), DistributionMap(lev), PlotFileVarNames().size(), 0);
         int cnt = 0;
         amrex::MultiFab::Copy(
-            plt_mf[i], macrodata[i], 0, cnt, macrodata[i].nComp(), 0);
-        cnt += macrodata[i].nComp();
+            plt_mf[lev], macrodata[lev], 0, cnt, macrodata[lev].nComp(), 0);
+        cnt += macrodata[lev].nComp();
         if (save_streaming == 1) {
-            amrex::MultiFab::Copy(plt_mf[i], f_[i], 0, cnt, f_[i].nComp(), 0);
-            cnt += f_[i].nComp();
+            amrex::MultiFab::Copy(
+                plt_mf[lev], f_[lev], 0, cnt, f_[lev].nComp(), 0);
+            cnt += f_[lev].nComp();
         }
-        auto const& is_fluid_arrs = is_fluid[i].const_arrays();
-        auto const& plt_mf_arrs = plt_mf[i].arrays();
+        auto const& is_fluid_arrs = is_fluid[lev].const_arrays();
+        auto const& plt_mf_arrs = plt_mf[lev].arrays();
         amrex::ParallelFor(
-            plt_mf[i], plt_mf[i].nGrowVect(), is_fluid[i].nComp(),
+            plt_mf[lev], plt_mf[lev].nGrowVect(), is_fluid[lev].nComp(),
             [=] AMREX_GPU_DEVICE(int nbx, int i, int j, int k, int n) noexcept {
                 plt_mf_arrs[nbx](i, j, k, n + cnt) =
                     is_fluid_arrs[nbx](i, j, k, n);
             });
         amrex::Gpu::synchronize();
-        cnt += is_fluid[i].nComp();
+        // cnt += is_fluid[lev].nComp();
 
-        r.push_back(&plt_mf[i]);
+        r.push_back(&plt_mf[lev]);
     }
     return r;
 }

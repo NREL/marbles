@@ -13,20 +13,20 @@ void CheckStencil()
 
         const auto& ev = evs[q];
         const auto& evb = evs[bounce_q];
-        const int sum = abs(ev[0]) + abs(ev[1]) + abs(ev[2]);
+        const int sum = std::abs(ev[0]) + std::abs(ev[1]) + std::abs(ev[2]);
 
         if ((ev[0] + evb[0] != 0) || (ev[1] + evb[1] != 0) ||
             (ev[2] + evb[2] != 0)) {
             amrex::Abort("Invalid bounce direction");
         }
 
-        if (sum == 3 && abs(weight[q] - 1.0 / 216.0) > 1.0e-6) {
+        if ((sum == 3) && (std::abs(weight[q] - 1.0 / 216.0) > 1.0e-6)) {
             amrex::Abort("Correct weight not set to 1/216");
-        } else if (sum == 2 && abs(weight[q] - 1.0 / 54.0) > 1.0e-6) {
+        } else if ((sum == 2) && (std::abs(weight[q] - 1.0 / 54.0) > 1.0e-6)) {
             amrex::Abort("Correct weight not set to 1/54");
-        } else if (sum == 1 && abs(weight[q] - 2.0 / 27.0) > 1.0e-6) {
+        } else if ((sum == 1) && (std::abs(weight[q] - 2.0 / 27.0) > 1.0e-6)) {
             amrex::Abort("Correct weight not set to 2/27");
-        } else if (sum == 0 && abs(weight[q] - 8.0 / 27.0) > 1.0e-6) {
+        } else if ((sum == 0) && (std::abs(weight[q] - 8.0 / 27.0) > 1.0e-6)) {
             amrex::Abort("Correct weight not set to 8/27");
         }
     }
