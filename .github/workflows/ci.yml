@@ -218,7 +218,6 @@ jobs:
           -DMARBLES_ENABLE_MPI:BOOL=OFF \
           -DMARBLES_ENABLE_TESTS:BOOL=ON \
           -DMARBLES_TEST_WITH_FCOMPARE:BOOL=OFF \
-          -DMARBLES_ENABLE_MASA:BOOL=OFF \
           -DMARBLES_ENABLE_CPPCHECK:BOOL=ON \
           ${{github.workspace}}
       - name: Check
@@ -259,7 +258,6 @@ jobs:
           -DMARBLES_ENABLE_MPI:BOOL=OFF \
           -DMARBLES_ENABLE_TESTS:BOOL=ON \
           -DMARBLES_TEST_WITH_FCOMPARE:BOOL=OFF \
-          -DMARBLES_ENABLE_MASA:BOOL=OFF \
           -DMARBLES_ENABLE_ALL_WARNINGS:BOOL=ON \
           -DMARBLES_ENABLE_CLANG_TIDY:BOOL=ON \
           ${{github.workspace}}
@@ -312,7 +310,6 @@ jobs:
             -DMARBLES_ENABLE_MPI:BOOL=OFF \
             -DMARBLES_ENABLE_TESTS:BOOL=ON \
             -DMARBLES_TEST_WITH_FCOMPARE:BOOL=OFF \
-            -DMARBLES_ENABLE_MASA:BOOL=OFF \
             ${{github.workspace}}
       - name: Build
         working-directory: ${{runner.workspace}}/build-ci-codeql
