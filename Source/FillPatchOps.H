@@ -57,7 +57,7 @@ public:
 
         // why is this necessary?
         {
-          const stencil::Stencil stencil;
+            const stencil::Stencil stencil;
             const auto& evs = stencil.evs;
             const auto& weight = stencil.weights;
             const amrex::Real l_mesh_speed = m_op.m_mesh_speed;
