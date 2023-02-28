@@ -3,7 +3,7 @@ MARBLES: Multi-scale Adaptively Refined Boltzmann LatticE Solvers
 
 |CI Badge| |Documentation Badge| |License Badge| |AMReX Badge| |C++ Badge|
 
-.. |CI Badge| image:: https://github.com/Exawind/amr-wind/workflows/MARBLES-CI/badge.svg
+.. |CI Badge| image:: https://github.com/NREL/marbles/workflows/MARBLES-CI/badge.svg
    :target: https://github.com/NREL/marbles/actions
 
 .. |Documentation Badge| image:: https://img.shields.io/badge/Docs-github.io-blue.svg
