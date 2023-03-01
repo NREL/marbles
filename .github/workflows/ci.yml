@@ -22,6 +22,9 @@ jobs:
   CPU-GNUmake:
     needs: Formatting
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        comp: [gnu, llvm]
     steps:
       - name: Cancel previous runs
         uses: styfle/cancel-workflow-action@0.6.0
@@ -38,10 +41,10 @@ jobs:
         working-directory: ./Build
         run: |
           echo "::add-matcher::.github/problem-matchers/gcc.json"
-          make -j ${{env.NPROCS}} COMP=gnu USE_MPI=FALSE DEBUG=TRUE 2>&1 | tee -a build-output.txt
+          make -j ${{env.NPROCS}} COMP=${{matrix.comp}} USE_MPI=FALSE DEBUG=TRUE 2>&1 | tee -a build-output.txt
       - name: TG debug test
         working-directory: ./Build
-        run: ./marbles3d.gnu.DEBUG.TPROF.ex ../Tests/test_files/tg/tg.inp max_step=2 amr.plot_files_output=0 amr.checkpoint_files_output=0
+        run: ./marbles3d.${{matrix.comp}}.DEBUG.TPROF.ex ../Tests/test_files/tg/tg.inp max_step=2 amr.plot_files_output=0 amr.checkpoint_files_output=0
       - name: TG debug report
         working-directory: ./Build
         run: |
@@ -57,10 +60,10 @@ jobs:
         run: |
           echo "::add-matcher::.github/problem-matchers/gcc.json"
           make realclean
-          make -j ${{env.NPROCS}} COMP=llvm USE_MPI=FALSE DEBUG=TRUE PRECISION=FLOAT 2>&1 | tee -a build-output.txt
+          make -j ${{env.NPROCS}} COMP=${{matrix.comp}} USE_MPI=FALSE DEBUG=TRUE PRECISION=FLOAT 2>&1 | tee -a build-output.txt
       - name: TG debug single precision test
         working-directory: ./Build
-        run: ./marbles3d.llvm.FLOAT.DEBUG.TPROF.ex ../Tests/test_files/tg/tg.inp max_step=2 amr.plot_files_output=0 amr.checkpoint_files_output=0
+        run: ./marbles3d.${{matrix.comp}}.FLOAT.DEBUG.TPROF.ex ../Tests/test_files/tg/tg.inp max_step=2 amr.plot_files_output=0 amr.checkpoint_files_output=0
       - name: TG debug single precision report
         working-directory: ./Build
         run: |
