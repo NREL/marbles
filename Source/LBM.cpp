@@ -44,8 +44,8 @@ LBM::LBM()
     }
 
     t_new.resize(nlevs_max, 0.0);
-    t_old.resize(nlevs_max, std::numeric_limits<amrex::Real>::lowest(););
-    dt.resize(nlevs_max, std::numeric_limits<amrex::Real>::max(););
+    t_old.resize(nlevs_max, constants::low_num);
+    dt.resize(nlevs_max, constants::large_num);
 
     macrodata.resize(nlevs_max);
     f_.resize(nlevs_max);
@@ -666,7 +666,7 @@ void LBM::MakeNewLevelFromCoarse(
         *(m_factory[lev]));
 
     t_new[lev] = time;
-    t_old[lev] = std::numeric_limits<amrex::Real>::lowest();
+    t_old[lev] = constants::low_num;
 
     InitializeIsFluid(lev);
     fillpatch_op->fillpatch_from_coarse(lev, time, f_[lev]);
@@ -702,7 +702,7 @@ void LBM::MakeNewLevelFromScratch(
         amrex::MFInfo(), *(m_factory[lev]));
 
     t_new[lev] = time;
-    t_old[lev] = std::numeric_limits<amrex::Real>::lowest();
+    t_old[lev] = constants::low_num;
 
     // Initialize the data
     InitializeIsFluid(lev);
@@ -785,7 +785,7 @@ void LBM::RemakeLevel(
     std::swap(new_state, macrodata[lev]);
 
     t_new[lev] = time;
-    t_old[lev] = std::numeric_limits<amrex::Real>::lowest();
+    t_old[lev] = constants::low_num;
 }
 
 // Delete level data

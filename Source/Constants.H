@@ -15,6 +15,11 @@ static constexpr int n_micro_states = 27;
 
 static constexpr amrex::Real root3 = 1.732050807568877293527446341;
 
+static constexpr amrex::Real low_num =
+  static_cast<amrex::Real>(std::numeric_limits<amrex::Real>::lowest() * 1e-10);
+
+static constexpr amrex::Real large_num =
+  static_cast<amrex::Real>(std::numeric_limits<amrex::Real>::max() * 1e-10);
 } // namespace lbm::constants
 
 #endif
