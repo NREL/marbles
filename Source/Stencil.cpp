@@ -20,13 +20,20 @@ void CheckStencil()
             amrex::Abort("Invalid bounce direction");
         }
 
-        if ((sum == 3) && (std::abs(weight[q] - 1.0 / 216.0) > 1.0e-6)) {
+        if ((sum == 3) &&
+            (std::abs(weight[q] - 1.0 / 216.0) > constants::small_num)) {
             amrex::Abort("Correct weight not set to 1/216");
-        } else if ((sum == 2) && (std::abs(weight[q] - 1.0 / 54.0) > 1.0e-6)) {
+        } else if (
+            (sum == 2) &&
+            (std::abs(weight[q] - 1.0 / 54.0) > constants::small_num)) {
             amrex::Abort("Correct weight not set to 1/54");
-        } else if ((sum == 1) && (std::abs(weight[q] - 2.0 / 27.0) > 1.0e-6)) {
+        } else if (
+            (sum == 1) &&
+            (std::abs(weight[q] - 2.0 / 27.0) > constants::small_num)) {
             amrex::Abort("Correct weight not set to 2/27");
-        } else if ((sum == 0) && (std::abs(weight[q] - 8.0 / 27.0) > 1.0e-6)) {
+        } else if (
+            (sum == 0) &&
+            (std::abs(weight[q] - 8.0 / 27.0) > constants::small_num)) {
             amrex::Abort("Correct weight not set to 8/27");
         }
     }
