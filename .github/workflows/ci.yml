@@ -239,14 +239,15 @@ jobs:
           set +e
           source /opt/intel/oneapi/setvars.sh
           set -e
-          cmake -G Ninja -B build-SYCL \
+          cmake -G Ninja -B${{runner.workspace}}/build-sycl \
             -DCMAKE_BUILD_TYPE:STRING=Release \
-            -DCMAKE_CXX_COMPILER:STRING=$(which dpcpp) \
-            -DCMAKE_C_COMPILER:STRING=$(which clang) \
+            -DCMAKE_CXX_COMPILER:STRING=$(which icpx) \
+            -DCMAKE_C_COMPILER:STRING=$(which icx) \
+            -DCMAKE_CXX_FLAGS:STRING=-fsycl \
             -DMARBLES_ENABLE_MPI:BOOL=OFF \
             -DMARBLES_ENABLE_SYCL:BOOL=ON \
             ${{github.workspace}}
-          cmake --build build-SYCL -- -j $(nproc)
+          cmake --build build-sycl -- -j $(nproc)
   Lint-cppcheck:
     needs: Formatting
     runs-on: macos-latest
