@@ -13,7 +13,8 @@ static constexpr int vmag_idx = 4;
 
 static constexpr int n_micro_states = 27;
 
-static constexpr amrex::Real root3 = 1.732050807568877293527446341;
+static constexpr amrex::Real root3 =
+    static_cast<amrex::Real>(1.732050807568877293527446341);
 
 static constexpr amrex::Real low_num = static_cast<amrex::Real>(
     std::numeric_limits<amrex::Real>::lowest() * 1e-10);
