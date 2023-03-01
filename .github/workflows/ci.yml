@@ -239,7 +239,7 @@ jobs:
           set +e
           source /opt/intel/oneapi/setvars.sh
           set -e
-          cmake -G Ninja -B${{runner.workspace}}/build-sycl \
+          cmake -G Ninja -B build-sycl \
             -DCMAKE_BUILD_TYPE:STRING=Release \
             -DCMAKE_CXX_COMPILER:STRING=$(which icpx) \
             -DCMAKE_C_COMPILER:STRING=$(which icx) \
