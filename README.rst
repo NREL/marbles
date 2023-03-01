@@ -1,5 +1,5 @@
-MARBLES: Multi-scale Adaptively Refined Boltzmann LatticE Solvers
------------------------------------------------------------------
+MARBLES: Multi-scale Adaptively Refined Boltzmann LatticE Solver
+----------------------------------------------------------------
 
 |CI Badge| |Documentation Badge| |License Badge| |AMReX Badge| |C++ Badge|
 
