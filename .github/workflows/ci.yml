@@ -111,19 +111,19 @@ jobs:
     - name: Configure
       run: |
         cmake -G Ninja \
-          -B ${{runner.workspace}}/build-ci-${{matrix.build_type}} \
-          -DCMAKE_INSTALL_PREFIX:PATH=${{runner.workspace}}/install-${{matrix.build_type}} \
+          -B ${{github.workspace}}/build-ci-${{matrix.build_type}} \
+          -DCMAKE_INSTALL_PREFIX:PATH=${{github.workspace}}/install-${{matrix.build_type}} \
           -DCMAKE_BUILD_TYPE:STRING=${{matrix.build_type}} \
           -DMARBLES_ENABLE_MPI:BOOL=ON \
           -DMARBLES_TEST_WITH_FCOMPARE:BOOL=OFF \
           ${{github.workspace}}
     - name: Build
-      working-directory: ${{runner.workspace}}/build-ci-${{matrix.build_type}}
+      working-directory: ${{github.workspace}}/build-ci-${{matrix.build_type}}
       run: |
         echo "::add-matcher::.github/problem-matchers/gcc.json"
         cmake --build . -- -j ${{env.NUM_PROCS}} 2>&1 | tee -a build-output.txt
     - name: Report
-      working-directory: ${{runner.workspace}}/build-ci-${{matrix.build_type}}
+      working-directory: ${{github.workspace}}/build-ci-${{matrix.build_type}}
       run: |
         echo "::add-matcher::.github/problem-matchers/gcc.json"
         egrep "warning:|error:" build-output.txt | egrep -v "Submodules" | sort | uniq | \
@@ -131,7 +131,7 @@ jobs:
         cat build-output-warnings.txt
         exit $(tail -n 1 build-output-warnings.txt | awk '{print $2}')
     - name: Test
-      working-directory: ${{runner.workspace}}/build-ci-${{matrix.build_type}}
+      working-directory: ${{github.workspace}}/build-ci-${{matrix.build_type}}
       run: |
         ctest ${{matrix.ctest_args}} --output-on-failure
   GPU-Nvidia:
@@ -266,19 +266,19 @@ jobs:
         run: |
           echo "NPROCS=$(sysctl -n hw.ncpu)" >> $GITHUB_ENV
           cmake \
-          -B ${{runner.workspace}}/build-cppcheck \
+          -B ${{github.workspace}}/build-cppcheck \
           -DMARBLES_ENABLE_MPI:BOOL=OFF \
           -DMARBLES_TEST_WITH_FCOMPARE:BOOL=OFF \
           -DMARBLES_ENABLE_CPPCHECK:BOOL=ON \
           ${{github.workspace}}
       - name: Check
-        working-directory: ${{runner.workspace}}/build-cppcheck
+        working-directory: ${{github.workspace}}/build-cppcheck
         run: make cppcheck-ci
       - name: Full report
-        working-directory: ${{runner.workspace}}/build-cppcheck
+        working-directory: ${{github.workspace}}/build-cppcheck
         run: cat cppcheck/cppcheck-full-report.txt
       - name: Short report
-        working-directory: ${{runner.workspace}}/build-cppcheck
+        working-directory: ${{github.workspace}}/build-cppcheck
         run: |
           echo "::add-matcher::.github/problem-matchers/cppcheck.json"
           cat cppcheck-ci-report.txt
@@ -302,7 +302,7 @@ jobs:
         run: |
           echo "NPROCS=$(nproc)" >> $GITHUB_ENV
           cmake -G Ninja \
-          -B ${{runner.workspace}}/build-clang-tidy \
+          -B ${{github.workspace}}/build-clang-tidy \
           -DCMAKE_BUILD_TYPE:STRING=Debug \
           -DCMAKE_CXX_COMPILER:STRING=clang++ \
           -DCMAKE_C_COMPILER:STRING=clang \
@@ -312,16 +312,16 @@ jobs:
           -DMARBLES_ENABLE_CLANG_TIDY:BOOL=ON \
           ${{github.workspace}}
       - name: Check
-        working-directory: ${{runner.workspace}}/build-clang-tidy
+        working-directory: ${{github.workspace}}/build-clang-tidy
         run: |
           cmake --build . --parallel ${{env.NPROCS}} 2>&1 | tee -a clang-tidy-full-report.txt
           cat clang-tidy-full-report.txt | grep "warning:" | grep -v "Submodules" | sort | uniq | \
             awk 'BEGIN{i=0}{print $0}{i++}END{print "Warnings: "i}' > clang-tidy-ci-report.txt
       - name: Full report
-        working-directory: ${{runner.workspace}}/build-clang-tidy
+        working-directory: ${{github.workspace}}/build-clang-tidy
         run: cat clang-tidy-full-report.txt
       - name: Short report
-        working-directory: ${{runner.workspace}}/build-clang-tidy
+        working-directory: ${{github.workspace}}/build-clang-tidy
         run: |
           echo "::add-matcher::.github/problem-matchers/gcc.json"
           cat clang-tidy-ci-report.txt
@@ -352,8 +352,8 @@ jobs:
         run: |
           echo "NPROCS=$(nproc)" >> $GITHUB_ENV
           cmake -G Ninja \
-            -B ${{runner.workspace}}/build-ci-codeql \
-            -DCMAKE_INSTALL_PREFIX:PATH=${{runner.workspace}}/install-codeql \
+            -B ${{github.workspace}}/build-ci-codeql \
+            -DCMAKE_INSTALL_PREFIX:PATH=${{github.workspace}}/install-codeql \
             -DCMAKE_BUILD_TYPE:STRING=Debug \
             -DCMAKE_CXX_COMPILER:STRING=clang++ \
             -DCMAKE_C_COMPILER:STRING=clang \
@@ -361,7 +361,7 @@ jobs:
             -DMARBLES_TEST_WITH_FCOMPARE:BOOL=OFF \
             ${{github.workspace}}
       - name: Build
-        working-directory: ${{runner.workspace}}/build-ci-codeql
+        working-directory: ${{github.workspace}}/build-ci-codeql
         run: |
           cmake --build . --parallel ${{env.NPROCS}}
       - name: Perform CodeQL Analysis
