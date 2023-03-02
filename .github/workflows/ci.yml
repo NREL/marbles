@@ -121,7 +121,7 @@ jobs:
       working-directory: ${{runner.workspace}}/build-ci-${{matrix.build_type}}
       run: |
         echo "::add-matcher::.github/problem-matchers/gcc.json"
-        cmake --build . -- -j ${{env.NUM_PROCS}} 2>&1 | tee -a build-output.txt
+        VERBOSE=1 cmake --build . -- -j ${{env.NUM_PROCS}} 2>&1 | tee -a build-output.txt
     - name: Report
       working-directory: ${{runner.workspace}}/build-ci-${{matrix.build_type}}
       run: |
@@ -173,7 +173,7 @@ jobs:
             -DCMAKE_CUDA_COMPILE_SEPARABLE_COMPILATION:BOOL=ON \
             -DCMAKE_CUDA_ARCHITECTURES=70 \
             ${{github.workspace}}
-          cmake --build build-${{matrix.cuda_pkg}} -- -j $(nproc)
+          VERBOSE=1 cmake --build build-${{matrix.cuda_pkg}} -- -j $(nproc)
   GPU-AMD:
     name: GPU-HIP
     needs: Formatting
@@ -212,7 +212,7 @@ jobs:
             -DAMDGPU_TARGETS:STRING=gfx908 \
             -DGPU_TARGETS:STRING=gfx908 \
             ${{github.workspace}}
-          cmake --build build -- -j $(nproc)
+          VERBOSE=1 cmake --build build -- -j $(nproc)
   GPU-Intel:
     name: GPU-SYCL
     needs: Formatting
@@ -247,7 +247,7 @@ jobs:
             -DMARBLES_ENABLE_MPI:BOOL=OFF \
             -DMARBLES_ENABLE_SYCL:BOOL=ON \
             ${{github.workspace}}
-          cmake --build build-sycl -- -j $(nproc)
+          VERBOSE=1 cmake --build build-sycl -- -j $(nproc)
   Lint-cppcheck:
     needs: Formatting
     runs-on: macos-latest
@@ -314,7 +314,7 @@ jobs:
       - name: Check
         working-directory: ${{runner.workspace}}/build-clang-tidy
         run: |
-          cmake --build . --parallel ${{env.NPROCS}} 2>&1 | tee -a clang-tidy-full-report.txt
+          VERBOSE=1 cmake --build . --parallel ${{env.NPROCS}} 2>&1 | tee -a clang-tidy-full-report.txt
           cat clang-tidy-full-report.txt | grep "warning:" | grep -v "Submodules" | sort | uniq | \
             awk 'BEGIN{i=0}{print $0}{i++}END{print "Warnings: "i}' > clang-tidy-ci-report.txt
       - name: Full report
@@ -363,7 +363,7 @@ jobs:
       - name: Build
         working-directory: ${{runner.workspace}}/build-ci-codeql
         run: |
-          cmake --build . --parallel ${{env.NPROCS}}
+          VERBOSE=1 cmake --build . --parallel ${{env.NPROCS}}
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
         with:
