@@ -4,7 +4,14 @@ Checks: 'bugprone-*,
          clang-analyzer-*,
          corecppguidelines-*,
          modernize-*,
-         readability-*,'
+         -modernize-use-trailing-return-type,
+         -modernize-use-nodiscard,
+         readability-*,
+         -readability-magic-numbers,
+         -readability-isolate-declaration,
+         -readability-avoid-const-params-in-decls,
+         -readability-identifier-length,
+         -readability-function-cognitive-complexity'
 WarningsAsErrors: ''
 HeaderFilterRegex: '.*'
 AnalyzeTemporaryDtors: false

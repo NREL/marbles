@@ -10,11 +10,11 @@
 
 namespace lbm::bc {
 
-static constexpr int periodic = 0;
-static constexpr int noslipwall = 1;
-static constexpr int velocity = 2;
-static constexpr int pressure = 3;
-static constexpr int outflow = 4;
+static constexpr int PERIODIC = 0;
+static constexpr int NOSLIPWALL = 1;
+static constexpr int VELOCITY = 2;
+static constexpr int PRESSURE = 3;
+static constexpr int OUTFLOW = 4;
 
 template <typename VelBCOp>
 struct BCFill
@@ -22,11 +22,11 @@ struct BCFill
 
     using VelBCOpType = VelBCOp;
 
-    const amrex::GpuArray<amrex::IntVect, constants::n_micro_states> m_evs =
+    const amrex::GpuArray<amrex::IntVect, constants::N_MICRO_STATES> m_evs =
         stencil::Stencil().evs;
-    const amrex::GpuArray<int, constants::n_micro_states> m_bounce_dirs =
+    const amrex::GpuArray<int, constants::N_MICRO_STATES> m_bounce_dirs =
         stencil::Stencil().bounce_dirs;
-    const amrex::GpuArray<amrex::Real, constants::n_micro_states> m_weights =
+    const amrex::GpuArray<amrex::Real, constants::N_MICRO_STATES> m_weights =
         stencil::Stencil().weights;
 
     const amrex::Real m_mesh_speed;
@@ -96,7 +96,7 @@ struct BCFill
 
         // Build the 3-part rho calculation at the
         // (iv+ev) fluid cell
-        for (int qq = 0; qq < constants::n_micro_states; qq++) {
+        for (int qq = 0; qq < constants::N_MICRO_STATES; qq++) {
 
             const auto& evn_out = m_evs[qq];
             const int bounce_qq = m_bounce_dirs[qq];
@@ -112,7 +112,7 @@ struct BCFill
         const amrex::Real rho_bc =
             (rho_out + rho_tan) / (1.0 - ndir * vel_bc[idir]);
 
-        SetEquilibriumValue(
+        set_equilibrium_value(
             rho_bc, vel_bc, m_mesh_speed, m_weights[q], ev, data(iv, q));
     }
 
@@ -143,7 +143,7 @@ struct BCFill
 
         // Build the 3-part rho calculation at the
         // (iv+ev) fluid cell
-        for (int qq = 0; qq < constants::n_micro_states; qq++) {
+        for (int qq = 0; qq < constants::N_MICRO_STATES; qq++) {
 
             const auto& evn_out = m_evs[qq];
             const int bounce_qq = m_bounce_dirs[qq];
@@ -159,7 +159,7 @@ struct BCFill
         amrex::RealVect vel_bc(0.0, 0.0, 0.0);
         vel_bc[idir] = ndir * (1.0 - (rho_out + rho_tan) / rho_bc);
 
-        SetEquilibriumValue(
+        set_equilibrium_value(
             rho_bc, vel_bc, m_mesh_speed, m_weights[q], ev, data(iv, q));
     }
 
@@ -186,7 +186,7 @@ struct BCFill
 
             amrex::Real rho = 0.0;
             amrex::RealVect vel(0.0, 0.0, 0.0);
-            for (int qq = 0; qq < constants::n_micro_states; qq++) {
+            for (int qq = 0; qq < constants::N_MICRO_STATES; qq++) {
                 rho += data(iv + ndir * iv_shift, qq);
                 const auto& ev_qq = m_evs[qq];
                 vel[0] += ev_qq[0] * data(iv + ndir * iv_shift, qq);
@@ -202,9 +202,10 @@ struct BCFill
             const int bounce_q = m_bounce_dirs[q];
             const auto& ev_star = m_evs[bounce_q];
 
-            SetEquilibriumValue(rho, vel, m_mesh_speed, m_weights[q], ev, f_eq);
+            set_equilibrium_value(
+                rho, vel, m_mesh_speed, m_weights[q], ev, f_eq);
 
-            SetEquilibriumValue(
+            set_equilibrium_value(
                 rho, vel, m_mesh_speed, m_weights[bounce_q], ev_star,
                 f_star_eq);
 
@@ -255,7 +256,7 @@ struct BCFill
                         amrex::IntVect(ub.x, ub.y, ub.z) - m_ng);
                     const amrex::Box inside(liv, uiv);
 
-                    for (int q = 0; q < constants::n_micro_states; q++) {
+                    for (int q = 0; q < constants::N_MICRO_STATES; q++) {
 
                         const auto& ev = m_evs[q];
                         const amrex::IntVect ivn(iv + ev);

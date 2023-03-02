@@ -122,13 +122,13 @@ void ExtrudedTriangles::build(
             plane0, plane1, plane2);
     }
 
-    auto alltri_IF = amrex::EB2::makeUnion(
+    auto alltri_if = amrex::EB2::makeUnion(
         *impfunc_triangles[0], *impfunc_triangles[1], *impfunc_triangles[2],
         *impfunc_triangles[3], *impfunc_triangles[4]);
 
-    auto alltri_extrude_IF = amrex::EB2::extrude(alltri_IF, 2); // along z
+    auto alltri_extrude_if = amrex::EB2::extrude(alltri_if, 2); // along z
 
-    auto gshop = amrex::EB2::makeShop(alltri_extrude_IF);
+    auto gshop = amrex::EB2::makeShop(alltri_extrude_if);
     amrex::EB2::Build(gshop, geom, max_coarsening_level, max_coarsening_level);
 }
 } // namespace lbm

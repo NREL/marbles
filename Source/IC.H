@@ -108,9 +108,9 @@ public:
         : m_mesh_speed(mesh_speed), m_op(ic_op), m_f_(f_)
     {}
 
-    ~Initializer() = default;
+    ~Initializer() override = default;
 
-    void initialize(const int lev, amrex::GeometryData const& geom)
+    void initialize(const int lev, amrex::GeometryData const& geom) override
     {
         const stencil::Stencil stencil;
         const auto& evs = stencil.evs;
@@ -119,7 +119,7 @@ public:
         const amrex::Real l_mesh_speed = m_mesh_speed;
         ICDeviceOp ic(m_op.device_instance());
         amrex::ParallelFor(
-            m_f_[lev], m_f_[lev].nGrowVect(), constants::n_micro_states,
+            m_f_[lev], m_f_[lev].nGrowVect(), constants::N_MICRO_STATES,
             [=] AMREX_GPU_DEVICE(int nbx, int i, int j, int k, int q) noexcept {
                 const amrex::Real wt = weight[q];
                 const auto& ev = evs[q];
@@ -129,7 +129,7 @@ public:
                 amrex::RealVect vel(0.0, 0.0, 0.0);
                 ic(iv, geom, rho, vel);
 
-                SetEquilibriumValue(
+                set_equilibrium_value(
                     rho, vel, l_mesh_speed, wt, ev, f_arrs[nbx](i, j, k, q));
             });
         amrex::Gpu::synchronize();
