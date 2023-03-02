@@ -852,13 +852,11 @@ void LBM::set_ics()
 bool LBM::check_field_existence(const std::string name)
 {
     BL_PROFILE("LBM::check_field_existence()");
-    for (const auto& vn :
-         {m_macrodata_varnames, m_microdata_varnames, m_idata_varnames}) {
-        if (get_field_component(name, vn) != -1) {
-            return true;
-        }
-    }
-    return false;
+    const auto vnames = {
+        m_macrodata_varnames, m_microdata_varnames, m_idata_varnames};
+    return std::any_of(vnames.begin(), vnames.end(), [=](const auto& vn) {
+        return get_field_component(name, vn) != -1;
+    });
 }
 
 // Get field component
@@ -868,7 +866,7 @@ int LBM::get_field_component(
     BL_PROFILE("LBM::get_field_component()");
     const auto itr = std::find(varnames.begin(), varnames.end(), name);
     if (itr != varnames.cend()) {
-        return std::distance(varnames.begin(), itr);
+        return static_cast<int>(std::distance(varnames.begin(), itr));
     }
     return -1;
 }
