@@ -23,16 +23,14 @@ MARBLES: Multi-scale Adaptively Refined Boltzmann LatticE Solver
 Getting Started
 ~~~~~~~~~~~~~~~
 
-* To compile and run `MARBLES`, one needs a C++ compiler that supports the C++17 standard:
+To compile and run `MARBLES`, one needs a C++ compiler that supports the C++17 standard, and then execute ::
 
-1. Have `MARBLES` use the default submodules for AMReX ::
+    $ git clone --recursive git@github.com:NREL/marbles.git
+    $ cd Build
+    $ make realclean && make -j
+    $ ./marbles3d.xxx.yyy.ex example.inp
 
-    git clone --recursive git@github.com:NREL/marbles.git
-    cd Build
-    make realclean && make -j
-    ./marbles.xxx.yyy.ex example.inp
-
-* Notes
+Notes ::
 
    A. In the exec line above, xxx.yyy is a tag identifying your compiler and various build options, and will vary across pltaform.  (Note that GNU compilers must be at least version 7, and MPI should be at least of standard version 3).
    B. The example file can be any file from the `Tests/test_files` directories.
