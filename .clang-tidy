@@ -4,7 +4,7 @@ Checks: 'bugprone-*,
          clang-analyzer-*,
          corecppguidelines-*,
          modernize-*,
-         readability-*,
+         readability-*,'
 WarningsAsErrors: ''
 HeaderFilterRegex: '.*'
 AnalyzeTemporaryDtors: false
