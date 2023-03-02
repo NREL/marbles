@@ -16,7 +16,7 @@ void ExtrudedTriangles::build(
 
     amrex::ParmParse pp("extruded_triangles");
     amrex::Vector<amrex::Array<amrex::Real, AMREX_SPACEDIM>> alltri(
-        npts_in_tri * max_tri);
+        static_cast<amrex::Long>(npts_in_tri * max_tri));
 
     // initalize all triangles with some dummy values
     // that fall outside of the domain

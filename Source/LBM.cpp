@@ -619,7 +619,8 @@ void LBM::compute_dt()
     for (int lev = 0; lev <= finest_level; ++lev) {
         dt_tmp[lev] = est_time_step(lev);
     }
-    amrex::ParallelDescriptor::ReduceRealMin(dt_tmp.data(), dt_tmp.size());
+    amrex::ParallelDescriptor::ReduceRealMin(
+        dt_tmp.data(), static_cast<int>(dt_tmp.size()));
 
     constexpr amrex::Real change_max = 1.1;
     amrex::Real dt_0 = dt_tmp[0];
@@ -968,8 +969,8 @@ amrex::Vector<const amrex::MultiFab*> LBM::plot_file_mf()
     for (int lev = 0; lev <= finest_level; ++lev) {
 
         m_plt_mf[lev].define(
-            boxArray(lev), DistributionMap(lev), plot_file_var_names().size(),
-            0);
+            boxArray(lev), DistributionMap(lev),
+            static_cast<int>(plot_file_var_names().size()), 0);
         int cnt = 0;
         amrex::MultiFab::Copy(
             m_plt_mf[lev], m_macrodata[lev], 0, cnt, m_macrodata[lev].nComp(),
@@ -1172,7 +1173,7 @@ void LBM::read_checkpoint_file()
         SetDistributionMap(lev, dm);
 
         // build MultiFabs
-        int ncomp = varnames.size();
+        const int ncomp = static_cast<int>(varnames.size());
         m_factory[lev] = amrex::makeEBFabFactory(
             Geom(lev), ba, dm, {5, 5, 5}, amrex::EBSupport::basic);
         m_f[lev].define(

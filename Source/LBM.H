@@ -146,7 +146,7 @@ private:
     void set_ics();
 
     // get plotfile name
-    std::string plot_file_name(int lev) const;
+    std::string plot_file_name(const int step) const;
 
     // set plotfile variables names
     amrex::Vector<std::string> plot_file_var_names() const;
