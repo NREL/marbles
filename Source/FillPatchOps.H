@@ -53,7 +53,7 @@ public:
     {
         BL_PROFILE("FillPatchOps::fillpatch()");
         AMREX_ASSERT(mf.nComp() == constants::N_MICRO_STATES);
-        AMREX_ASSERT(mf.nComp() == m_f_[0].nComp());
+        AMREX_ASSERT(mf.nComp() == m_f[0].nComp());
         AMREX_ASSERT(m_bcs.size() == mf.nComp());
 
         // why is this necessary?

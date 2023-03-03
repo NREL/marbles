@@ -104,8 +104,8 @@ public:
     Initializer(
         const amrex::Real& mesh_speed,
         const ICOp ic_op,
-        amrex::Vector<amrex::MultiFab>& f_)
-        : m_mesh_speed(mesh_speed), m_op(ic_op), m_f_(f_)
+        amrex::Vector<amrex::MultiFab>& f)
+        : m_mesh_speed(mesh_speed), m_op(ic_op), m_f(f)
     {}
 
     ~Initializer() override = default;
@@ -115,11 +115,11 @@ public:
         const stencil::Stencil stencil;
         const auto& evs = stencil.evs;
         const auto& weight = stencil.weights;
-        auto const& f_arrs = m_f_[lev].arrays();
+        auto const& f_arrs = m_f[lev].arrays();
         const amrex::Real l_mesh_speed = m_mesh_speed;
         ICDeviceOp ic(m_op.device_instance());
         amrex::ParallelFor(
-            m_f_[lev], m_f_[lev].nGrowVect(), constants::N_MICRO_STATES,
+            m_f[lev], m_f[lev].nGrowVect(), constants::N_MICRO_STATES,
             [=] AMREX_GPU_DEVICE(int nbx, int i, int j, int k, int q) noexcept {
                 const amrex::Real wt = weight[q];
                 const auto& ev = evs[q];
@@ -137,7 +137,7 @@ public:
 
     const amrex::Real m_mesh_speed;
     const ICOp m_op;
-    amrex::Vector<amrex::MultiFab>& m_f_;
+    amrex::Vector<amrex::MultiFab>& m_f;
 };
 
 } // namespace lbm::ic
