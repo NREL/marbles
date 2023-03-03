@@ -6,6 +6,7 @@
 #include <AMReX_Array.H>
 #include <AMReX_MultiFab.H>
 #include <AMReX_FillPatchUtil.H>
+#include <utility>
 #include "Constants.H"
 #include "Stencil.H"
 
@@ -35,13 +36,13 @@ public:
         const amrex::Vector<amrex::Geometry>& geom,
         const amrex::Vector<amrex::IntVect>& ref_ratio,
         const amrex::Vector<amrex::BCRec>& bcs,
-        const BCOpCreator& bc_op,
+        BCOpCreator bc_op,
         amrex::Vector<amrex::MultiFab>& f_)
         : m_geom(geom)
         , m_ref_ratio(ref_ratio)
         , m_bcs(bcs)
-        , m_op(bc_op)
-        , m_f_(f_)
+        , m_op(std::move(bc_op))
+        , m_f(f_)
     {}
 
     // compute a new multifab by coping in phi from valid region and filling
@@ -51,8 +52,8 @@ public:
         const int lev, const amrex::Real time, amrex::MultiFab& mf) override
     {
         BL_PROFILE("FillPatchOps::fillpatch()");
-        AMREX_ASSERT(mf.nComp() == constants::n_micro_states);
-        AMREX_ASSERT(mf.nComp() == m_f_[0].nComp());
+        AMREX_ASSERT(mf.nComp() == constants::N_MICRO_STATES);
+        AMREX_ASSERT(mf.nComp() == m_f[0].nComp());
         AMREX_ASSERT(m_bcs.size() == mf.nComp());
 
         // why is this necessary?
@@ -62,9 +63,9 @@ public:
             const auto& weight = stencil.weights;
             const amrex::Real l_mesh_speed = m_op.m_mesh_speed;
             const amrex::Box& dbox = m_geom[lev].Domain();
-            auto const& f_arrs = m_f_[lev].arrays();
+            auto const& f_arrs = m_f[lev].arrays();
             amrex::ParallelFor(
-                m_f_[lev], m_f_[lev].nGrowVect(), constants::n_micro_states,
+                m_f[lev], m_f[lev].nGrowVect(), constants::N_MICRO_STATES,
                 [=] AMREX_GPU_DEVICE(
                     int nbx, int i, int j, int k, int q) noexcept {
                     const amrex::Real wt = weight[q];
@@ -73,7 +74,7 @@ public:
                     amrex::Real rho = 1.0;
                     amrex::RealVect vel(0.0, 0.0, 0.0);
                     if (!dbox.contains(iv)) {
-                        SetEquilibriumValue(
+                        set_equilibrium_value(
                             rho, vel, l_mesh_speed, wt, ev,
                             f_arrs[nbx](i, j, k, q));
                     }
@@ -85,7 +86,7 @@ public:
             amrex::PhysBCFunct<amrex::GpuBndryFuncFab<Functor>> physbc(
                 m_geom[lev], m_bcs, bc_functor());
             amrex::FillPatchSingleLevel(
-                mf, time, {&(m_f_[lev])}, {time}, 0, 0, m_f_[lev].nComp(),
+                mf, time, {&(m_f[lev])}, {time}, 0, 0, m_f[lev].nComp(),
                 m_geom[lev], physbc, 0);
         } else {
             amrex::PhysBCFunct<amrex::GpuBndryFuncFab<Functor>> cphysbc(
@@ -94,8 +95,8 @@ public:
                 m_geom[lev], m_bcs, bc_functor());
 
             amrex::FillPatchTwoLevels(
-                mf, time, {&(m_f_[lev - 1])}, {time}, {&(m_f_[lev])}, {time}, 0,
-                0, m_f_[lev].nComp(), m_geom[lev - 1], m_geom[lev], cphysbc, 0,
+                mf, time, {&(m_f[lev - 1])}, {time}, {&(m_f[lev])}, {time}, 0,
+                0, m_f[lev].nComp(), m_geom[lev - 1], m_geom[lev], cphysbc, 0,
                 fphysbc, 0, m_ref_ratio[lev - 1], m_mapper, m_bcs, 0);
         }
 
@@ -116,7 +117,7 @@ public:
             m_geom[lev], m_bcs, bc_functor());
 
         amrex::InterpFromCoarseLevel(
-            mf, time, m_f_[lev - 1], 0, 0, m_f_[lev].nComp(), m_geom[lev - 1],
+            mf, time, m_f[lev - 1], 0, 0, m_f[lev].nComp(), m_geom[lev - 1],
             m_geom[lev], cphysbc, 0, fphysbc, 0, m_ref_ratio[lev - 1], m_mapper,
             m_bcs, 0);
 
@@ -130,7 +131,7 @@ protected:
     const amrex::Vector<amrex::IntVect>& m_ref_ratio;
     const amrex::Vector<amrex::BCRec>& m_bcs;
     const BCOpCreator m_op;
-    amrex::Vector<amrex::MultiFab>& m_f_;
+    amrex::Vector<amrex::MultiFab>& m_f;
     amrex::Interpolater* m_mapper = &amrex::cell_cons_interp;
 };
 } // namespace lbm

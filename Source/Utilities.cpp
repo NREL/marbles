@@ -2,7 +2,7 @@
 
 namespace lbm {
 
-void average_down(
+void average_down_with_ghosts(
     const amrex::MultiFab& fine,
     amrex::MultiFab& crse,
     const amrex::IntVect ng,

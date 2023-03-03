@@ -1,7 +1,7 @@
 #include "VelocityBC.H"
 
 namespace lbm::bc {
-NoOp::NoOp() {}
+NoOp::NoOp() = default;
 
 Constant::Constant()
 {

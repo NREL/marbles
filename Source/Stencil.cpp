@@ -2,13 +2,13 @@
 
 namespace lbm::stencil {
 
-void CheckStencil()
+void check_stencil()
 {
     const Stencil stencil;
     const auto& evs = stencil.evs;
     const auto& weight = stencil.weights;
     const auto& bounce_dirs = stencil.bounce_dirs;
-    for (int q = 0; q < constants::n_micro_states; q++) {
+    for (int q = 0; q < constants::N_MICRO_STATES; q++) {
         const int bounce_q = bounce_dirs[q];
 
         const auto& ev = evs[q];
@@ -21,19 +21,19 @@ void CheckStencil()
         }
 
         if ((sum == 3) &&
-            (std::abs(weight[q] - 1.0 / 216.0) > constants::small_num)) {
+            (std::abs(weight[q] - 1.0 / 216.0) > constants::SMALL_NUM)) {
             amrex::Abort("Correct weight not set to 1/216");
         } else if (
             (sum == 2) &&
-            (std::abs(weight[q] - 1.0 / 54.0) > constants::small_num)) {
+            (std::abs(weight[q] - 1.0 / 54.0) > constants::SMALL_NUM)) {
             amrex::Abort("Correct weight not set to 1/54");
         } else if (
             (sum == 1) &&
-            (std::abs(weight[q] - 2.0 / 27.0) > constants::small_num)) {
+            (std::abs(weight[q] - 2.0 / 27.0) > constants::SMALL_NUM)) {
             amrex::Abort("Correct weight not set to 2/27");
         } else if (
             (sum == 0) &&
-            (std::abs(weight[q] - 8.0 / 27.0) > constants::small_num)) {
+            (std::abs(weight[q] - 8.0 / 27.0) > constants::SMALL_NUM)) {
             amrex::Abort("Correct weight not set to 8/27");
         }
     }

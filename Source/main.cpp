@@ -16,9 +16,9 @@ int main(int argc, char* argv[])
     {
         lbm::LBM lbm_obj;
 
-        lbm_obj.InitData();
+        lbm_obj.init_data();
 
-        lbm_obj.Evolve();
+        lbm_obj.evolve();
     }
 
     amrex::Finalize();
