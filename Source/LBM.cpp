@@ -197,7 +197,7 @@ void LBM::read_parameters()
         }
         if (!(pp.contains(vel_bc_key.c_str())) && has_vel_bc) {
             amrex::Abort(
-                "LBM::ReadParameters: velocity BC is used without specifying "
+                "LBM::read_paramaters: velocity BC is used without specifying "
                 "the type to be used");
         }
         pp.query(vel_bc_key.c_str(), m_velocity_bc_type);
@@ -303,14 +303,14 @@ void LBM::read_tagging_parameters()
             itexists = true;
         } else {
             amrex::Abort(
-                "LBM::ReadTaggingParameters(): unrecognized refinement "
+                "LBM::read_tagging_parameters(): unrecognized refinement "
                 "indicator for " +
                 refinement_indicators[n]);
         }
 
         if (!itexists) {
             amrex::Error(
-                "LBM::ReadTaggingParameters(): unknown variable field for "
+                "LBM::read_tagging_parameters(): unknown variable field for "
                 "tagging "
                 "criteria " +
                 refinement_indicators[n]);
@@ -829,7 +829,7 @@ void LBM::set_bcs()
             geom, refRatio(), m_bcs,
             VelBCOp(m_mesh_speed, m_bc_type, m_f[0].nGrowVect()), m_f);
     } else {
-        amrex::Abort("LBM::SetBC(): Unknown velocity BC");
+        amrex::Abort("LBM::set_bcs(): Unknown velocity BC");
     }
 }
 
@@ -844,7 +844,7 @@ void LBM::set_ics()
             m_mesh_speed, ic::TaylorGreen(ic::TaylorGreen()), m_f);
     } else {
         amrex::Abort(
-            "LBM::SetICs(): User must specify a valid initial condition");
+            "LBM::set_ics(): User must specify a valid initial condition");
     }
 }
 
@@ -878,7 +878,7 @@ LBM::get_field(const std::string name, const int lev, const int ngrow)
     BL_PROFILE("LBM::get_field()");
 
     if (!check_field_existence(name)) {
-        amrex::Abort("LBM::GetField(): this field was not found: " + name);
+        amrex::Abort("LBM::get_field(): this field was not found: " + name);
     }
 
     const int nc = 1;
