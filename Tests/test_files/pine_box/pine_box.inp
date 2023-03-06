@@ -28,7 +28,7 @@ constant.density = 1.0
 constant.velocity = 0.0 0.0 0.0
 
 eb2.geom_type = "all_regular"
-eb2.stl_name = "pine_box_50k.stl"
+eb2.stl_file = "pine_box_50k.stl"
 eb2.stl_scale = 1e-2
 
 amrex.fpe_trap_invalid = 1

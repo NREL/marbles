@@ -44,7 +44,12 @@ void initialize_from_stl(
     std::string geom_type("all_regular");
     pp.query("geom_type", geom_type);
     std::string name;
-    pp.query("stl_name", name);
+    pp.query("stl_file", name);
+
+    // use native AMReX EB STL utility
+    if ((!name.empty()) && (geom_type == "stl")) {
+        return;
+    }
 
     if ((!name.empty()) && (geom_type == "all_regular")) {
         amrex::Real scale = 1.0;
