@@ -25,8 +25,8 @@ void initialize_eb(const amrex::Geometry& geom, const int max_level)
     // Custom types defined here - all_regular, plane, sphere, etc, will get
     // picked up by default (see AMReX_EB2.cpp around L100 )
     amrex::Vector<std::string> amrex_defaults(
-        {"all_regular", "box", "cylinder", "plane", "sphere", "torus",
-         "parser"});
+        {"all_regular", "box", "cylinder", "plane", "sphere", "torus", "parser",
+         "stl"});
     if (!(std::find(amrex_defaults.begin(), amrex_defaults.end(), geom_type) !=
           amrex_defaults.end())) {
         std::unique_ptr<lbm::Geometry> geometry(
