@@ -6,10 +6,10 @@ void initialize_eb(const amrex::Geometry& geom, const int max_level)
 {
     BL_PROFILE("LBM::initialize_eb()");
 
-    amrex::ParmParse ppeb2("eb2");
+    amrex::ParmParse pp("eb2");
 
     std::string geom_type("all_regular");
-    ppeb2.query("geom_type", geom_type);
+    pp.query("geom_type", geom_type);
 
     int max_coarsening_level = max_level;
     amrex::ParmParse ppamr("amr");
@@ -36,4 +36,52 @@ void initialize_eb(const amrex::Geometry& geom, const int max_level)
         amrex::EB2::Build(geom, max_level, max_level);
     }
 }
+
+void initialize_from_stl(
+    const amrex::Geometry& geom, amrex::iMultiFab& is_fluid)
+{
+    amrex::ParmParse pp("eb2");
+    std::string geom_type("all_regular");
+    pp.query("geom_type", geom_type);
+    std::string name;
+    pp.query("stl_name", name);
+
+    if ((!name.empty()) && (geom_type == "all_regular")) {
+        amrex::Real scale = 1.0;
+        int reverse_normal = 0;
+        amrex::Array<amrex::Real, 3> center = {0.0, 0.0, 0.0};
+        pp.query("stl_scale", scale);
+        pp.query("stl_reverse_normal", reverse_normal);
+        pp.query("stl_center", center);
+
+        amrex::STLtools stlobj;
+        stlobj.read_stl_file(name, scale, center, reverse_normal);
+
+        amrex::MultiFab marker(
+            is_fluid.boxArray(), is_fluid.DistributionMap(), 1,
+            is_fluid.nGrow());
+
+        const amrex::Real outside_value = 1.0;
+        const amrex::Real inside_value = 0.0;
+        marker.setVal(1.0);
+        stlobj.fill(
+            marker, marker.nGrowVect(), geom, outside_value, inside_value);
+        amrex::Gpu::synchronize();
+
+        auto const& marker_arrs = marker.const_arrays();
+        auto const& is_fluid_arrs = is_fluid.arrays();
+        amrex::ParallelFor(
+            is_fluid, is_fluid.nGrowVect(), is_fluid.nComp(),
+            [=] AMREX_GPU_DEVICE(int nbx, int i, int j, int k, int n) noexcept {
+                is_fluid_arrs[nbx](i, j, k, n) =
+                    static_cast<int>(marker_arrs[nbx](i, j, k, n));
+            });
+        amrex::Gpu::synchronize();
+    } else if ((!name.empty()) && (geom_type != "all_regular")) {
+        amrex::Abort(
+            "LBM::initialize_from_stl() geom_type should be all_regular to "
+            "avoid issues");
+    }
+}
+
 } // namespace lbm

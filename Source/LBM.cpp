@@ -748,7 +748,9 @@ void LBM::initialize_is_fluid(const int lev)
             is_fluid_arrs[nbx](i, j, k) =
                 !flag_arrs[nbx](i, j, k).isRegular() ? 0 : 1;
         });
-    amrex::Gpu::synchronize();
+
+    initialize_from_stl(Geom(lev), m_is_fluid[lev]);
+
     m_is_fluid[lev].FillBoundary(Geom(lev).periodicity());
 }
 

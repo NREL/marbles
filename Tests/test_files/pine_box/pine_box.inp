@@ -1,0 +1,38 @@
+max_step = 1000
+
+# geometry parameters
+geometry.prob_lo = 3.0 3.0 -1.0
+geometry.prob_hi = 5.0 5.0 1.0
+geometry.is_periodic = 0 0 0
+
+# timestepping
+amr.n_cell  = 32 32 32
+amr.max_level = 0
+amr.max_grid_size = 8
+amr.plot_int = 10
+amr.chk_int = 10
+
+lbm.bc_lo = 2 1 1
+lbm.bc_hi = 3 1 1
+lbm.dx_outer = 0.5
+lbm.dt_outer = 0.5
+#lbm.reynolds = 10.23
+lbm.nu = 0.01733333333333333
+lbm.save_streaming = 1
+
+lbm.velocity_bc_type = "channel"
+channel.u_ref = 0.1
+
+lbm.ic_type = "constant"
+constant.density = 1.0
+constant.velocity = 0.0 0.0 0.0
+
+eb2.geom_type = "all_regular"
+eb2.stl_name = "pine_box_50k.stl"
+eb2.stl_scale = 1e-2
+
+amrex.fpe_trap_invalid = 1
+amrex.fpe_trap_zero = 1
+amrex.fpe_trap_overflow = 1
+amrex.the_arena_is_managed = 0
+amrex.abort_on_out_of_gpu_memory = 1
