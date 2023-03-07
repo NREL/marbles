@@ -2,6 +2,8 @@
 #define EB_H
 #include <AMReX_ParmParse.H>
 #include <AMReX_Geometry.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_iMultiFab.H>
 #include <AMReX_EB2.H>
 #include <AMReX_EB2_IF_Union.H>
 #include <AMReX_EB2_IF_Intersection.H>
@@ -20,9 +22,12 @@
 #include <AMReX_EBFArrayBox.H>
 #include <AMReX_EBCellFlag.H>
 #include <AMReX_EBSupport.H>
+#include <AMReX_EB_STL_utils.H>
 
 namespace lbm {
 void initialize_eb(const amrex::Geometry& geom, const int max_level);
+void initialize_from_stl(
+    const amrex::Geometry& geom, amrex::iMultiFab& is_fluid);
 
-}
+} // namespace lbm
 #endif

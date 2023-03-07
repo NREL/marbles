@@ -18,7 +18,7 @@ option(MARBLES_ENABLE_OPENMP "Enable OpenMP" OFF)
 option(MARBLES_ENABLE_CUDA "Enable CUDA" OFF)
 option(MARBLES_ENABLE_ROCM "Enable ROCm/HIP" OFF)
 option(MARBLES_ENABLE_SYCL "Enable Intel OneAPI SyCL" OFF)
-option(MARBLES_ENABLE_TINY_PROFILE "Enable AMReX TinyProfile support" OFF)
+option(MARBLES_ENABLE_TINY_PROFILE "Enable AMReX TinyProfile support" ON)
 set(MARBLES_PRECISION "DOUBLE" CACHE STRING "Floating point precision SINGLE or DOUBLE")
 
 # Third party libraries
