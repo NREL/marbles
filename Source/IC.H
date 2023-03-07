@@ -33,7 +33,7 @@ struct Constant
 
     explicit Constant();
 
-    static std::string identifier() { return "constant"; }
+    static std::string identifier() { return "ic_constant"; }
 
     DeviceType device_instance() const { return m_op; }
 
@@ -78,7 +78,7 @@ struct TaylorGreen
 
     explicit TaylorGreen();
 
-    static std::string identifier() { return "taylorgreen"; }
+    static std::string identifier() { return "ic_taylorgreen"; }
 
     DeviceType device_instance() const { return m_op; }
 
