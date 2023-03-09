@@ -1,12 +1,12 @@
 max_step = 1000
 
 # geometry parameters
-geometry.prob_lo = 0.01 0.01 0.01
-geometry.prob_hi = 0.14 0.21 0.28
+geometry.prob_lo = 0.01 0.01 -0.0575
+geometry.prob_hi = 0.14 0.21 0.3475
 geometry.is_periodic = 0 0 0
 
 # timestepping
-amr.n_cell  = 32 48 64
+amr.n_cell  = 32 48 96
 amr.max_level = 0
 amr.max_grid_size = 8
 amr.plot_int = 10
