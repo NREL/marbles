@@ -22,6 +22,6 @@ Build/Source/
 Build/Submodules/
 Build/Tests/
 Build/cmake_install.cmake
-Build/compile_commands.json
 Build/marbles
 Build/marbles_obj/
+compile_commands.json

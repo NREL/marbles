@@ -21,11 +21,11 @@ lbm.nu = 0.01733333333333333
 lbm.save_streaming = 1
 
 lbm.velocity_bc_type = "channel"
-channel.u_ref = 0.1
+velocity_bc_channel.u_ref = 0.1
 
 lbm.ic_type = "constant"
-constant.density = 1.0
-constant.velocity = 0.0 0.0 0.0
+ic_constant.density = 1.0
+ic_constant.velocity = 0.0 0.0 0.0
 
 #eb2.geom_type = "all_regular"
 eb2.geom_type = "cylinder"

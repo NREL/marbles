@@ -48,11 +48,11 @@ Here is an example input file::
   lbm.save_streaming = 0
 
   lbm.velocity_bc_type = "channel"
-  channel.u_ref = 0.1
+  velocity_bc_channel.u_ref = 0.1
 
   lbm.ic_type = "constant"
-  constant.density = 1.0
-  constant.velocity = 0.0 0.0 0.0
+  ic_constant.density = 1.0
+  ic_constant.velocity = 0.0 0.0 0.0
 
   # embedded boundary
   eb2.geom_type = "cylinder"
