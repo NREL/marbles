@@ -56,11 +56,17 @@ public:
         AMREX_ASSERT(mf.nComp() == m_f[0].nComp());
         AMREX_ASSERT(m_bcs.size() == mf.nComp());
 
+        amrex::MultiFab f_star(mf.boxArray(), mf.DistributionMap(), mf.nComp(), mf.nGrow());
+
+        f_star.setVal(0.0);
+
         // why is this necessary?
         {
             const stencil::Stencil stencil;
             const auto& evs = stencil.evs;
             const auto& weight = stencil.weights;
+            const auto& bounce_dirs = stencil.bounce_dirs;
+
             const amrex::Real l_mesh_speed = m_op.m_mesh_speed;
             const amrex::Box& dbox = m_geom[lev].Domain();
             auto const& f_arrs = m_f[lev].arrays();
@@ -71,12 +77,11 @@ public:
                     const amrex::Real wt = weight[q];
                     const auto& ev = evs[q];
                     const amrex::IntVect iv(i, j, k);
-                    amrex::Real rho = 1.0;
-                    amrex::RealVect vel(0.0, 0.0, 0.0);
-                    if (!dbox.contains(iv)) {
-                        set_equilibrium_value(
-                            rho, vel, l_mesh_speed, wt, ev,
-                            f_arrs[nbx](i, j, k, q));
+                    if (!dbox.contains(iv) && dbox.contains(iv+ev)) {
+                        // Copy last streamed values (after collision)
+                        // f_arrs[nbx](iv, q) = f_arrs[nbx](iv+ev, q);
+                        // Copy bounce back values
+                        f_arrs[nbx](iv, q) = f_arrs[nbx](iv+ev, bounce_dirs[q]);
                     }
                 });
             amrex::Gpu::synchronize();

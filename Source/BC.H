@@ -64,6 +64,7 @@ struct BCFill
         // when the streaming step is performed.
 
         data(iv, q) = data(iv + ev, m_bounce_dirs[q]);
+        // data(iv-ev, q) = data(iv, q);
     }
 
     AMREX_GPU_DEVICE
@@ -264,8 +265,7 @@ struct BCFill
                         // If this distribution points into (enters) the
                         // domain, and we are accessing a cell within the data
                         // bounds
-                        if ((ev[idir] == normal_dir) &&
-                            (inside.contains(ivn))) {
+                        if (inside.contains(ivn)) {
 
                             if (m_bc_type[bc_idx] == 1) {
                                 bounce_back_bc(iv, q, ev, data);
