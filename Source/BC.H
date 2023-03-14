@@ -264,8 +264,7 @@ struct BCFill
                         // If this distribution points into (enters) the
                         // domain, and we are accessing a cell within the data
                         // bounds
-                        if ((ev[idir] == normal_dir) &&
-                            (inside.contains(ivn))) {
+                        if (inside.contains(ivn)) {
 
                             if (m_bc_type[bc_idx] == 1) {
                                 bounce_back_bc(iv, q, ev, data);
