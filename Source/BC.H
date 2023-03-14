@@ -64,7 +64,6 @@ struct BCFill
         // when the streaming step is performed.
 
         data(iv, q) = data(iv + ev, m_bounce_dirs[q]);
-        // data(iv-ev, q) = data(iv, q);
     }
 
     AMREX_GPU_DEVICE
