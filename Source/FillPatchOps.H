@@ -68,12 +68,13 @@ public:
                     int nbx, int i, int j, int k, int q) noexcept {
                     const auto& ev = evs[q];
                     const amrex::IntVect iv(i, j, k);
-                    if (!dbox.contains(iv) && dbox.contains(iv + ev)) {
+                    const amrex::IntVect iv_ev = iv + ev;
+                    if (!dbox.contains(iv) && dbox.contains(iv_ev) &&
+                        f_arrs[nbx].contains(iv_ev[0], iv_ev[1], iv_ev[2])) {
                         // Copy last streamed values (after collision)
-                        // f_arrs[nbx](iv, q) = f_arrs[nbx](iv+ev, q);
+                        // f_arrs[nbx](iv, q) = f_arrs[nbx](iv_ev, q);
                         // Copy bounce back values
-                        f_arrs[nbx](iv, q) =
-                            f_arrs[nbx](iv + ev, bounce_dirs[q]);
+                        f_arrs[nbx](iv, q) = f_arrs[nbx](iv_ev, bounce_dirs[q]);
                     }
                 });
             amrex::Gpu::synchronize();
