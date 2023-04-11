@@ -40,6 +40,8 @@ void initialize_eb(const amrex::Geometry& geom, const int max_level)
 void initialize_from_stl(
     const amrex::Geometry& geom, amrex::iMultiFab& is_fluid)
 {
+    BL_PROFILE("LBM::initialize_from_stl()");
+
     amrex::ParmParse pp("eb2");
     std::string geom_type("all_regular");
     pp.query("geom_type", geom_type);
