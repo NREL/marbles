@@ -145,11 +145,11 @@ private:
         const std::string& name, const amrex::Vector<std::string>& varnames);
 
     // set covered coarse cells to be the average of overlying fine cells
-    void average_down();
+    void average_down(amrex::IntVect crse_ng);
 
     // more flexible version of AverageDown() that lets you average down across
     // multiple levels
-    void average_down_to(int crse_lev);
+    void average_down_to(int crse_lev, amrex::IntVect crse_ng);
 
     // Set the user defined BC functions
     void set_bcs();
