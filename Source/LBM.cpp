@@ -234,9 +234,9 @@ void LBM::read_tagging_parameters()
     pp.queryarr(
         "refinement_indicators", refinement_indicators, 0,
         pp.countval("refinement_indicators"));
-    for (int n = 0; n < refinement_indicators.size(); ++n) {
+    for (const auto & refinement_indicator : refinement_indicators) {
         const std::string ref_prefix =
-            tag_prefix + "." + refinement_indicators[n];
+            tag_prefix + "." + refinement_indicator;
         amrex::ParmParse ppr(ref_prefix);
 
         // Tag a given box
@@ -305,7 +305,7 @@ void LBM::read_tagging_parameters()
             amrex::Abort(
                 "LBM::read_tagging_parameters(): unrecognized refinement "
                 "indicator for " +
-                refinement_indicators[n]);
+                refinement_indicator);
         }
 
         if (!itexists) {
@@ -313,7 +313,7 @@ void LBM::read_tagging_parameters()
                 "LBM::read_tagging_parameters(): unknown variable field for "
                 "tagging "
                 "criteria " +
-                refinement_indicators[n]);
+                refinement_indicator);
         }
     }
 }
@@ -941,12 +941,12 @@ void LBM::ErrorEst(
 {
     BL_PROFILE("LBM::ErrorEst()");
 
-    for (int n = 0; n < m_err_tags.size(); ++n) {
+    for (const auto & m_err_tag : m_err_tags) {
         std::unique_ptr<amrex::MultiFab> mf;
-        if (!m_err_tags[n].Field().empty()) {
-            mf = get_field(m_err_tags[n].Field(), lev, m_err_tags[n].NGrow());
+        if (!m_err_tag.Field().empty()) {
+            mf = get_field(m_err_tag.Field(), lev, m_err_tag.NGrow());
         }
-        m_err_tags[n](
+        m_err_tag(
             tags, mf.get(), amrex::TagBox::CLEAR, amrex::TagBox::SET, time, lev,
             Geom(lev));
     }
@@ -1068,20 +1068,20 @@ void LBM::write_checkpoint_file() const
         header_file << finest_level << "\n";
 
         // write out array of istep
-        for (int i = 0; i < m_isteps.size(); ++i) {
-            header_file << m_isteps[i] << " ";
+        for (int m_istep : m_isteps) {
+            header_file << m_istep << " ";
         }
         header_file << "\n";
 
         // write out array of dt
-        for (int i = 0; i < m_dts.size(); ++i) {
-            header_file << m_dts[i] << " ";
+        for (double m_dt : m_dts) {
+            header_file << m_dt << " ";
         }
         header_file << "\n";
 
         // write out array of t_new
-        for (int i = 0; i < m_ts_new.size(); ++i) {
-            header_file << m_ts_new[i] << " ";
+        for (double i : m_ts_new) {
+            header_file << i << " ";
         }
         header_file << "\n";
 

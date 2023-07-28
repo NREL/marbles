@@ -159,7 +159,7 @@ jobs:
         ctest ${{matrix.ctest_args}} --output-on-failure
   GPU-Nvidia:
     name: GPU-CUDA
-    needs: Formatting
+    needs: [Formatting, CPU-GNUmake]
     runs-on: ubuntu-20.04
     strategy:
       matrix:
@@ -197,7 +197,7 @@ jobs:
           VERBOSE=1 cmake --build build-${{matrix.cuda_pkg}} -- -j $(nproc)
   GPU-AMD:
     name: GPU-HIP
-    needs: Formatting
+    needs: [Formatting, CPU-GNUmake]
     runs-on: ubuntu-20.04
     steps:
       - name: Clone
@@ -237,7 +237,7 @@ jobs:
           VERBOSE=1 cmake --build build -- -j $(nproc)
   GPU-Intel:
     name: GPU-SYCL
-    needs: Formatting
+    needs: [Formatting, CPU-GNUmake]
     runs-on: ubuntu-latest
     steps:
       - name: Clone
