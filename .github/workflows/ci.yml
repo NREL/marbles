@@ -104,17 +104,19 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
-        build_type: [RelWithDebInfo, Debug]
+        build_type: [Release, Debug]
         include:
           - os: macos-latest
-            install_deps: brew install mpich ninja ccache
+            install_deps: brew install mpich automake ccache
             comp: llvm
             procs: $(sysctl -n hw.ncpu)
+            ccache_cache: /Users/runner/Library/Caches/ccache
           - os: ubuntu-latest
-            install_deps: sudo apt-get install -y --no-install-recommends mpich libmpich-dev ninja-build
+            install_deps: sudo apt-get update && sudo apt-get install mpich libmpich-dev
             comp: gnu
             procs: $(nproc)
-          - build_type: RelWithDebInfo
+            ccache_cache: ~/.cache/ccache
+          - build_type: Release
             ctest_args: -LE no_ci
           - build_type: Debug
             ctest_args: -L unit
@@ -122,41 +124,69 @@ jobs:
           - os: macos-latest
             build_type: Debug
     steps:
-    - name: Clone
-      uses: actions/checkout@v3
-      with:
-        submodules: true
-    - name: Dependencies
-      run: ${{matrix.install_deps}}
-    - name: Setup
-      run: |
-        echo "NUM_PROCS=${{matrix.procs}}" >> $GITHUB_ENV
-    - name: Configure
-      run: |
-        cmake -G Ninja \
-          -B ${{runner.workspace}}/build-ci-${{matrix.build_type}} \
-          -DCMAKE_INSTALL_PREFIX:PATH=${{runner.workspace}}/install-${{matrix.build_type}} \
+      - name: Clone
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+      - name: Setup
+        run: |
+          echo "NPROCS=${{matrix.procs}}" >> $GITHUB_ENV
+          echo "CCACHE_COMPRESS=1" >> $GITHUB_ENV
+          echo "CCACHE_COMPRESSLEVEL=5" >> $GITHUB_ENV
+          echo "CCACHE_LOGFILE=${{github.workspace}}/ccache.log.txt" >> $GITHUB_ENV
+          echo "CCACHE_MAXSIZE=1G" >> $GITHUB_ENV
+          cmake -E make_directory ${{runner.workspace}}/deps
+      - name: Dependencies
+        run: |
+          ${{matrix.install_deps}}
+      - name: Install Ccache
+        run: |
+          if [ "${RUNNER_OS}" != "macOS" ]; then
+            wget https://github.com/ccache/ccache/releases/download/v4.8/ccache-4.8-linux-x86_64.tar.xz
+            tar xvf ccache-4.8-linux-x86_64.tar.xz
+            sudo cp -f ccache-4.8-linux-x86_64/ccache /usr/local/bin/
+          fi
+      - name: Set Up Ccache
+        uses: actions/cache@v3
+        with:
+          path: ${{matrix.ccache_cache}}
+          key: ccache-${{github.workflow}}-${{github.job}}-${{matrix.os}}-${{matrix.build_type}}-git-${{github.sha}}
+          restore-keys: |
+               ccache-${{github.workflow}}-${{github.job}}-${{matrix.os}}-${{matrix.build_type}}-git-
+      - name: Configure
+        run: |
+          cmake -B${{runner.workspace}}/build-${{matrix.os}}-${{matrix.build_type}} \
+          -DCMAKE_INSTALL_PREFIX:PATH=${{runner.workspace}}/install-${{matrix.os}}-${{matrix.build_type}} \
           -DCMAKE_BUILD_TYPE:STRING=${{matrix.build_type}} \
+          -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON \
           -DMARBLES_ENABLE_MPI:BOOL=ON \
-          -DMARBLES_TEST_WITH_FCOMPARE:BOOL=OFF \
+          -DCMAKE_CXX_COMPILER_LAUNCHER:STRING=ccache \
           ${{github.workspace}}
-    - name: Build
-      working-directory: ${{runner.workspace}}/build-ci-${{matrix.build_type}}
-      run: |
-        echo "::add-matcher::.github/problem-matchers/gcc.json"
-        VERBOSE=1 cmake --build . -- -j ${{env.NUM_PROCS}} 2>&1 | tee -a build-output.txt
-    - name: Report
-      working-directory: ${{runner.workspace}}/build-ci-${{matrix.build_type}}
-      run: |
-        echo "::add-matcher::.github/problem-matchers/gcc.json"
-        egrep "warning:|error:" build-output.txt | egrep -v "Submodules" | sort | uniq | \
-          awk 'BEGIN{i=0}{print $0}{i++}END{print "Warnings: "i}' > build-output-warnings.txt
-        cat build-output-warnings.txt
-        exit $(tail -n 1 build-output-warnings.txt | awk '{print $2}')
-    - name: Test
-      working-directory: ${{runner.workspace}}/build-ci-${{matrix.build_type}}
-      run: |
-        ctest ${{matrix.ctest_args}} --output-on-failure
+      - name: Build
+        run: |
+          ccache -z
+          cmake --build ${{runner.workspace}}/build-${{matrix.os}}-${{matrix.build_type}} \
+            --parallel ${{env.NPROCS}} 2>&1 | tee -a ${{runner.workspace}}/build-output.txt; \
+      - name: Ccache Report
+        run: |
+          ccache -s
+          if [ "${RUNNER_OS}" != "macOS" ]; then
+            du -hs ${HOME}/.cache/ccache
+          fi
+      - name: Report
+        run: |
+          echo "::add-matcher::.github/problem-matchers/gcc.json"
+          egrep "warning:|error:" ${{runner.workspace}}/build-output.txt \
+            | egrep -v "Submodules/AMReX" \
+            | egrep -v "ld: warning:" | sort | uniq \
+            | awk 'BEGIN{i=0}{print $0}{i++}END{print "Warnings: "i}' > ${{runner.workspace}}/build-output-warnings.txt
+          cat ${{runner.workspace}}/build-output-warnings.txt
+          export return=$(tail -n 1 ${{runner.workspace}}/build-output-warnings.txt | awk '{print $2}')
+          exit ${return}
+      - name: Test
+        run: |
+            cd ${{runner.workspace}}/build-${{matrix.os}}-${{matrix.build_type}}; \
+            ctest -j ${{env.NPROCS}} ${{matrix.ctest_args}} --output-on-failure; \
   GPU-Nvidia:
     name: GPU-CUDA
     needs: [Formatting, CPU-GNUmake]
@@ -178,23 +208,46 @@ jobs:
           curl -O https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-keyring_1.0-1_all.deb
           sudo dpkg -i cuda-keyring_1.0-1_all.deb
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends ninja-build \
-              cuda-command-line-tools-${{matrix.cuda_pkg}} cuda-compiler-${{matrix.cuda_pkg}} cuda-minimal-build-${{matrix.cuda_pkg}} cuda-nvml-dev-${{matrix.cuda_pkg}} cuda-nvtx-${{matrix.cuda_pkg}} ${{matrix.cuda_extra}}
+          sudo apt-get install -y \
+              cuda-command-line-tools-${{matrix.cuda_pkg}} \
+              cuda-compiler-${{matrix.cuda_pkg}} cuda-minimal-build-${{matrix.cuda_pkg}} \
+              cuda-nvml-dev-${{matrix.cuda_pkg}} cuda-nvtx-${{matrix.cuda_pkg}} \
+              libcurand-dev-${{matrix.cuda_pkg}} cuda-cupti-dev-${{matrix.cuda_pkg}} \
+              libcusolver-dev-${{matrix.cuda_pkg}} libcusparse-dev-${{matrix.cuda_pkg}} \
+              libcublas-dev-${{matrix.cuda_pkg}}
+      - name: Install Ccache
+        run: |
+          wget https://github.com/ccache/ccache/releases/download/v4.8/ccache-4.8-linux-x86_64.tar.xz
+          tar xvf ccache-4.8-linux-x86_64.tar.xz
+          sudo cp -f ccache-4.8-linux-x86_64/ccache /usr/local/bin/
+      - name: Set Up Ccache
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/ccache
+          key: ccache-${{github.workflow}}-${{github.job}}-git-${{github.sha}}
+          restore-keys: |
+               ccache-${{github.workflow}}-${{github.job}}-git-
       - name: Configure
         run: |
           export PATH=/usr/local/nvidia/bin:/usr/local/cuda-${{matrix.cuda_ver}}/bin:${PATH}
           export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:/usr/local/cuda-${{matrix.cuda_ver}}/lib:${LD_LIBRARY_PATH}
-          cmake -G Ninja -B build-${{matrix.cuda_pkg}} \
+          cmake -Bbuild-${{matrix.cuda_pkg}} \
             -DCMAKE_BUILD_TYPE:STRING=Release \
             -DMARBLES_ENABLE_MPI:BOOL=OFF \
             -DMARBLES_ENABLE_CUDA:BOOL=ON \
             -DAMReX_CUDA_ERROR_CAPTURE_THIS:BOOL=ON \
-            -DCMAKE_CUDA_COMPILE_SEPARABLE_COMPILATION:BOOL=ON \
-            -DCMAKE_CUDA_ARCHITECTURES=70 \
+            -DCMAKE_CUDA_ARCHITECTURES:STRING=70 \
+            -DCMAKE_CUDA_COMPILER_LAUNCHER:STRING=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER:STRING=ccache \
             ${{github.workspace}}
       - name: Build
         run: |
-          VERBOSE=1 cmake --build build-${{matrix.cuda_pkg}} -- -j $(nproc)
+          ccache -z
+          cmake --build build-${{matrix.cuda_pkg}} --parallel ${{env.NPROCS}}
+      - name: Ccache Report
+        run: |
+          ccache -s
+          du -hs ${HOME}/.cache/ccache
   GPU-AMD:
     name: GPU-HIP
     needs: [Formatting, CPU-GNUmake]
@@ -258,7 +311,7 @@ jobs:
           echo "::add-matcher::.github/problem-matchers/gcc.json"
           source /etc/profile.d/rocm.sh
           ccache -z
-          VERBOSE=1 cmake --build ${{runner.workspace}}/build-hip --parallel ${{env.NPROCS}}
+          cmake --build ${{runner.workspace}}/build-hip --parallel ${{env.NPROCS}}
       - name: Ccache Report
         run: |
           ccache -s
@@ -321,7 +374,7 @@ jobs:
           source /opt/intel/oneapi/setvars.sh
           set -e
           ccache -z
-          VERBOSE=1 cmake --build ${{runner.workspace}}/build-sycl --parallel ${{env.NPROCS}}
+          cmake --build ${{runner.workspace}}/build-sycl --parallel ${{env.NPROCS}}
       - name: Ccache Report
         run: |
           ccache -s
@@ -380,7 +433,7 @@ jobs:
       - name: Check
         working-directory: ${{runner.workspace}}/build-clang-tidy
         run: |
-          VERBOSE=1 cmake --build . --parallel ${{env.NPROCS}} 2>&1 | tee -a clang-tidy-full-report.txt
+          cmake --build . --parallel ${{env.NPROCS}} 2>&1 | tee -a clang-tidy-full-report.txt
           egrep "warning:|error:" clang-tidy-full-report.txt \
             | egrep -v "Submodules/AMReX" \
             | egrep -v "ld: warning:" | sort | uniq \
@@ -428,7 +481,7 @@ jobs:
   #     - name: Build
   #       working-directory: ${{runner.workspace}}/build-ci-codeql
   #       run: |
-  #         VERBOSE=1 cmake --build . --parallel ${{env.NPROCS}}
+  #         cmake --build . --parallel ${{env.NPROCS}}
   #     - name: Perform CodeQL Analysis
   #       uses: github/codeql-action/analyze@v2
   #       with:
