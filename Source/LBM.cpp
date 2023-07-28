@@ -234,9 +234,8 @@ void LBM::read_tagging_parameters()
     pp.queryarr(
         "refinement_indicators", refinement_indicators, 0,
         pp.countval("refinement_indicators"));
-    for (const auto & refinement_indicator : refinement_indicators) {
-        const std::string ref_prefix =
-            tag_prefix + "." + refinement_indicator;
+    for (const auto& refinement_indicator : refinement_indicators) {
+        const std::string ref_prefix = tag_prefix + "." + refinement_indicator;
         amrex::ParmParse ppr(ref_prefix);
 
         // Tag a given box
@@ -435,7 +434,7 @@ void LBM::advance(
     BL_PROFILE("LBM::advance()");
 
     m_ts_old[lev] = m_ts_new[lev]; // old time is now current time (time)
-    m_ts_new[lev] += dt_lev;      // new time is ahead
+    m_ts_new[lev] += dt_lev;       // new time is ahead
 
     stream(lev);
 
@@ -941,7 +940,7 @@ void LBM::ErrorEst(
 {
     BL_PROFILE("LBM::ErrorEst()");
 
-    for (const auto & m_err_tag : m_err_tags) {
+    for (const auto& m_err_tag : m_err_tags) {
         std::unique_ptr<amrex::MultiFab> mf;
         if (!m_err_tag.Field().empty()) {
             mf = get_field(m_err_tag.Field(), lev, m_err_tag.NGrow());
