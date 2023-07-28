@@ -204,6 +204,13 @@ jobs:
         uses: actions/checkout@v3
         with:
           submodules: true
+      - name: Setup
+        run: |
+          echo "NPROCS=$(nproc)" >> $GITHUB_ENV
+          echo "CCACHE_COMPRESS=1" >> $GITHUB_ENV
+          echo "CCACHE_COMPRESSLEVEL=5" >> $GITHUB_ENV
+          echo "CCACHE_LOGFILE=${{github.workspace}}/ccache.log.txt" >> $GITHUB_ENV
+          echo "CCACHE_MAXSIZE=1G" >> $GITHUB_ENV
       - name: Dependencies
         run: |
           curl -O https://repo.radeon.com/rocm/rocm.gpg.key
@@ -213,28 +220,49 @@ jobs:
           echo 'export PATH=/opt/rocm/llvm/bin:/opt/rocm/bin:/opt/rocm/profiler/bin:/opt/rocm/opencl/bin:$PATH' \
               | sudo tee -a /etc/profile.d/rocm.sh
           sudo apt-get update
-          sudo apt-get install -y ninja-build rocm-dev roctracer-dev rocprofiler-dev rocrand-dev rocprim-dev rocm-libs
+          sudo apt-get install -y rocm-dev roctracer-dev rocprofiler-dev rocrand-dev rocprim-dev rocm-libs
+      - name: Install Ccache
+        run: |
+          wget https://github.com/ccache/ccache/releases/download/v4.8/ccache-4.8-linux-x86_64.tar.xz
+          tar xvf ccache-4.8-linux-x86_64.tar.xz
+          sudo cp -f ccache-4.8-linux-x86_64/ccache /usr/local/bin/
+      - name: Set Up Ccache
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/ccache
+          key: ccache-${{github.workflow}}-${{github.job}}-git-${{github.sha}}
+          restore-keys: |
+               ccache-${{github.workflow}}-${{github.job}}-git-
       - name: Configure
         run: |
           source /etc/profile.d/rocm.sh
           which clang
-          which clang++
-          cmake -G Ninja -B${{runner.workspace}}/build-hip  \
-            -DCMAKE_BUILD_TYPE:STRING=Release \
-            -DMARBLES_ENABLE_MPI:BOOL=OFF \
-            -DMARBLES_ENABLE_ROCM:BOOL=ON \
-            -DCMAKE_CXX_COMPILER:STRING=$(which clang++) \
-            -DCMAKE_C_COMPILER:STRING=$(which clang) \
-            -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON \
-            -DAMReX_AMD_ARCH:STRING=gfx908 \
-            -DCMAKE_HIP_ARCHITECTURES:STRING=gfx908 \
-            -DAMDGPU_TARGETS:STRING=gfx908 \
-            -DGPU_TARGETS:STRING=gfx908 \
-            ${{github.workspace}}
+          which hipcc
+          cmake -B${{runner.workspace}}/build-hip \
+          -DCMAKE_BUILD_TYPE:STRING=Release \
+          -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON \
+          -DCMAKE_CXX_COMPILER:STRING=$(which hipcc) \
+          -DCMAKE_C_COMPILER:STRING=$(which clang) \
+          -DCMAKE_CXX_STANDARD:STRING=17 \
+          -DMARBLES_ENABLE_MPI:BOOL=OFF \
+          -DMARBLES_ENABLE_HIP:BOOL=ON \
+          -DAMReX_AMD_ARCH:STRING=gfx90a \
+          -DCMAKE_HIP_ARCHITECTURES:STRING=gfx90a \
+          -DAMDGPU_TARGETS:STRING=gfx90a \
+          -DGPU_TARGETS:STRING=gfx90a \
+          -DAMReX_GPU_RDC:BOOL=OFF \
+          -DCMAKE_CXX_COMPILER_LAUNCHER:STRING=ccache \
+          ${{github.workspace}}
       - name: Build
-        working-directory: ${{runner.workspace}}/build-hip
         run: |
-          VERBOSE=1 cmake --build build -- -j $(nproc)
+          echo "::add-matcher::.github/problem-matchers/gcc.json"
+          source /etc/profile.d/rocm.sh
+          ccache -z
+          VERBOSE=1 cmake --build ${{runner.workspace}}/build-hip --parallel ${{env.NPROCS}}
+      - name: Ccache Report
+        run: |
+          ccache -s
+          du -hs ${HOME}/.cache/ccache
   GPU-Intel:
     name: GPU-SYCL
     needs: [Formatting, CPU-GNUmake]
@@ -278,15 +306,15 @@ jobs:
           source /opt/intel/oneapi/setvars.sh
           set -e
           cmake -B${{runner.workspace}}/build-sycl \
-            -DCMAKE_BUILD_TYPE:STRING=Release \
-            -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON \
-            -DCMAKE_CXX_COMPILER:STRING=$(which icpx) \
-            -DCMAKE_C_COMPILER:STRING=$(which icx) \
-            -DCMAKE_CXX_FLAGS:STRING=-fsycl \
-            -DMARBLES_ENABLE_MPI:BOOL=OFF \
-            -DMARBLES_ENABLE_SYCL:BOOL=ON \
-            -DCMAKE_CXX_COMPILER_LAUNCHER:STRING=ccache \
-            ${{github.workspace}}
+          -DCMAKE_BUILD_TYPE:STRING=Release \
+          -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON \
+          -DCMAKE_CXX_COMPILER:STRING=$(which icpx) \
+          -DCMAKE_C_COMPILER:STRING=$(which icx) \
+          -DCMAKE_CXX_FLAGS:STRING=-fsycl \
+          -DMARBLES_ENABLE_MPI:BOOL=OFF \
+          -DMARBLES_ENABLE_SYCL:BOOL=ON \
+          -DCMAKE_CXX_COMPILER_LAUNCHER:STRING=ccache \
+          ${{github.workspace}}
       - name: Build
         run: |
           set +e
@@ -337,14 +365,10 @@ jobs:
         uses: actions/checkout@v3
         with:
           submodules: true
-      - name: Dependencies
-        run: |
-          sudo apt-get install -y ninja-build
       - name: Configure
         run: |
           echo "NPROCS=$(nproc)" >> $GITHUB_ENV
-          cmake -G Ninja \
-          -B ${{runner.workspace}}/build-clang-tidy \
+          cmake -B${{runner.workspace}}/build-clang-tidy \
           -DCMAKE_BUILD_TYPE:STRING=Debug \
           -DCMAKE_CXX_COMPILER:STRING=clang++ \
           -DCMAKE_C_COMPILER:STRING=clang \
@@ -357,8 +381,10 @@ jobs:
         working-directory: ${{runner.workspace}}/build-clang-tidy
         run: |
           VERBOSE=1 cmake --build . --parallel ${{env.NPROCS}} 2>&1 | tee -a clang-tidy-full-report.txt
-          cat clang-tidy-full-report.txt | grep "warning:" | grep -v "Submodules" | sort | uniq | \
-            awk 'BEGIN{i=0}{print $0}{i++}END{print "Warnings: "i}' > clang-tidy-ci-report.txt
+          egrep "warning:|error:" clang-tidy-full-report.txt \
+            | egrep -v "Submodules/AMReX" \
+            | egrep -v "ld: warning:" | sort | uniq \
+            | awk 'BEGIN{i=0}{print $0}{i++}END{print "Warnings: "i}' > clang-tidy-warnings.txt
       - name: Full report
         working-directory: ${{runner.workspace}}/build-clang-tidy
         run: cat clang-tidy-full-report.txt
@@ -366,8 +392,9 @@ jobs:
         working-directory: ${{runner.workspace}}/build-clang-tidy
         run: |
           echo "::add-matcher::.github/problem-matchers/gcc.json"
-          cat clang-tidy-ci-report.txt
-          exit $(tail -n 1 clang-tidy-ci-report.txt | awk '{print $2}')
+          cat clang-tidy-warnings.txt
+          export return=$(tail -n 1 clang-tidy-warnings.txt | awk '{print $2}')
+          exit ${return}
   # Lint-codeql:
   #   needs: Formatting
   #   runs-on: ubuntu-latest
