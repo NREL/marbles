@@ -146,14 +146,14 @@ jobs:
         uses: actions/checkout@v3
         with:
           submodules: true
-      - name: Prepare CUDA environment
+      - name: Dependencies
         run: |
-          sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/3bf863cc.pub
-          echo "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64 /" | sudo tee /etc/apt/sources.list.d/cuda.list
+          curl -O https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-keyring_1.0-1_all.deb
+          sudo dpkg -i cuda-keyring_1.0-1_all.deb
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends ninja-build \
               cuda-command-line-tools-${{matrix.cuda_pkg}} cuda-compiler-${{matrix.cuda_pkg}} cuda-minimal-build-${{matrix.cuda_pkg}} cuda-nvml-dev-${{matrix.cuda_pkg}} cuda-nvtx-${{matrix.cuda_pkg}} ${{matrix.cuda_extra}}
-      - name: Configure and build
+      - name: Configure
         run: |
           export PATH=/usr/local/nvidia/bin:/usr/local/cuda-${{matrix.cuda_ver}}/bin:${PATH}
           export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:/usr/local/cuda-${{matrix.cuda_ver}}/lib:${LD_LIBRARY_PATH}
@@ -165,6 +165,8 @@ jobs:
             -DCMAKE_CUDA_COMPILE_SEPARABLE_COMPILATION:BOOL=ON \
             -DCMAKE_CUDA_ARCHITECTURES=70 \
             ${{github.workspace}}
+      - name: Build
+        run: |
           VERBOSE=1 cmake --build build-${{matrix.cuda_pkg}} -- -j $(nproc)
   GPU-AMD:
     name: GPU-HIP
@@ -175,7 +177,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           submodules: true
-      - name: Prepare HIP environment
+      - name: Dependencies
         run: |
           wget -q -O - https://repo.radeon.com/rocm/rocm.gpg.key | sudo apt-key add -
           echo 'deb [arch=amd64] https://repo.radeon.com/rocm/apt/debian/ ubuntu main' | sudo tee /etc/apt/sources.list.d/rocm.list
@@ -183,7 +185,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends ninja-build \
               build-essential rocm-dev roctracer-dev rocprofiler-dev rocrand-dev rocprim-dev rocm-libs
-      - name: Configure and build
+      - name: Configure
         run: |
           source /etc/profile.d/rocm.sh
           which clang
@@ -200,6 +202,8 @@ jobs:
             -DAMDGPU_TARGETS:STRING=gfx908 \
             -DGPU_TARGETS:STRING=gfx908 \
             ${{github.workspace}}
+      - name: Build
+        run: |
           VERBOSE=1 cmake --build build -- -j $(nproc)
   GPU-Intel:
     name: GPU-SYCL
@@ -210,15 +214,15 @@ jobs:
         uses: actions/checkout@v3
         with:
           submodules: true
-      - name: Prepare SyCL environment
+      - name: Dependencies
         run: |
-          export DEBIAN_FRONTEND=noninteractive
-          sudo wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
-          sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
-          echo "deb https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
+          sudo wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
+          sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
+          echo "deb https://apt.repos.intel.com/oneapi all main" \
+              | sudo tee /etc/apt/sources.list.d/oneAPI.list
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends ninja-build intel-oneapi-dpcpp-cpp-compiler intel-oneapi-mkl-devel
-      - name: Configure and build
+          sudo apt-get install -y ninja-build intel-oneapi-compiler-dpcpp-cpp intel-oneapi-mkl-devel
+      - name: Configure
         run: |
           set +e
           source /opt/intel/oneapi/setvars.sh
@@ -231,6 +235,13 @@ jobs:
             -DMARBLES_ENABLE_MPI:BOOL=OFF \
             -DMARBLES_ENABLE_SYCL:BOOL=ON \
             ${{github.workspace}}
+          VERBOSE=1 cmake --build build-sycl -- -j $(nproc)
+      - name: Build
+        working-directory: ${{runner.workspace}}/build-sycl
+        run: |
+          set +e
+          source /opt/intel/oneapi/setvars.sh
+          set -e
           VERBOSE=1 cmake --build build-sycl -- -j $(nproc)
   Lint-cppcheck:
     needs: Formatting
@@ -353,3 +364,17 @@ jobs:
   #       uses: github/codeql-action/upload-sarif@v2
   #       with:
   #         sarif_file: sarif-results/cpp.sarif
+  Save-PR-Number:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Save PR number
+        env:
+          PR_NUMBER: ${{ github.event.number }}
+        run: |
+          echo $PR_NUMBER > pr_number.txt
+      - uses: actions/upload-artifact@v3
+        with:
+          name: pr_number
+          path: pr_number.txt
+          retention-days: 1
