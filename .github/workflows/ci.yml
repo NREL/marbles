@@ -264,7 +264,7 @@ jobs:
           ${{github.workspace}}
       - name: Check
         working-directory: ${{runner.workspace}}/build-cppcheck
-        run: make cppcheck-ci
+        run: cmake --build . --parallel $(sysctl -n hw.ncpu) -t cppcheck-ci
       - name: Full report
         working-directory: ${{runner.workspace}}/build-cppcheck
         run: cat cppcheck/cppcheck-full-report.txt

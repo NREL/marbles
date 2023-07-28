@@ -737,7 +737,7 @@ void LBM::initialize_f(const int lev)
 void LBM::initialize_is_fluid(const int lev)
 {
     BL_PROFILE("LBM::initialize_is_fluid()");
-    auto* factory =
+    const auto* factory =
         static_cast<amrex::EBFArrayBoxFactory*>(m_factory[lev].get());
     auto const& flags = factory->getMultiEBCellFlagFab();
     auto const& flag_arrs = flags.const_arrays();
@@ -851,7 +851,7 @@ void LBM::set_ics()
 }
 
 // Check if a field exists
-bool LBM::check_field_existence(const std::string name)
+bool LBM::check_field_existence(const std::string& name)
 {
     BL_PROFILE("LBM::check_field_existence()");
     const auto vnames = {
@@ -863,7 +863,7 @@ bool LBM::check_field_existence(const std::string name)
 
 // Get field component
 int LBM::get_field_component(
-    const std::string name, const amrex::Vector<std::string>& varnames)
+    const std::string& name, const amrex::Vector<std::string>& varnames)
 {
     BL_PROFILE("LBM::get_field_component()");
     const auto itr = std::find(varnames.begin(), varnames.end(), name);
@@ -875,7 +875,7 @@ int LBM::get_field_component(
 
 // get a field based on a variable name
 std::unique_ptr<amrex::MultiFab>
-LBM::get_field(const std::string name, const int lev, const int ngrow)
+LBM::get_field(const std::string& name, const int lev, const int ngrow)
 {
     BL_PROFILE("LBM::get_field()");
 
