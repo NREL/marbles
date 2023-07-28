@@ -179,18 +179,20 @@ jobs:
           submodules: true
       - name: Dependencies
         run: |
-          wget -q -O - https://repo.radeon.com/rocm/rocm.gpg.key | sudo apt-key add -
-          echo 'deb [arch=amd64] https://repo.radeon.com/rocm/apt/debian/ ubuntu main' | sudo tee /etc/apt/sources.list.d/rocm.list
-          echo 'export PATH=/opt/rocm/llvm/bin:/opt/rocm/bin:/opt/rocm/profiler/bin:/opt/rocm/opencl/bin:$PATH' | sudo tee -a /etc/profile.d/rocm.sh
+          curl -O https://repo.radeon.com/rocm/rocm.gpg.key
+          sudo apt-key add rocm.gpg.key
+          echo 'deb [arch=amd64] https://repo.radeon.com/rocm/apt/debian/ ubuntu main' \
+              | sudo tee /etc/apt/sources.list.d/rocm.list
+          echo 'export PATH=/opt/rocm/llvm/bin:/opt/rocm/bin:/opt/rocm/profiler/bin:/opt/rocm/opencl/bin:$PATH' \
+              | sudo tee -a /etc/profile.d/rocm.sh
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends ninja-build \
-              build-essential rocm-dev roctracer-dev rocprofiler-dev rocrand-dev rocprim-dev rocm-libs
+          sudo apt-get install -y ninja-build rocm-dev roctracer-dev rocprofiler-dev rocrand-dev rocprim-dev rocm-libs
       - name: Configure
         run: |
           source /etc/profile.d/rocm.sh
           which clang
           which clang++
-          cmake -G Ninja -B build \
+          cmake -G Ninja -B${{runner.workspace}}/build-hip  \
             -DCMAKE_BUILD_TYPE:STRING=Release \
             -DMARBLES_ENABLE_MPI:BOOL=OFF \
             -DMARBLES_ENABLE_ROCM:BOOL=ON \
@@ -203,6 +205,7 @@ jobs:
             -DGPU_TARGETS:STRING=gfx908 \
             ${{github.workspace}}
       - name: Build
+        working-directory: ${{runner.workspace}}/build-hip
         run: |
           VERBOSE=1 cmake --build build -- -j $(nproc)
   GPU-Intel:
@@ -227,7 +230,7 @@ jobs:
           set +e
           source /opt/intel/oneapi/setvars.sh
           set -e
-          cmake -G Ninja -B build-sycl \
+          cmake -G Ninja -B -B${{runner.workspace}}/build-sycl \
             -DCMAKE_BUILD_TYPE:STRING=Release \
             -DCMAKE_CXX_COMPILER:STRING=$(which icpx) \
             -DCMAKE_C_COMPILER:STRING=$(which icx) \
