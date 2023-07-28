@@ -99,7 +99,7 @@ public:
 
     // get a field based on a variable name
     std::unique_ptr<amrex::MultiFab>
-    get_field(const std::string name, const int lev, const int ngrow);
+    get_field(const std::string& name, const int lev, const int ngrow);
 
     // put together an array of multifabs for writing
     amrex::Vector<const amrex::MultiFab*> plot_file_mf();
@@ -126,11 +126,11 @@ private:
         const int ncycle);
 
     // Check if a field exists
-    bool check_field_existence(const std::string name);
+    bool check_field_existence(const std::string& name);
 
     // Get field component
     static int get_field_component(
-        const std::string name, const amrex::Vector<std::string>& varnames);
+        const std::string& name, const amrex::Vector<std::string>& varnames);
 
     // set covered coarse cells to be the average of overlying fine cells
     void average_down();
@@ -163,13 +163,13 @@ private:
     // utility to skip to next line in Header
     static void goto_next_line(std::istream& is);
 
-    amrex::Vector<int> m_istep;     // which step?
+    amrex::Vector<int> m_isteps;    // which step?
     amrex::Vector<int> m_nsubsteps; // how many substeps on each level?
 
     // keep track of old time, new time, and time step at each level
-    amrex::Vector<amrex::Real> m_t_new;
-    amrex::Vector<amrex::Real> m_t_old;
-    amrex::Vector<amrex::Real> m_dt;
+    amrex::Vector<amrex::Real> m_ts_new;
+    amrex::Vector<amrex::Real> m_ts_old;
+    amrex::Vector<amrex::Real> m_dts;
 
     // maximum number of steps and stop time
     int m_max_step = std::numeric_limits<int>::max();
