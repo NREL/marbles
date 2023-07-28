@@ -163,13 +163,13 @@ private:
     // utility to skip to next line in Header
     static void goto_next_line(std::istream& is);
 
-    amrex::Vector<int> m_istep;     // which step?
+    amrex::Vector<int> m_isteps;     // which step?
     amrex::Vector<int> m_nsubsteps; // how many substeps on each level?
 
     // keep track of old time, new time, and time step at each level
-    amrex::Vector<amrex::Real> m_t_new;
-    amrex::Vector<amrex::Real> m_t_old;
-    amrex::Vector<amrex::Real> m_dt;
+    amrex::Vector<amrex::Real> m_ts_new;
+    amrex::Vector<amrex::Real> m_ts_old;
+    amrex::Vector<amrex::Real> m_dts;
 
     // maximum number of steps and stop time
     int m_max_step = std::numeric_limits<int>::max();

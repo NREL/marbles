@@ -39,15 +39,15 @@ LBM::LBM()
 
     read_tagging_parameters();
 
-    m_istep.resize(nlevs_max, 0);
+    m_isteps.resize(nlevs_max, 0);
     m_nsubsteps.resize(nlevs_max, 1);
     for (int lev = 1; lev <= max_level; ++lev) {
         m_nsubsteps[lev] = MaxRefRatio(lev - 1);
     }
 
-    m_t_new.resize(nlevs_max, 0.0);
-    m_t_old.resize(nlevs_max, constants::LOW_NUM);
-    m_dt.resize(nlevs_max, constants::LARGE_NUM);
+    m_ts_new.resize(nlevs_max, 0.0);
+    m_ts_old.resize(nlevs_max, constants::LOW_NUM);
+    m_dts.resize(nlevs_max, constants::LARGE_NUM);
 
     m_macrodata.resize(nlevs_max);
     m_f.resize(nlevs_max);
@@ -322,28 +322,28 @@ void LBM::evolve()
 {
     BL_PROFILE("LBM::evolve()");
 
-    amrex::Real cur_time = m_t_new[0];
+    amrex::Real cur_time = m_ts_new[0];
     int last_plot_file_step = 0;
 
-    for (int step = m_istep[0]; step < m_max_step && cur_time < m_stop_time;
+    for (int step = m_isteps[0]; step < m_max_step && cur_time < m_stop_time;
          ++step) {
         compute_dt();
 
         amrex::Print() << "\n==============================================="
                           "==============================="
                        << std::endl;
-        amrex::Print() << "Step: " << step << " dt : " << m_dt[0]
-                       << " time: " << cur_time << " to " << cur_time + m_dt[0]
+        amrex::Print() << "Step: " << step << " dt : " << m_dts[0]
+                       << " time: " << cur_time << " to " << cur_time + m_dts[0]
                        << std::endl;
 
         m_fillpatch_op->fillpatch(0, cur_time, m_f[0]);
         time_step(0, cur_time, 1);
 
-        cur_time += m_dt[0];
+        cur_time += m_dts[0];
 
         // sync up time
         for (int lev = 0; lev <= finest_level; ++lev) {
-            m_t_new[lev] = cur_time;
+            m_ts_new[lev] = cur_time;
         }
 
         if (m_plot_int > 0 && (step + 1) % m_plot_int == 0) {
@@ -355,11 +355,11 @@ void LBM::evolve()
             write_checkpoint_file();
         }
 
-        if (cur_time >= m_stop_time - 1.e-6 * m_dt[0]) {
+        if (cur_time >= m_stop_time - 1.e-6 * m_dts[0]) {
             break;
         }
     }
-    if (m_plot_int > 0 && m_istep[0] > last_plot_file_step) {
+    if (m_plot_int > 0 && m_isteps[0] > last_plot_file_step) {
         write_plot_file();
     }
 }
@@ -379,8 +379,8 @@ void LBM::time_step(const int lev, const amrex::Real time, const int iteration)
         // regrid changes level "lev+1" so we don't regrid on max_level
         // also make sure we don't regrid fine levels again if
         // it was taken care of during a coarser regrid
-        if (lev < max_level && m_istep[lev] > last_regrid_step[lev]) {
-            if (m_istep[lev] % m_regrid_int == 0) {
+        if (lev < max_level && m_isteps[lev] > last_regrid_step[lev]) {
+            if (m_isteps[lev] % m_regrid_int == 0) {
                 // regrid could add newly refine levels (if finest_level <
                 // max_level) so we save the previous finest level index
                 int old_finest = finest_level;
@@ -388,38 +388,38 @@ void LBM::time_step(const int lev, const amrex::Real time, const int iteration)
 
                 // mark that we have regridded this level already
                 for (int k = lev; k <= finest_level; ++k) {
-                    last_regrid_step[k] = m_istep[k];
+                    last_regrid_step[k] = m_isteps[k];
                 }
 
                 // if there are newly created levels, set the time step
                 // dt gets halved here
                 for (int k = old_finest + 1; k <= finest_level; ++k) {
-                    m_dt[k] = m_dt[k - 1] / MaxRefRatio(k - 1);
+                    m_dts[k] = m_dts[k - 1] / MaxRefRatio(k - 1);
                 }
             }
         }
     }
 
     if (Verbose() != 0) {
-        amrex::Print() << "[Level " << lev << " step " << m_istep[lev] + 1
+        amrex::Print() << "[Level " << lev << " step " << m_isteps[lev] + 1
                        << "] ";
-        amrex::Print() << "Advance with time = " << m_t_new[lev]
-                       << " dt = " << m_dt[lev] << std::endl;
+        amrex::Print() << "Advance with time = " << m_ts_new[lev]
+                       << " dt = " << m_dts[lev] << std::endl;
     }
 
     if (lev < finest_level) {
-        m_fillpatch_op->fillpatch(lev + 1, m_t_new[lev + 1], m_f[lev + 1]);
+        m_fillpatch_op->fillpatch(lev + 1, m_ts_new[lev + 1], m_f[lev + 1]);
         for (int i = 1; i <= m_nsubsteps[lev + 1]; ++i) {
-            time_step(lev + 1, time + (i - 1) * m_dt[lev + 1], i);
+            time_step(lev + 1, time + (i - 1) * m_dts[lev + 1], i);
         }
     }
 
-    advance(lev, time, m_dt[lev], iteration, m_nsubsteps[lev]);
+    advance(lev, time, m_dts[lev], iteration, m_nsubsteps[lev]);
 
-    ++m_istep[lev];
+    ++m_isteps[lev];
 
     if (Verbose() != 0) {
-        amrex::Print() << "[Level " << lev << " step " << m_istep[lev] << "] ";
+        amrex::Print() << "[Level " << lev << " step " << m_isteps[lev] << "] ";
         amrex::Print() << "Advanced " << CountCells(lev) << " cells"
                        << std::endl;
     }
@@ -434,8 +434,8 @@ void LBM::advance(
 {
     BL_PROFILE("LBM::advance()");
 
-    m_t_old[lev] = m_t_new[lev]; // old time is now current time (time)
-    m_t_new[lev] += dt_lev;      // new time is ahead
+    m_ts_old[lev] = m_ts_new[lev]; // old time is now current time (time)
+    m_ts_new[lev] += dt_lev;      // new time is ahead
 
     stream(lev);
 
@@ -553,7 +553,7 @@ void LBM::relax_f_to_equilibrium(const int lev)
     auto const& is_fluid_arrs = m_is_fluid[lev].const_arrays();
     auto const& eq_arrs = m_eq[lev].const_arrays();
     auto const& f_arrs = m_f[lev].arrays();
-    const amrex::Real tau = m_nu / (m_dt[lev] * m_cs_2) + 0.5;
+    const amrex::Real tau = m_nu / (m_dts[lev] * m_cs_2) + 0.5;
     amrex::ParallelFor(
         m_f[lev], m_macrodata[lev].nGrowVect(), constants::N_MICRO_STATES,
         [=] AMREX_GPU_DEVICE(int nbx, int i, int j, int k, int q) noexcept {
@@ -626,20 +626,20 @@ void LBM::compute_dt()
     amrex::Real dt_0 = dt_tmp[0];
     int n_factor = 1;
     for (int lev = 0; lev <= finest_level; ++lev) {
-        dt_tmp[lev] = std::min(dt_tmp[lev], change_max * m_dt[lev]);
+        dt_tmp[lev] = std::min(dt_tmp[lev], change_max * m_dts[lev]);
         n_factor *= m_nsubsteps[lev];
         dt_0 = std::min(dt_0, n_factor * dt_tmp[lev]);
     }
 
     // Limit dt's by the value of stop_time.
     const amrex::Real eps = 1.e-3 * dt_0;
-    if (m_t_new[0] + dt_0 > m_stop_time - eps) {
-        dt_0 = m_stop_time - m_t_new[0];
+    if (m_ts_new[0] + dt_0 > m_stop_time - eps) {
+        dt_0 = m_stop_time - m_ts_new[0];
     }
 
-    m_dt[0] = dt_0;
+    m_dts[0] = dt_0;
     for (int lev = 1; lev <= finest_level; ++lev) {
-        m_dt[lev] = m_dt[lev - 1] / m_nsubsteps[lev];
+        m_dts[lev] = m_dts[lev - 1] / m_nsubsteps[lev];
     }
 }
 
@@ -675,8 +675,8 @@ void LBM::MakeNewLevelFromCoarse(
         ba, dm, m_eq[lev - 1].nComp(), m_eq[lev - 1].nGrow(), amrex::MFInfo(),
         *(m_factory[lev]));
 
-    m_t_new[lev] = time;
-    m_t_old[lev] = constants::LOW_NUM;
+    m_ts_new[lev] = time;
+    m_ts_old[lev] = constants::LOW_NUM;
 
     initialize_is_fluid(lev);
     m_fillpatch_op->fillpatch_from_coarse(lev, time, m_f[lev]);
@@ -711,8 +711,8 @@ void LBM::MakeNewLevelFromScratch(
         ba, dm, constants::N_MICRO_STATES, m_macrodata[lev].nGrow(),
         amrex::MFInfo(), *(m_factory[lev]));
 
-    m_t_new[lev] = time;
-    m_t_old[lev] = constants::LOW_NUM;
+    m_ts_new[lev] = time;
+    m_ts_old[lev] = constants::LOW_NUM;
 
     // Initialize the data
     initialize_is_fluid(lev);
@@ -796,8 +796,8 @@ void LBM::RemakeLevel(
 
     std::swap(new_state, m_macrodata[lev]);
 
-    m_t_new[lev] = time;
-    m_t_old[lev] = constants::LOW_NUM;
+    m_ts_new[lev] = time;
+    m_ts_old[lev] = constants::LOW_NUM;
 }
 
 // Delete level data
@@ -1000,16 +1000,16 @@ amrex::Vector<const amrex::MultiFab*> LBM::plot_file_mf()
 void LBM::write_plot_file()
 {
     BL_PROFILE("LBM::write_plot_file()");
-    const std::string& plotfilename = plot_file_name(m_istep[0]);
+    const std::string& plotfilename = plot_file_name(m_isteps[0]);
     const auto& mf = plot_file_mf();
     const auto& varnames = plot_file_var_names();
 
     amrex::Print() << "Writing plot file " << plotfilename << " at time "
-                   << m_t_new[0] << std::endl;
+                   << m_ts_new[0] << std::endl;
 
     amrex::WriteMultiLevelPlotfile(
-        plotfilename, finest_level + 1, mf, varnames, Geom(), m_t_new[0],
-        m_istep, refRatio());
+        plotfilename, finest_level + 1, mf, varnames, Geom(), m_ts_new[0],
+        m_isteps, refRatio());
 }
 
 void LBM::write_checkpoint_file() const
@@ -1028,10 +1028,10 @@ void LBM::write_checkpoint_file() const
 
     // checkpoint file name, e.g., chk00010
     const std::string& checkpointname =
-        amrex::Concatenate(m_chk_file, m_istep[0]);
+        amrex::Concatenate(m_chk_file, m_isteps[0]);
 
     amrex::Print() << "Writing checkpoint file " << checkpointname
-                   << " at time " << m_t_new[0] << std::endl;
+                   << " at time " << m_ts_new[0] << std::endl;
 
     const int nlevels = finest_level + 1;
 
@@ -1068,20 +1068,20 @@ void LBM::write_checkpoint_file() const
         header_file << finest_level << "\n";
 
         // write out array of istep
-        for (int i = 0; i < m_istep.size(); ++i) {
-            header_file << m_istep[i] << " ";
+        for (int i = 0; i < m_isteps.size(); ++i) {
+            header_file << m_isteps[i] << " ";
         }
         header_file << "\n";
 
         // write out array of dt
-        for (int i = 0; i < m_dt.size(); ++i) {
-            header_file << m_dt[i] << " ";
+        for (int i = 0; i < m_dts.size(); ++i) {
+            header_file << m_dts[i] << " ";
         }
         header_file << "\n";
 
         // write out array of t_new
-        for (int i = 0; i < m_t_new.size(); ++i) {
-            header_file << m_t_new[i] << " ";
+        for (int i = 0; i < m_ts_new.size(); ++i) {
+            header_file << m_ts_new[i] << " ";
         }
         header_file << "\n";
 
@@ -1133,7 +1133,7 @@ void LBM::read_checkpoint_file()
         std::istringstream lis(line);
         int i = 0;
         while (lis >> word) {
-            m_istep[i++] = std::stoi(word);
+            m_isteps[i++] = std::stoi(word);
         }
     }
 
@@ -1143,7 +1143,7 @@ void LBM::read_checkpoint_file()
         std::istringstream lis(line);
         int i = 0;
         while (lis >> word) {
-            m_dt[i++] = std::stod(word);
+            m_dts[i++] = std::stod(word);
         }
     }
 
@@ -1153,7 +1153,7 @@ void LBM::read_checkpoint_file()
         std::istringstream lis(line);
         int i = 0;
         while (lis >> word) {
-            m_t_new[i++] = std::stod(word);
+            m_ts_new[i++] = std::stod(word);
         }
     }
 
