@@ -34,12 +34,34 @@ jobs:
       - name: Setup
         run: |
           echo "NPROCS=$(nproc)" >> $GITHUB_ENV
+          echo "CCACHE_COMPRESS=1" >> $GITHUB_ENV
+          echo "CCACHE_COMPRESSLEVEL=5" >> $GITHUB_ENV
+          echo "CCACHE_LOGFILE=${{github.workspace}}/ccache.log.txt" >> $GITHUB_ENV
+          echo "CCACHE_MAXSIZE=1G" >> $GITHUB_ENV
+      - name: Install Ccache
+        run: |
+          wget https://github.com/ccache/ccache/releases/download/v4.8/ccache-4.8-linux-x86_64.tar.xz
+          tar xvf ccache-4.8-linux-x86_64.tar.xz
+          sudo cp -f ccache-4.8-linux-x86_64/ccache /usr/local/bin/
+      - name: Set Up Ccache
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/ccache
+          key: ccache-${{github.workflow}}-${{github.job}}-git-${{github.sha}}
+          restore-keys: |
+               ccache-${{github.workflow}}-${{github.job}}-git-
       - name: TG
         working-directory: ./Build
         run: |
           echo "::add-matcher::.github/problem-matchers/gcc.json"
-          make -j ${{env.NPROCS}} COMP=llvm USE_MPI=FALSE DEBUG=TRUE 2>&1 | tee -a build-output.txt
-      - name: TG debug test
+          ccache -z
+          make -j ${{env.NPROCS}} COMP=llvm USE_CCACHE=TRUE USE_MPI=FALSE DEBUG=TRUE 2>&1 | tee -a build-output.txt
+      - name: TG ccache report
+        working-directory: ./Build
+        run: |
+          ccache -s
+          du -hs ${HOME}/.cache/ccache
+      - name: TG test
         working-directory: ./Build
         run: ./marbles3d.llvm.DEBUG.TPROF.ex ../Tests/test_files/tg/tg.inp max_step=2 amr.plt_int=-1 amr.chk_int=-1
       - name: TG debug report
@@ -56,8 +78,13 @@ jobs:
         working-directory: ./Build
         run: |
           echo "::add-matcher::.github/problem-matchers/gcc.json"
-          make realclean
-          make -j ${{env.NPROCS}} COMP=llvm USE_MPI=FALSE DEBUG=TRUE PRECISION=FLOAT 2>&1 | tee -a build-output.txt
+          ccache -z
+          make -j ${{env.NPROCS}} COMP=llvm USE_CCACHE=TRUE USE_MPI=FALSE DEBUG=TRUE PRECISION=FLOAT 2>&1 | tee -a build-output.txt
+      - name: TG debug single precision ccache report
+        working-directory: ./Build
+        run: |
+          ccache -s
+          du -hs ${HOME}/.cache/ccache
       - name: TG debug single precision test
         working-directory: ./Build
         run: ./marbles3d.llvm.FLOAT.DEBUG.TPROF.ex ../Tests/test_files/tg/tg.inp max_step=2 amr.plt_int=-1 amr.chk_int=-1
@@ -80,7 +107,7 @@ jobs:
         build_type: [RelWithDebInfo, Debug]
         include:
           - os: macos-latest
-            install_deps: brew install mpich ninja
+            install_deps: brew install mpich ninja ccache
             comp: llvm
             procs: $(sysctl -n hw.ncpu)
           - os: ubuntu-latest
