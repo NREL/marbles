@@ -244,6 +244,14 @@ jobs:
         uses: actions/checkout@v3
         with:
           submodules: true
+      - name: Setup
+        run: |
+          echo "NPROCS=$(nproc)" >> $GITHUB_ENV
+          echo "CCACHE_COMPRESS=1" >> $GITHUB_ENV
+          echo "CCACHE_COMPRESSLEVEL=5" >> $GITHUB_ENV
+          echo "CCACHE_LOGFILE=${{github.workspace}}/ccache.log.txt" >> $GITHUB_ENV
+          echo "CCACHE_MAXSIZE=1G" >> $GITHUB_ENV
+          echo "CCACHE_DEPEND=1" >> $GITHUB_ENV
       - name: Dependencies
         run: |
           sudo wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
@@ -251,28 +259,45 @@ jobs:
           echo "deb https://apt.repos.intel.com/oneapi all main" \
               | sudo tee /etc/apt/sources.list.d/oneAPI.list
           sudo apt-get update
-          sudo apt-get install -y ninja-build intel-oneapi-compiler-dpcpp-cpp intel-oneapi-mkl-devel
+          sudo apt-get install -y intel-oneapi-compiler-dpcpp-cpp intel-oneapi-mkl-devel
+      - name: Install Ccache
+        run: |
+          wget https://github.com/ccache/ccache/releases/download/v4.8/ccache-4.8-linux-x86_64.tar.xz
+          tar xvf ccache-4.8-linux-x86_64.tar.xz
+          sudo cp -f ccache-4.8-linux-x86_64/ccache /usr/local/bin/
+      - name: Set Up Ccache
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/ccache
+          key: ccache-${{github.workflow}}-${{github.job}}-git-${{github.sha}}
+          restore-keys: |
+               ccache-${{github.workflow}}-${{github.job}}-git-
       - name: Configure
         run: |
           set +e
           source /opt/intel/oneapi/setvars.sh
           set -e
-          cmake -G Ninja -B -B${{runner.workspace}}/build-sycl \
+          cmake -B${{runner.workspace}}/build-sycl \
             -DCMAKE_BUILD_TYPE:STRING=Release \
+            -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON \
             -DCMAKE_CXX_COMPILER:STRING=$(which icpx) \
             -DCMAKE_C_COMPILER:STRING=$(which icx) \
             -DCMAKE_CXX_FLAGS:STRING=-fsycl \
             -DMARBLES_ENABLE_MPI:BOOL=OFF \
             -DMARBLES_ENABLE_SYCL:BOOL=ON \
+            -DCMAKE_CXX_COMPILER_LAUNCHER:STRING=ccache \
             ${{github.workspace}}
-          VERBOSE=1 cmake --build build-sycl -- -j $(nproc)
       - name: Build
-        working-directory: ${{runner.workspace}}/build-sycl
         run: |
           set +e
           source /opt/intel/oneapi/setvars.sh
           set -e
-          VERBOSE=1 cmake --build build-sycl -- -j $(nproc)
+          ccache -z
+          VERBOSE=1 cmake --build ${{runner.workspace}}/build-sycl --parallel ${{env.NPROCS}}
+      - name: Ccache Report
+        run: |
+          ccache -s
+          du -hs ${HOME}/.cache/ccache
   Lint-cppcheck:
     needs: Formatting
     runs-on: macos-latest
@@ -285,25 +310,25 @@ jobs:
         run: brew install cppcheck
       - name: Configure
         run: |
-          echo "NPROCS=$(sysctl -n hw.ncpu)" >> $GITHUB_ENV
-          cmake \
-          -B ${{runner.workspace}}/build-cppcheck \
+          cmake -B${{runner.workspace}}/build-cppcheck \
           -DMARBLES_ENABLE_MPI:BOOL=OFF \
-          -DMARBLES_TEST_WITH_FCOMPARE:BOOL=OFF \
+          -DMARBLES_ENABLE_FCOMPARE_FOR_TESTS:BOOL=OFF \
           -DMARBLES_ENABLE_CPPCHECK:BOOL=ON \
           ${{github.workspace}}
       - name: Check
         working-directory: ${{runner.workspace}}/build-cppcheck
-        run: cmake --build . --parallel $(sysctl -n hw.ncpu) -t cppcheck-ci
+        run: make cppcheck
       - name: Full report
-        working-directory: ${{runner.workspace}}/build-cppcheck
-        run: cat cppcheck/cppcheck-full-report.txt
+        working-directory: ${{runner.workspace}}/build-cppcheck/cppcheck
+        run: cat cppcheck-full-report.txt
       - name: Short report
-        working-directory: ${{runner.workspace}}/build-cppcheck
+        working-directory: ${{runner.workspace}}/build-cppcheck/cppcheck
         run: |
           echo "::add-matcher::.github/problem-matchers/cppcheck.json"
-          cat cppcheck-ci-report.txt
-          exit $(tail -n 1 cppcheck-ci-report.txt | awk '{print $2}')
+          awk 'BEGIN{i=0}{print $0}{i++}END{print "Warnings: "i}' < cppcheck-report.txt > cppcheck-warnings.txt
+          cat cppcheck-warnings.txt
+          export return=$(tail -n 1 cppcheck-warnings.txt | awk '{print $2}')
+          exit ${return}
   Lint-clang-tidy:
     needs: Formatting
     runs-on: ubuntu-latest
