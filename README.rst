@@ -48,7 +48,7 @@ Dependencies
 Documentation
 ~~~~~~~~~~~~~
 
-The full documentation for `MARBLES` exists in the Docs directory; at present this is maintained inline using Sphinx  `Sphinx <http://www.sphinx-doc.org>`_.
+The full documentation for `MARBLES` exists in the Docs directory; at present this is maintained inline using `Sphinx <http://www.sphinx-doc.org>`_.
 
     cd Docs && mkdir build && cd build && sphinx-build -M html ../sphinx .
 
