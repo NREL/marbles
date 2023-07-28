@@ -33,7 +33,7 @@ To compile and run `MARBLES`, one needs a C++ compiler that supports the C++17 s
 .. note::
    A. In the exec line above, xxx.yyy is a tag identifying your compiler and various build options, and will vary across pltaform.  (Note that GNU compilers must be at least version 7, and MPI should be at least of standard version 3).
    B. The example file can be any file from the `Tests/test_files` directories.
-   C. In addition to informative output to the terminal, periodic plotfiles are written in the run folder.  These may be viewed with CCSE's `Amrvis <https://amrex-codes.github.io/amrex/docs_html/Visualization.html>`_ or `VisIt https://visit-dav.github.io/visit-website/`_:
+   C. In addition to informative output to the terminal, periodic plotfiles are written in the run folder.  These may be viewed with AMReX's `Amrvis <https://amrex-codes.github.io/amrex/docs_html/Visualization.html>`_ or `VisIt <https://visit-dav.github.io/visit-website/>`_:
 
       1. In VisIt, direct the File->Open dialogue to select the file named "Header" that is inside each plotfile folder..
       2. With Amrvis, "amrvis3d plt00030", for example.
