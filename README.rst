@@ -30,8 +30,7 @@ To compile and run `MARBLES`, one needs a C++ compiler that supports the C++17 s
     $ make realclean && make -j
     $ ./marbles3d.xxx.yyy.ex example.inp
 
-Notes ::
-
+.. note::
    A. In the exec line above, xxx.yyy is a tag identifying your compiler and various build options, and will vary across pltaform.  (Note that GNU compilers must be at least version 7, and MPI should be at least of standard version 3).
    B. The example file can be any file from the `Tests/test_files` directories.
    C. In addition to informative output to the terminal, periodic plotfiles are written in the run folder.  These may be viewed with CCSE's Amrvis (<https://ccse.lbl.gov/Downloads/downloadAmrvis.html>) or Vis-It (<http://vis.lbl.gov/NERSC/Software/visit/>):
