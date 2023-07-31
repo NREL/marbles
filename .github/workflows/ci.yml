@@ -393,7 +393,7 @@ jobs:
         run: |
           cmake -B${{runner.workspace}}/build-cppcheck \
           -DMARBLES_ENABLE_MPI:BOOL=OFF \
-          -DMARBLES_ENABLE_FCOMPARE_FOR_TESTS:BOOL=OFF \
+          -DMARBLES_TEST_WITH_FCOMPARE:BOOL=OFF \
           -DMARBLES_ENABLE_CPPCHECK:BOOL=ON \
           ${{github.workspace}}
       - name: Check
