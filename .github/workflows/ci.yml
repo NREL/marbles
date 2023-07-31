@@ -243,7 +243,7 @@ jobs:
       - name: Build
         run: |
           ccache -z
-          cmake --build build-${{matrix.cuda_pkg}} --parallel ${{env.NPROCS}}
+          cmake --build build-${{matrix.cuda_pkg}} --parallel 1
       - name: Ccache Report
         run: |
           ccache -s
