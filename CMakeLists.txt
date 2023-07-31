@@ -103,6 +103,7 @@ if(MARBLES_ENABLE_CUDA)
   foreach(tgt IN LISTS mtargets)
     set_cuda_build_properties(${tgt})
   endforeach()
+  target_compile_options(${marbles_exe_name} PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:-Xptxas --disable-optimizer-constants>)
 endif()
 
 enable_testing()
