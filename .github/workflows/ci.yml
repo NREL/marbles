@@ -54,6 +54,7 @@ jobs:
         working-directory: ./Build
         run: |
           echo "::add-matcher::.github/problem-matchers/gcc.json"
+          set -eu -o pipefail
           ccache -z
           make -j ${{env.NPROCS}} COMP=llvm USE_CCACHE=TRUE USE_MPI=FALSE DEBUG=TRUE 2>&1 | tee -a build-output.txt
       - name: TG ccache report
@@ -78,6 +79,7 @@ jobs:
         working-directory: ./Build
         run: |
           echo "::add-matcher::.github/problem-matchers/gcc.json"
+          set -eu -o pipefail
           ccache -z
           make -j ${{env.NPROCS}} COMP=llvm USE_CCACHE=TRUE USE_MPI=FALSE DEBUG=TRUE PRECISION=FLOAT 2>&1 | tee -a build-output.txt
       - name: TG debug single precision ccache report
