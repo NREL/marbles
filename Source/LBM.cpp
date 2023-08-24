@@ -68,7 +68,8 @@ LBM::LBM()
         } else if (
             (m_bc_lo[idim] == bc::NOSLIPWALL) ||
             (m_bc_lo[idim] == bc::VELOCITY) ||
-            (m_bc_lo[idim] == bc::PRESSURE) || (m_bc_lo[idim] == bc::OUTFLOW)) {
+            (m_bc_lo[idim] == bc::PRESSURE) || (m_bc_lo[idim] == bc::OUTFLOW) ||
+            (m_bc_lo[idim] == bc::OUTFLOW_ZEROTH_ORDER)) {
             for (auto& bc : m_bcs) {
                 bc.setLo(idim, amrex::BCType::ext_dir);
             }
@@ -84,7 +85,8 @@ LBM::LBM()
         } else if (
             (m_bc_hi[idim] == bc::NOSLIPWALL) ||
             (m_bc_hi[idim] == bc::VELOCITY) ||
-            (m_bc_hi[idim] == bc::PRESSURE) || (m_bc_hi[idim] == bc::OUTFLOW)) {
+            (m_bc_hi[idim] == bc::PRESSURE) || (m_bc_hi[idim] == bc::OUTFLOW) ||
+            (m_bc_hi[idim] == bc::OUTFLOW_ZEROTH_ORDER)) {
             for (auto& bc : m_bcs) {
                 bc.setHi(idim, amrex::BCType::ext_dir);
             }
