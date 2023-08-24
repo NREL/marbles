@@ -148,6 +148,7 @@ void LBM::read_parameters()
         pp.query("chk_file", m_chk_file);
         pp.query("chk_int", m_chk_int);
         pp.query("restart", m_restart_chkfile);
+        pp.query("file_name_digits", m_file_name_digits);
     }
 
     {
@@ -965,7 +966,12 @@ amrex::Vector<std::string> LBM::plot_file_var_names() const
 
 std::string LBM::plot_file_name(const int step) const
 {
-    return amrex::Concatenate(m_plot_file, step, 5);
+    return amrex::Concatenate(m_plot_file, step, m_file_name_digits);
+}
+
+std::string LBM::chk_file_name(const int step) const
+{
+    return amrex::Concatenate(m_chk_file, step, m_file_name_digits);
 }
 
 // put together an array of multifabs for writing
@@ -1032,9 +1038,7 @@ void LBM::write_checkpoint_file() const
     // etc.                these subdirectories will hold the MultiFab data
     // at each level of refinement
 
-    // checkpoint file name, e.g., chk00010
-    const std::string& checkpointname =
-        amrex::Concatenate(m_chk_file, m_isteps[0]);
+    const std::string& checkpointname = chk_file_name(m_isteps[0]);
 
     amrex::Print() << "Writing checkpoint file " << checkpointname
                    << " at time " << m_ts_new[0] << std::endl;

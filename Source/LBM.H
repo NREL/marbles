@@ -148,6 +148,9 @@ private:
     // get plotfile name
     std::string plot_file_name(const int step) const;
 
+    // get chkfile name
+    std::string chk_file_name(const int step) const;
+
     // set plotfile variables names
     amrex::Vector<std::string> plot_file_var_names() const;
 
@@ -219,6 +222,9 @@ private:
     // checkpoint prefix and frequency
     std::string m_chk_file{"chk"};
     int m_chk_int = -1;
+
+    // digits used in chk and plt file names
+    int m_file_name_digits{5};
 
     // error tags
     amrex::Vector<amrex::AMRErrorTag> m_err_tags;
