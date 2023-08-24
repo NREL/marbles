@@ -829,6 +829,11 @@ void LBM::set_bcs()
         m_fillpatch_op = std::make_unique<FillPatchOps<VelBCOp>>(
             geom, refRatio(), m_bcs,
             VelBCOp(m_mesh_speed, m_bc_type, m_f[0].nGrowVect()), m_f);
+    } else if (m_velocity_bc_type == "parabolic") {
+        using VelBCOp = bc::BCOpCreator<bc::Parabolic>;
+        m_fillpatch_op = std::make_unique<FillPatchOps<VelBCOp>>(
+            geom, refRatio(), m_bcs,
+            VelBCOp(m_mesh_speed, m_bc_type, m_f[0].nGrowVect()), m_f);
     } else {
         amrex::Abort("LBM::set_bcs(): Unknown velocity BC");
     }

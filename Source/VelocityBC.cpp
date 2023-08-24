@@ -16,4 +16,12 @@ Channel::Channel()
     pp.query("u_ref", m_op.u_ref);
 }
 
+Parabolic::Parabolic()
+{
+    amrex::ParmParse pp("velocity_bc_parabolic");
+    pp.query("normal_dir", m_op.normal_dir);
+    pp.query("tangential_dir", m_op.tangential_dir);
+    pp.query("um", m_op.um);
+}
+
 } // namespace lbm::bc
