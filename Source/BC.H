@@ -218,6 +218,28 @@ struct BCFill
         }
     }
 
+
+    AMREX_GPU_DEVICE
+    AMREX_FORCE_INLINE
+    void simple_outflow_bc(
+        const amrex::IntVect& iv,
+        const int q,
+        const amrex::IntVect& ev,
+        const int idir,
+        const int ndir,
+        amrex::Array4<amrex::Real> const& data) const
+    {
+        // Prepare the ghost cell layer of f_ for
+        // streaming due to an outflow condition This
+        // copies the rate of change from the last two
+        // interior cell onto the ghost layer such that
+        // when streaming you have the effect of "no
+        // change" in the direction across the boundary.
+        amrex::IntVect iv_shift(amrex::IntVect::TheDimensionVector(idir));
+
+        data(iv, q) = data(iv + 1 * ndir * iv_shift, q);
+    }
+
     AMREX_GPU_DEVICE
     void operator()(
         const amrex::IntVect& iv,
@@ -280,6 +302,8 @@ struct BCFill
                                     iv, q, ev, idir, normal_dir, rho_bc, data);
                             } else if (m_bc_type[bc_idx] == 4) {
                                 outflow_bc(iv, q, ev, idir, normal_dir, data);
+                            } else if (m_bc_type[bc_idx] == 5) {
+                                simple_outflow_bc(iv, q, ev, idir, normal_dir, data);
                             }
                         }
                     }
