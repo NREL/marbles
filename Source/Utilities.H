@@ -39,6 +39,41 @@ AMREX_GPU_DEVICE AMREX_INLINE void set_equilibrium_value(
     eq = rho * wt * (1.0 + c1 + c2 + c3);
 }
 
+AMREX_GPU_DEVICE AMREX_INLINE amrex::Real vel_grad(
+    const int dir,
+    const int vdir,
+    const amrex::IntVect& iv,
+    const amrex::GpuArray<amrex::Real, AMREX_SPACEDIM>& idx,
+    const amrex::Box& dbox,
+    const amrex::Array4<const int>& is_fluid,
+    const amrex::Array4<const amrex::Real>& md)
+{
+    const amrex::IntVect ivp(iv + amrex::IntVect::TheDimensionVector(dir));
+    const amrex::IntVect ivm(iv - amrex::IntVect::TheDimensionVector(dir));
+    amrex::Real vp = 0.0, vc = 0.0, vm = 0.0;
+
+    if (((!dbox.contains(ivp)) || (is_fluid(ivp) != 1)) &&
+        ((!dbox.contains(ivm)) || (is_fluid(ivm) != 1))) {
+        vp = 0.0;
+        vc = 0.0;
+        vm = 0.0;
+    } else if ((!dbox.contains(ivp)) || (is_fluid(ivp) != 1)) {
+        vp = 0.0;
+        vc = md(iv, vdir);
+        vm = md(ivm, vdir);
+    } else if ((!dbox.contains(ivm)) || (is_fluid(ivm) != 1)) {
+        vp = md(ivp, vdir);
+        vc = md(iv, vdir);
+        vm = 0.0;
+    } else {
+        vp = 0.5 * md(ivp, vdir);
+        vc = 0.0;
+        vm = 0.5 * md(ivm, vdir);
+    }
+
+    return (vp + vc + vm) * idx[dir];
+}
+
 // Version of average_down that also averages down fine ghost cells
 void average_down_with_ghosts(
     const amrex::MultiFab& fine,

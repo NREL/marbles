@@ -642,6 +642,7 @@ void LBM::compute_derived(const int lev)
     auto const& is_fluid_arrs = m_is_fluid[lev].const_arrays();
     auto const& d_arrs = m_derived[lev].arrays();
     const auto& idx = geom[lev].InvCellSizeArray();
+    const amrex::Box& dbox = geom[lev].Domain();
 
     amrex::ParallelFor(
         m_derived[lev], m_derived[lev].nGrowVect(),
@@ -655,59 +656,32 @@ void LBM::compute_derived(const int lev)
                 amrex::Real vx = 0.0, wx = 0.0, uy = 0.0, wy = 0.0, uz = 0.0,
                             vz = 0.0;
                 {
-                    const amrex::Real cp = 0.5;
-                    const amrex::Real c0 = 0.0;
-                    const amrex::Real cm = -0.5;
-                    int dir = 0;
-                    const amrex::IntVect ivp(
-                        iv + amrex::IntVect::TheDimensionVector(dir));
-                    const amrex::IntVect ivm(
-                        iv - amrex::IntVect::TheDimensionVector(dir));
-                    vx = (cp * md_arr(ivp, constants::VELY_IDX) +
-                          c0 * md_arr(iv, constants::VELY_IDX) +
-                          cm * md_arr(ivm, constants::VELY_IDX)) *
-                         idx[dir];
-                    wx = (cp * md_arr(ivp, constants::VELZ_IDX) +
-                          c0 * md_arr(iv, constants::VELZ_IDX) +
-                          cm * md_arr(ivm, constants::VELZ_IDX)) *
-                         idx[dir];
+                    const int dir = 0;
+                    vx = vel_grad(
+                        dir, constants::VELY_IDX, iv, idx, dbox, if_arr,
+                        md_arr);
+                    wx = vel_grad(
+                        dir, constants::VELZ_IDX, iv, idx, dbox, if_arr,
+                        md_arr);
                 }
 
                 {
-                    const amrex::Real cp = 0.5;
-                    const amrex::Real c0 = 0.0;
-                    const amrex::Real cm = -0.5;
                     const int dir = 1;
-                    const amrex::IntVect ivp(
-                        iv + amrex::IntVect::TheDimensionVector(dir));
-                    const amrex::IntVect ivm(
-                        iv - amrex::IntVect::TheDimensionVector(dir));
-                    uy = (cp * md_arr(ivp, constants::VELX_IDX) +
-                          c0 * md_arr(iv, constants::VELX_IDX) +
-                          cm * md_arr(ivm, constants::VELX_IDX)) *
-                         idx[dir];
-                    wy = (cp * md_arr(ivp, constants::VELZ_IDX) +
-                          c0 * md_arr(iv, constants::VELZ_IDX) +
-                          cm * md_arr(ivm, constants::VELZ_IDX)) *
-                         idx[dir];
+                    uy = vel_grad(
+                        dir, constants::VELX_IDX, iv, idx, dbox, if_arr,
+                        md_arr);
+                    wy = vel_grad(
+                        dir, constants::VELZ_IDX, iv, idx, dbox, if_arr,
+                        md_arr);
                 }
                 {
-                    const amrex::Real cp = 0.5;
-                    const amrex::Real c0 = 0.0;
-                    const amrex::Real cm = -0.5;
                     const int dir = 2;
-                    const amrex::IntVect ivp(
-                        iv + amrex::IntVect::TheDimensionVector(dir));
-                    const amrex::IntVect ivm(
-                        iv - amrex::IntVect::TheDimensionVector(dir));
-                    uz = (cp * md_arr(ivp, constants::VELX_IDX) +
-                          c0 * md_arr(iv, constants::VELX_IDX) +
-                          cm * md_arr(ivm, constants::VELX_IDX)) *
-                         idx[dir];
-                    vz = (cp * md_arr(ivp, constants::VELY_IDX) +
-                          c0 * md_arr(iv, constants::VELY_IDX) +
-                          cm * md_arr(ivm, constants::VELY_IDX)) *
-                         idx[dir];
+                    uz = vel_grad(
+                        dir, constants::VELX_IDX, iv, idx, dbox, if_arr,
+                        md_arr);
+                    vz = vel_grad(
+                        dir, constants::VELY_IDX, iv, idx, dbox, if_arr,
+                        md_arr);
                 }
                 d_arr(iv, constants::VORTX_IDX) = wy - vz;
                 d_arr(iv, constants::VORTY_IDX) = uz - wx;
