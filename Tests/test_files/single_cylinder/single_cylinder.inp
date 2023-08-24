@@ -12,6 +12,7 @@ amr.max_grid_size = 32
 amr.blocking_factor = 2
 amr.plot_int = 10
 amr.chk_int = 10
+amr.file_name_digits = 5
 
 lbm.bc_lo = 1 2 0
 lbm.bc_hi = 1 5 0
