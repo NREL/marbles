@@ -24,12 +24,21 @@ LBM::LBM()
             num_str;
         m_microdata_varnames.push_back("f_" + zero_padded_str);
     }
+    m_deriveddata_varnames.push_back("vort_x");
+    m_deriveddata_varnames.push_back("vort_y");
+    m_deriveddata_varnames.push_back("vort_z");
+    m_deriveddata_varnames.push_back("vort_mag");
     m_idata_varnames.push_back("is_fluid");
     for (const auto& vname : m_macrodata_varnames) {
         m_lbm_varnames.push_back(vname);
     }
-    if (m_save_streaming == 1) {
+    if (m_save_streaming) {
         for (const auto& vname : m_microdata_varnames) {
+            m_lbm_varnames.push_back(vname);
+        }
+    }
+    if (m_save_derived) {
+        for (const auto& vname : m_deriveddata_varnames) {
             m_lbm_varnames.push_back(vname);
         }
     }
@@ -52,6 +61,7 @@ LBM::LBM()
     m_macrodata.resize(nlevs_max);
     m_f.resize(nlevs_max);
     m_eq.resize(nlevs_max);
+    m_derived.resize(nlevs_max);
     m_is_fluid.resize(nlevs_max);
     m_plt_mf.resize(nlevs_max);
 
@@ -220,6 +230,7 @@ void LBM::read_parameters()
         pp.query("nu", m_nu);
 
         pp.query("save_streaming", m_save_streaming);
+        pp.query("save_derived", m_save_derived);
 
         m_mesh_speed = m_dx_outer / m_dt_outer;
         m_cs = m_mesh_speed / constants::ROOT3;
@@ -341,6 +352,8 @@ void LBM::evolve()
         m_fillpatch_op->fillpatch(0, cur_time, m_f[0]);
         time_step(0, cur_time, 1);
 
+        post_time_step();
+
         cur_time += m_dts[0];
 
         // sync up time
@@ -446,6 +459,15 @@ void LBM::advance(
     }
 
     collide(lev);
+}
+
+void LBM::post_time_step()
+{
+    BL_PROFILE("LBM::post_time_step()");
+
+    for (int lev = 0; lev <= finest_level; ++lev) {
+        compute_derived(lev);
+    }
 }
 
 // Stream the information to the neighbor particles
@@ -612,6 +634,92 @@ void LBM::f_to_macrodata(const int lev)
     amrex::Gpu::synchronize();
 }
 
+// Compute derived quantities
+void LBM::compute_derived(const int lev)
+{
+    BL_PROFILE("LBM::compute_derived()");
+    auto const& md_arrs = m_macrodata[lev].const_arrays();
+    auto const& is_fluid_arrs = m_is_fluid[lev].const_arrays();
+    auto const& d_arrs = m_derived[lev].arrays();
+    const auto& idx = geom[lev].InvCellSizeArray();
+
+    amrex::ParallelFor(
+        m_derived[lev], m_derived[lev].nGrowVect(),
+        [=] AMREX_GPU_DEVICE(int nbx, int i, int j, int k) noexcept {
+            const auto md_arr = md_arrs[nbx];
+            const auto if_arr = is_fluid_arrs[nbx];
+            const auto d_arr = d_arrs[nbx];
+            const amrex::IntVect iv(i, j, k);
+
+            if (if_arr(iv) == 1) {
+                amrex::Real vx = 0.0, wx = 0.0, uy = 0.0, wy = 0.0, uz = 0.0,
+                            vz = 0.0;
+                {
+                    const amrex::Real cp = 0.5;
+                    const amrex::Real c0 = 0.0;
+                    const amrex::Real cm = -0.5;
+                    int dir = 0;
+                    const amrex::IntVect ivp(
+                        iv + amrex::IntVect::TheDimensionVector(dir));
+                    const amrex::IntVect ivm(
+                        iv - amrex::IntVect::TheDimensionVector(dir));
+                    vx = (cp * md_arr(ivp, constants::VELY_IDX) +
+                          c0 * md_arr(iv, constants::VELY_IDX) +
+                          cm * md_arr(ivm, constants::VELY_IDX)) *
+                         idx[dir];
+                    wx = (cp * md_arr(ivp, constants::VELZ_IDX) +
+                          c0 * md_arr(iv, constants::VELZ_IDX) +
+                          cm * md_arr(ivm, constants::VELZ_IDX)) *
+                         idx[dir];
+                }
+
+                {
+                    const amrex::Real cp = 0.5;
+                    const amrex::Real c0 = 0.0;
+                    const amrex::Real cm = -0.5;
+                    const int dir = 1;
+                    const amrex::IntVect ivp(
+                        iv + amrex::IntVect::TheDimensionVector(dir));
+                    const amrex::IntVect ivm(
+                        iv - amrex::IntVect::TheDimensionVector(dir));
+                    uy = (cp * md_arr(ivp, constants::VELX_IDX) +
+                          c0 * md_arr(iv, constants::VELX_IDX) +
+                          cm * md_arr(ivm, constants::VELX_IDX)) *
+                         idx[dir];
+                    wy = (cp * md_arr(ivp, constants::VELZ_IDX) +
+                          c0 * md_arr(iv, constants::VELZ_IDX) +
+                          cm * md_arr(ivm, constants::VELZ_IDX)) *
+                         idx[dir];
+                }
+                {
+                    const amrex::Real cp = 0.5;
+                    const amrex::Real c0 = 0.0;
+                    const amrex::Real cm = -0.5;
+                    const int dir = 2;
+                    const amrex::IntVect ivp(
+                        iv + amrex::IntVect::TheDimensionVector(dir));
+                    const amrex::IntVect ivm(
+                        iv - amrex::IntVect::TheDimensionVector(dir));
+                    uz = (cp * md_arr(ivp, constants::VELX_IDX) +
+                          c0 * md_arr(iv, constants::VELX_IDX) +
+                          cm * md_arr(ivm, constants::VELX_IDX)) *
+                         idx[dir];
+                    vz = (cp * md_arr(ivp, constants::VELY_IDX) +
+                          c0 * md_arr(iv, constants::VELY_IDX) +
+                          cm * md_arr(ivm, constants::VELY_IDX)) *
+                         idx[dir];
+                }
+                d_arr(iv, constants::VORTX_IDX) = wy - vz;
+                d_arr(iv, constants::VORTY_IDX) = uz - wx;
+                d_arr(iv, constants::VORTZ_IDX) = vx - uy;
+                d_arr(iv, constants::VORTM_IDX) = std::sqrt(
+                    (wy - vz) * (wy - vz) + (uz - wx) * (uz - wx) +
+                    (vx - uy) * (vx - uy));
+            }
+        });
+    amrex::Gpu::synchronize();
+}
+
 // a wrapper for EstTimeStep
 void LBM::compute_dt()
 {
@@ -676,6 +784,9 @@ void LBM::MakeNewLevelFromCoarse(
     m_eq[lev].define(
         ba, dm, m_eq[lev - 1].nComp(), m_eq[lev - 1].nGrow(), amrex::MFInfo(),
         *(m_factory[lev]));
+    m_derived[lev].define(
+        ba, dm, m_derived[lev - 1].nComp(), m_derived[lev - 1].nGrow(),
+        amrex::MFInfo(), *(m_factory[lev]));
 
     m_ts_new[lev] = time;
     m_ts_old[lev] = constants::LOW_NUM;
@@ -684,6 +795,7 @@ void LBM::MakeNewLevelFromCoarse(
     m_fillpatch_op->fillpatch_from_coarse(lev, time, m_f[lev]);
     m_macrodata[lev].setVal(0.0);
     m_eq[lev].setVal(0.0);
+    m_derived[lev].setVal(0.0);
     f_to_macrodata(lev);
     macrodata_to_equilibrium(lev);
 }
@@ -712,6 +824,9 @@ void LBM::MakeNewLevelFromScratch(
     m_eq[lev].define(
         ba, dm, constants::N_MICRO_STATES, m_macrodata[lev].nGrow(),
         amrex::MFInfo(), *(m_factory[lev]));
+    m_derived[lev].define(
+        ba, dm, constants::N_DERIVED, m_macrodata[lev].nGrow(), amrex::MFInfo(),
+        *(m_factory[lev]));
 
     m_ts_new[lev] = time;
     m_ts_old[lev] = constants::LOW_NUM;
@@ -721,6 +836,7 @@ void LBM::MakeNewLevelFromScratch(
     initialize_f(lev);
     m_macrodata[lev].setVal(0.0);
     m_eq[lev].setVal(0.0);
+    m_derived[lev].setVal(0.0);
     f_to_macrodata(lev);
     macrodata_to_equilibrium(lev);
 }
@@ -809,6 +925,7 @@ void LBM::ClearLevel(int lev)
     m_macrodata[lev].clear();
     m_f[lev].clear();
     m_eq[lev].clear();
+    m_derived[lev].clear();
     m_is_fluid[lev].clear();
     m_plt_mf[lev].clear();
 }
@@ -862,7 +979,8 @@ bool LBM::check_field_existence(const std::string& name)
 {
     BL_PROFILE("LBM::check_field_existence()");
     const auto vnames = {
-        m_macrodata_varnames, m_microdata_varnames, m_idata_varnames};
+        m_macrodata_varnames, m_microdata_varnames, m_deriveddata_varnames,
+        m_idata_varnames};
     return std::any_of(vnames.begin(), vnames.end(), [=](const auto& vn) {
         return get_field_component(name, vn) != -1;
     });
@@ -901,6 +1019,10 @@ LBM::get_field(const std::string& name, const int lev, const int ngrow)
     const int srccomp_mid = get_field_component(name, m_microdata_varnames);
     if (srccomp_mid != -1) {
         amrex::MultiFab::Copy(*mf, m_f[lev], srccomp_mid, 0, nc, ngrow);
+    }
+    const int srccomp_mdd = get_field_component(name, m_deriveddata_varnames);
+    if (srccomp_mdd != -1) {
+        amrex::MultiFab::Copy(*mf, m_derived[lev], srccomp_mid, 0, nc, ngrow);
     }
     const int srccomp_id = get_field_component(name, m_idata_varnames);
     if (srccomp_id != -1) {
@@ -988,10 +1110,16 @@ amrex::Vector<const amrex::MultiFab*> LBM::plot_file_mf()
             m_plt_mf[lev], m_macrodata[lev], 0, cnt, m_macrodata[lev].nComp(),
             0);
         cnt += m_macrodata[lev].nComp();
-        if (m_save_streaming == 1) {
+        if (m_save_streaming) {
             amrex::MultiFab::Copy(
                 m_plt_mf[lev], m_f[lev], 0, cnt, m_f[lev].nComp(), 0);
             cnt += m_f[lev].nComp();
+        }
+        if (m_save_derived) {
+            amrex::MultiFab::Copy(
+                m_plt_mf[lev], m_derived[lev], 0, cnt, m_derived[lev].nComp(),
+                0);
+            cnt += m_derived[lev].nComp();
         }
         auto const& is_fluid_arrs = m_is_fluid[lev].const_arrays();
         auto const& plt_mf_arrs = m_plt_mf[lev].arrays();
@@ -1210,6 +1338,7 @@ void LBM::read_checkpoint_file()
         initialize_f(lev);
         m_macrodata[lev].setVal(0.0);
         m_eq[lev].setVal(0.0);
+        m_derived[lev].setVal(0.0);
         f_to_macrodata(lev);
         macrodata_to_equilibrium(lev);
     }

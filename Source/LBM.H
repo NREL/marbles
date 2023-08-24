@@ -88,6 +88,9 @@ public:
     // Relax the particles toward the equilibrium state
     void relax_f_to_equilibrium(const int lev);
 
+    // Compute derived quantities
+    void compute_derived(const int lev);
+
     // Initialize microdata
     void initialize_f(const int lev);
 
@@ -124,6 +127,9 @@ private:
         const amrex::Real dt_lev,
         const int iteration,
         const int ncycle);
+
+    // perform work after a time step
+    void post_time_step();
 
     // Check if a field exists
     bool check_field_existence(const std::string& name);
@@ -182,12 +188,14 @@ private:
     amrex::Vector<std::string> m_lbm_varnames;
     amrex::Vector<std::string> m_macrodata_varnames;
     amrex::Vector<std::string> m_microdata_varnames;
+    amrex::Vector<std::string> m_deriveddata_varnames;
     amrex::Vector<std::string> m_idata_varnames;
 
     // array of multifabs to store the solution at each level of refinement
     amrex::Vector<amrex::MultiFab> m_macrodata;
     amrex::Vector<amrex::MultiFab> m_f;
     amrex::Vector<amrex::MultiFab> m_eq;
+    amrex::Vector<amrex::MultiFab> m_derived;
     amrex::Vector<amrex::iMultiFab> m_is_fluid;
     amrex::Vector<amrex::MultiFab> m_plt_mf;
 
@@ -235,7 +243,11 @@ private:
     // amrex::Real reynolds = 1.0;
     amrex::Real m_nu = 1.0;
 
-    int m_save_streaming = 1;
+    // save streaming data to plot file
+    bool m_save_streaming = true;
+
+    // save derived data to plot file
+    bool m_save_derived = true;
 
     // Derived values (will be updated after reading in user inputs)
     amrex::Real m_mesh_speed = 1.0;
