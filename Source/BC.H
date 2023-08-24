@@ -218,7 +218,6 @@ struct BCFill
         }
     }
 
-
     AMREX_GPU_DEVICE
     AMREX_FORCE_INLINE
     void simple_outflow_bc(
@@ -303,7 +302,8 @@ struct BCFill
                             } else if (m_bc_type[bc_idx] == 4) {
                                 outflow_bc(iv, q, ev, idir, normal_dir, data);
                             } else if (m_bc_type[bc_idx] == 5) {
-                                simple_outflow_bc(iv, q, ev, idir, normal_dir, data);
+                                simple_outflow_bc(
+                                    iv, q, ev, idir, normal_dir, data);
                             }
                         }
                     }
