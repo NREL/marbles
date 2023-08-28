@@ -536,7 +536,7 @@ void LBM::collide(const int lev)
 void LBM::macrodata_to_equilibrium(const int lev)
 {
     BL_PROFILE("LBM::macrodata_to_equilibrium()");
-    AMREX_ASSERT(m_macrodata[lev].nGrow() == m_eq[lev].nGrow());
+    AMREX_ASSERT(m_macrodata[lev].nGrow() >= m_eq[lev].nGrow());
     auto const& md_arrs = m_macrodata[lev].const_arrays();
     auto const& is_fluid_arrs = m_is_fluid[lev].const_arrays();
     auto const& eq_arrs = m_eq[lev].arrays();
@@ -546,7 +546,7 @@ void LBM::macrodata_to_equilibrium(const int lev)
     const auto& evs = stencil.evs;
     const auto& weight = stencil.weights;
     amrex::ParallelFor(
-        m_eq[lev], m_macrodata[lev].nGrowVect(), constants::N_MICRO_STATES,
+        m_eq[lev], m_eq[lev].nGrowVect(), constants::N_MICRO_STATES,
         [=] AMREX_GPU_DEVICE(int nbx, int i, int j, int k, int q) noexcept {
             const amrex::IntVect iv(i, j, k);
             if (is_fluid_arrs[nbx](iv) == 1) {
@@ -580,7 +580,7 @@ void LBM::relax_f_to_equilibrium(const int lev)
     auto const& f_arrs = m_f[lev].arrays();
     const amrex::Real tau = m_nu / (m_dts[lev] * m_cs_2) + 0.5;
     amrex::ParallelFor(
-        m_f[lev], m_macrodata[lev].nGrowVect(), constants::N_MICRO_STATES,
+        m_f[lev], m_eq[lev].nGrowVect(), constants::N_MICRO_STATES,
         [=] AMREX_GPU_DEVICE(int nbx, int i, int j, int k, int q) noexcept {
             const amrex::IntVect iv(i, j, k);
             if (is_fluid_arrs[nbx](iv) == 1) {
@@ -857,7 +857,6 @@ void LBM::initialize_f(const int lev)
 
     m_f[lev].FillBoundary(Geom(lev).periodicity());
 }
-
 void LBM::initialize_is_fluid(const int lev)
 {
     BL_PROFILE("LBM::initialize_is_fluid()");
@@ -1318,6 +1317,7 @@ void LBM::read_checkpoint_file()
 
         // build MultiFabs
         const int ncomp = static_cast<int>(varnames.size());
+        AMREX_ASSERT(ncomp == constants::N_MICRO_STATES);
         m_factory[lev] = amrex::makeEBFabFactory(
             Geom(lev), ba, dm, {5, 5, 5}, amrex::EBSupport::basic);
         m_f[lev].define(
@@ -1344,7 +1344,8 @@ void LBM::read_checkpoint_file()
     // Populate the other data
     for (int lev = 0; lev <= finest_level; ++lev) {
         initialize_is_fluid(lev);
-        initialize_f(lev);
+        fill_f_inside_eb(lev);
+        m_f[lev].FillBoundary(Geom(lev).periodicity());
         m_macrodata[lev].setVal(0.0);
         m_eq[lev].setVal(0.0);
         m_derived[lev].setVal(0.0);

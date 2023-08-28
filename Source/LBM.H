@@ -201,7 +201,7 @@ private:
 
     const int m_macrodata_nghost = 1;
     const int m_f_nghost = 2;
-    const int m_eq_nghost = 1;
+    const int m_eq_nghost = 0;
     const int m_derived_nghost = 0;
 
     amrex::Vector<int> m_bc_lo{0, 0, 0};
