@@ -536,6 +536,7 @@ void LBM::collide(const int lev)
 void LBM::macrodata_to_equilibrium(const int lev)
 {
     BL_PROFILE("LBM::macrodata_to_equilibrium()");
+    AMREX_ASSERT(m_macrodata[lev].nGrow() == m_eq[lev].nGrow());
     auto const& md_arrs = m_macrodata[lev].const_arrays();
     auto const& is_fluid_arrs = m_is_fluid[lev].const_arrays();
     auto const& eq_arrs = m_eq[lev].arrays();
@@ -638,12 +639,60 @@ void LBM::f_to_macrodata(const int lev)
 void LBM::compute_derived(const int lev)
 {
     BL_PROFILE("LBM::compute_derived()");
+    AMREX_ASSERT(m_macrodata[lev].nGrow() > m_derived[lev].nGrow());
+    const auto& idx = geom[lev].InvCellSizeArray();
+
+    //     amrex::MFItInfo mfi_info;
+    //     if (amrex::Gpu::notInLaunchRegion()) {
+    //         mfi_info.EnableTiling(amrex::IntVect(1024, 1024, 1024))
+    //             .SetDynamic(true);
+    //     }
+    // #ifdef AMREX_USE_OMP
+    // #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+    // #endif
+    //     for (amrex::MFIter mfi(m_derived[lev], mfi_info); mfi.isValid();
+    //     ++mfi) {
+    //         const auto& bx = mfi.validbox();
+    //         const auto& md_arr = m_macrodata[lev].const_array(mfi);
+    //         const auto& if_arr = m_is_fluid[lev].const_array(mfi);
+    //         const auto& d_arr = m_derived[lev].array(mfi);
+    //         amrex::ParallelFor(
+    //             bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
+    //                 const amrex::IntVect iv(i, j, k);
+    //                 if (if_arr(iv) == 1) {
+    //                     const amrex::Real vx = gradient(
+    //                         0, constants::VELY_IDX, iv, idx, bx, if_arr,
+    //                         md_arr);
+    //                     const amrex::Real wx = gradient(
+    //                         0, constants::VELZ_IDX, iv, idx, bx, if_arr,
+    //                         md_arr);
+    //                     const amrex::Real uy = gradient(
+    //                         1, constants::VELX_IDX, iv, idx, bx, if_arr,
+    //                         md_arr);
+    //                     const amrex::Real wy = gradient(
+    //                         1, constants::VELZ_IDX, iv, idx, bx, if_arr,
+    //                         md_arr);
+    //                     const amrex::Real uz = gradient(
+    //                         2, constants::VELX_IDX, iv, idx, bx, if_arr,
+    //                         md_arr);
+    //                     const amrex::Real vz = gradient(
+    //                         2, constants::VELY_IDX, iv, idx, bx, if_arr,
+    //                         md_arr);
+
+    //                     d_arr(iv, constants::VORTX_IDX) = wy - vz;
+    //                     d_arr(iv, constants::VORTY_IDX) = uz - wx;
+    //                     d_arr(iv, constants::VORTZ_IDX) = vx - uy;
+    //                     d_arr(iv, constants::VORTM_IDX) = std::sqrt(
+    //                         (wy - vz) * (wy - vz) + (uz - wx) * (uz - wx) +
+    //                         (vx - uy) * (vx - uy));
+    //                 }
+    //             });
+    //     }
+
     auto const& md_arrs = m_macrodata[lev].const_arrays();
     auto const& is_fluid_arrs = m_is_fluid[lev].const_arrays();
     auto const& d_arrs = m_derived[lev].arrays();
-    const auto& idx = geom[lev].InvCellSizeArray();
     const amrex::Box& dbox = geom[lev].Domain();
-
     amrex::ParallelFor(
         m_derived[lev], m_derived[lev].nGrowVect(),
         [=] AMREX_GPU_DEVICE(int nbx, int i, int j, int k) noexcept {
@@ -653,36 +702,19 @@ void LBM::compute_derived(const int lev)
             const amrex::IntVect iv(i, j, k);
 
             if (if_arr(iv) == 1) {
-                amrex::Real vx = 0.0, wx = 0.0, uy = 0.0, wy = 0.0, uz = 0.0,
-                            vz = 0.0;
-                {
-                    const int dir = 0;
-                    vx = vel_grad(
-                        dir, constants::VELY_IDX, iv, idx, dbox, if_arr,
-                        md_arr);
-                    wx = vel_grad(
-                        dir, constants::VELZ_IDX, iv, idx, dbox, if_arr,
-                        md_arr);
-                }
+                const amrex::Real vx = gradient(
+                    0, constants::VELY_IDX, iv, idx, dbox, if_arr, md_arr);
+                const amrex::Real wx = gradient(
+                    0, constants::VELZ_IDX, iv, idx, dbox, if_arr, md_arr);
+                const amrex::Real uy = gradient(
+                    1, constants::VELX_IDX, iv, idx, dbox, if_arr, md_arr);
+                const amrex::Real wy = gradient(
+                    1, constants::VELZ_IDX, iv, idx, dbox, if_arr, md_arr);
+                const amrex::Real uz = gradient(
+                    2, constants::VELX_IDX, iv, idx, dbox, if_arr, md_arr);
+                const amrex::Real vz = gradient(
+                    2, constants::VELY_IDX, iv, idx, dbox, if_arr, md_arr);
 
-                {
-                    const int dir = 1;
-                    uy = vel_grad(
-                        dir, constants::VELX_IDX, iv, idx, dbox, if_arr,
-                        md_arr);
-                    wy = vel_grad(
-                        dir, constants::VELZ_IDX, iv, idx, dbox, if_arr,
-                        md_arr);
-                }
-                {
-                    const int dir = 2;
-                    uz = vel_grad(
-                        dir, constants::VELX_IDX, iv, idx, dbox, if_arr,
-                        md_arr);
-                    vz = vel_grad(
-                        dir, constants::VELY_IDX, iv, idx, dbox, if_arr,
-                        md_arr);
-                }
                 d_arr(iv, constants::VORTX_IDX) = wy - vz;
                 d_arr(iv, constants::VORTY_IDX) = uz - wx;
                 d_arr(iv, constants::VORTZ_IDX) = vx - uy;
@@ -789,17 +821,17 @@ void LBM::MakeNewLevelFromScratch(
         Geom(lev), ba, dm, {5, 5, 5}, amrex::EBSupport::basic);
 
     m_macrodata[lev].define(
-        ba, dm, constants::N_MACRO_STATES, 0, amrex::MFInfo(),
+        ba, dm, constants::N_MACRO_STATES, m_macrodata_nghost, amrex::MFInfo(),
         *(m_factory[lev]));
     m_f[lev].define(
         ba, dm, constants::N_MICRO_STATES, m_f_nghost, amrex::MFInfo(),
         *(m_factory[lev]));
     m_is_fluid[lev].define(ba, dm, 1, m_f[lev].nGrow());
     m_eq[lev].define(
-        ba, dm, constants::N_MICRO_STATES, m_macrodata[lev].nGrow(),
-        amrex::MFInfo(), *(m_factory[lev]));
+        ba, dm, constants::N_MICRO_STATES, m_eq_nghost, amrex::MFInfo(),
+        *(m_factory[lev]));
     m_derived[lev].define(
-        ba, dm, constants::N_DERIVED, m_macrodata[lev].nGrow(), amrex::MFInfo(),
+        ba, dm, constants::N_DERIVED, m_derived_nghost, amrex::MFInfo(),
         *(m_factory[lev]));
 
     m_ts_new[lev] = time;
@@ -1291,12 +1323,15 @@ void LBM::read_checkpoint_file()
         m_f[lev].define(
             ba, dm, ncomp, m_f_nghost, amrex::MFInfo(), *(m_factory[lev]));
         m_macrodata[lev].define(
-            ba, dm, constants::N_MACRO_STATES, 0, amrex::MFInfo(),
-            *(m_factory[lev]));
+            ba, dm, constants::N_MACRO_STATES, m_macrodata_nghost,
+            amrex::MFInfo(), *(m_factory[lev]));
         m_is_fluid[lev].define(ba, dm, 1, m_f[lev].nGrow());
         m_eq[lev].define(
-            ba, dm, constants::N_MICRO_STATES, m_macrodata[lev].nGrow(),
-            amrex::MFInfo(), *(m_factory[lev]));
+            ba, dm, constants::N_MICRO_STATES, m_eq_nghost, amrex::MFInfo(),
+            *(m_factory[lev]));
+        m_derived[lev].define(
+            ba, dm, constants::N_DERIVED, m_derived_nghost, amrex::MFInfo(),
+            *(m_factory[lev]));
     }
 
     // read in the MultiFab data
