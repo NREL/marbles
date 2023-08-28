@@ -1351,6 +1351,7 @@ void LBM::read_checkpoint_file()
         m_derived[lev].setVal(0.0);
         f_to_macrodata(lev);
         macrodata_to_equilibrium(lev);
+        compute_derived(lev);
     }
 }
 
