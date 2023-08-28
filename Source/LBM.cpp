@@ -757,6 +757,7 @@ void LBM::MakeNewLevelFromCoarse(
     m_derived[lev].setVal(0.0);
     f_to_macrodata(lev);
     macrodata_to_equilibrium(lev);
+    compute_derived(lev);
 }
 
 // Make a new level from scratch using provided BoxArray and
@@ -798,6 +799,7 @@ void LBM::MakeNewLevelFromScratch(
     m_derived[lev].setVal(0.0);
     f_to_macrodata(lev);
     macrodata_to_equilibrium(lev);
+    compute_derived(lev);
 }
 
 void LBM::initialize_f(const int lev)
