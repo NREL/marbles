@@ -642,53 +642,6 @@ void LBM::compute_derived(const int lev)
     AMREX_ASSERT(m_macrodata[lev].nGrow() > m_derived[lev].nGrow());
     const auto& idx = geom[lev].InvCellSizeArray();
 
-    //     amrex::MFItInfo mfi_info;
-    //     if (amrex::Gpu::notInLaunchRegion()) {
-    //         mfi_info.EnableTiling(amrex::IntVect(1024, 1024, 1024))
-    //             .SetDynamic(true);
-    //     }
-    // #ifdef AMREX_USE_OMP
-    // #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
-    // #endif
-    //     for (amrex::MFIter mfi(m_derived[lev], mfi_info); mfi.isValid();
-    //     ++mfi) {
-    //         const auto& bx = mfi.validbox();
-    //         const auto& md_arr = m_macrodata[lev].const_array(mfi);
-    //         const auto& if_arr = m_is_fluid[lev].const_array(mfi);
-    //         const auto& d_arr = m_derived[lev].array(mfi);
-    //         amrex::ParallelFor(
-    //             bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
-    //                 const amrex::IntVect iv(i, j, k);
-    //                 if (if_arr(iv) == 1) {
-    //                     const amrex::Real vx = gradient(
-    //                         0, constants::VELY_IDX, iv, idx, bx, if_arr,
-    //                         md_arr);
-    //                     const amrex::Real wx = gradient(
-    //                         0, constants::VELZ_IDX, iv, idx, bx, if_arr,
-    //                         md_arr);
-    //                     const amrex::Real uy = gradient(
-    //                         1, constants::VELX_IDX, iv, idx, bx, if_arr,
-    //                         md_arr);
-    //                     const amrex::Real wy = gradient(
-    //                         1, constants::VELZ_IDX, iv, idx, bx, if_arr,
-    //                         md_arr);
-    //                     const amrex::Real uz = gradient(
-    //                         2, constants::VELX_IDX, iv, idx, bx, if_arr,
-    //                         md_arr);
-    //                     const amrex::Real vz = gradient(
-    //                         2, constants::VELY_IDX, iv, idx, bx, if_arr,
-    //                         md_arr);
-
-    //                     d_arr(iv, constants::VORTX_IDX) = wy - vz;
-    //                     d_arr(iv, constants::VORTY_IDX) = uz - wx;
-    //                     d_arr(iv, constants::VORTZ_IDX) = vx - uy;
-    //                     d_arr(iv, constants::VORTM_IDX) = std::sqrt(
-    //                         (wy - vz) * (wy - vz) + (uz - wx) * (uz - wx) +
-    //                         (vx - uy) * (vx - uy));
-    //                 }
-    //             });
-    //     }
-
     auto const& md_arrs = m_macrodata[lev].const_arrays();
     auto const& is_fluid_arrs = m_is_fluid[lev].const_arrays();
     auto const& d_arrs = m_derived[lev].arrays();
