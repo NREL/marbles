@@ -60,15 +60,15 @@ AMREX_GPU_DEVICE AMREX_INLINE amrex::Real gradient(
     } else if ((!bx.contains(ivp)) || (is_fluid(ivp) != 1)) {
         vp = 0.0;
         vc = data(iv, comp);
-        vm = data(ivm, comp);
+        vm = -data(ivm, comp);
     } else if ((!bx.contains(ivm)) || (is_fluid(ivm) != 1)) {
         vp = data(ivp, comp);
-        vc = data(iv, comp);
+        vc = -data(iv, comp);
         vm = 0.0;
     } else {
         vp = 0.5 * data(ivp, comp);
         vc = 0.0;
-        vm = 0.5 * data(ivm, comp);
+        vm = -0.5 * data(ivm, comp);
     }
 
     return (vp + vc + vm) * idx[dir];
