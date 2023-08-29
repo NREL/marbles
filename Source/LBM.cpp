@@ -835,7 +835,10 @@ void LBM::initialize_is_fluid(const int lev)
         m_is_fluid[lev], m_is_fluid[lev].nGrowVect(),
         [=] AMREX_GPU_DEVICE(int nbx, int i, int j, int k) noexcept {
             is_fluid_arrs[nbx](i, j, k) =
-                !flag_arrs[nbx](i, j, k).isRegular() ? 0 : 1;
+                !(flag_arrs[nbx](i, j, k).isRegular() ||
+                  flag_arrs[nbx](i, j, k).isSingleValued())
+                    ? 0
+                    : 1;
         });
 
     initialize_from_stl(Geom(lev), m_is_fluid[lev]);
@@ -1332,7 +1335,7 @@ void LBM::open_forces_file(const bool initialize)
 {
 
     if (m_compute_forces) {
-      if ((file_exists(m_forces_file)) && (!initialize)) {
+        if ((file_exists(m_forces_file)) && (!initialize)) {
             m_forces_stream.open(m_forces_file, std::ios::app);
         } else {
             m_forces_stream.open(m_forces_file, std::ios::out);
