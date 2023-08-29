@@ -13,6 +13,12 @@ static constexpr int VMAG_IDX = 4;
 
 static constexpr int N_MICRO_STATES = 27;
 
+static constexpr int N_DERIVED = 4;
+static constexpr int VORTX_IDX = 0;
+static constexpr int VORTY_IDX = 1;
+static constexpr int VORTZ_IDX = 2;
+static constexpr int VORTM_IDX = 3;
+
 static constexpr amrex::Real ROOT3 =
     static_cast<amrex::Real>(1.732050807568877293527446341);
 

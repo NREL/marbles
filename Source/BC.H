@@ -15,6 +15,7 @@ static constexpr int NOSLIPWALL = 1;
 static constexpr int VELOCITY = 2;
 static constexpr int PRESSURE = 3;
 static constexpr int OUTFLOW = 4;
+static constexpr int OUTFLOW_ZEROTH_ORDER = 5;
 
 template <typename VelBCOp>
 struct BCFill
@@ -223,7 +224,7 @@ struct BCFill
     void simple_outflow_bc(
         const amrex::IntVect& iv,
         const int q,
-        const amrex::IntVect& ev,
+        const amrex::IntVect& /*ev*/,
         const int idir,
         const int ndir,
         amrex::Array4<amrex::Real> const& data) const

@@ -87,6 +87,7 @@ endfunction(add_test_re)
 add_test_r(channel_cylinder)
 add_test_r(channel_regular)
 add_test_r(tg)
+add_test_r(single_cylinder)
 
 #=============================================================================
 # Regression tests excluded from CI

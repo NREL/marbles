@@ -93,5 +93,43 @@ struct Channel
     DeviceOp m_op;
 };
 
+struct Parabolic
+{
+    struct DeviceOp
+    {
+        int normal_dir{0};
+        int tangential_dir{1};
+        amrex::Real um{1.0};
+
+        AMREX_GPU_DEVICE
+        inline void operator()(
+            const amrex::IntVect& iv,
+            const int /*idir*/,
+            const int /*ndir*/,
+            const amrex::Real /*time*/,
+            amrex::GeometryData const& geom,
+            amrex::RealVect& vel) const
+        {
+            const amrex::Real* prob_lo = geom.ProbLo();
+            const amrex::Real* prob_hi = geom.ProbHi();
+            const amrex::Real* dx = geom.CellSize();
+            const amrex::Real height =
+                prob_hi[normal_dir] - prob_lo[normal_dir];
+            const amrex::Real x =
+                prob_lo[normal_dir] + (iv[normal_dir] + 0.5) * dx[normal_dir];
+            vel[tangential_dir] =
+                4.0 * um * x * (height - x) / (height * height);
+        }
+    };
+
+    using DeviceType = DeviceOp;
+
+    explicit Parabolic();
+
+    DeviceType device_instance() const { return m_op; }
+
+    DeviceOp m_op;
+};
+
 } // namespace lbm::bc
 #endif
