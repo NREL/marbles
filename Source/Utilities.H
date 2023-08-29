@@ -80,5 +80,7 @@ void average_down_with_ghosts(
     amrex::MultiFab& crse,
     const amrex::IntVect ng,
     const amrex::IntVect ref_ratio);
+
+bool file_exists(const std::string& fname);
 } // namespace lbm
 #endif

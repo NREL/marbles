@@ -106,7 +106,12 @@ LBM::LBM()
     }
 }
 
-LBM::~LBM() = default;
+LBM::~LBM()
+{
+    if (m_forces_stream) {
+        m_forces_stream.close();
+    }
+}
 
 void LBM::init_data()
 {
@@ -127,9 +132,12 @@ void LBM::init_data()
             write_checkpoint_file();
         }
 
+        open_forces_file(true);
     } else {
         // restart from a checkpoint
         read_checkpoint_file();
+
+        open_forces_file(false);
     }
 
     if (m_plot_int > 0) {
@@ -231,6 +239,9 @@ void LBM::read_parameters()
 
         pp.query("save_streaming", m_save_streaming);
         pp.query("save_derived", m_save_derived);
+
+        pp.query("compute_forces", m_compute_forces);
+        pp.query("forces_file", m_forces_file);
 
         m_mesh_speed = m_dx_outer / m_dt_outer;
         m_cs = m_mesh_speed / constants::ROOT3;
@@ -1315,5 +1326,23 @@ void LBM::goto_next_line(std::istream& is)
 {
     constexpr std::streamsize bl_ignore_max{100000};
     is.ignore(bl_ignore_max, '\n');
+}
+
+void LBM::open_forces_file(const bool initialize)
+{
+
+    if (m_compute_forces) {
+      if ((file_exists(m_forces_file)) && (!initialize)) {
+            m_forces_stream.open(m_forces_file, std::ios::app);
+        } else {
+            m_forces_stream.open(m_forces_file, std::ios::out);
+            m_forces_stream << std::setw(constants::DATWIDTH)
+                            << "          time";
+            m_forces_stream << std::setw(constants::DATWIDTH) << "          fx";
+            m_forces_stream << std::setw(constants::DATWIDTH) << "          fy";
+            m_forces_stream << std::setw(constants::DATWIDTH) << "          fz";
+            m_forces_stream << std::endl;
+        }
+    }
 }
 } // namespace lbm

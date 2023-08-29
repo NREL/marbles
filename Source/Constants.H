@@ -30,6 +30,10 @@ static constexpr amrex::Real SMALL_NUM = static_cast<amrex::Real>(
 
 static constexpr amrex::Real LARGE_NUM =
     static_cast<amrex::Real>(std::numeric_limits<amrex::Real>::max() * 1e-10);
+
+static constexpr int DATWIDTH = 24;
+static constexpr int DATPRECISION = 16;
+
 } // namespace lbm::constants
 
 #endif

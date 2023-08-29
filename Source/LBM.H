@@ -172,6 +172,9 @@ private:
     // utility to skip to next line in Header
     static void goto_next_line(std::istream& is);
 
+    // open the forces file
+    void open_forces_file(const bool initialize);
+
     amrex::Vector<int> m_isteps;    // which step?
     amrex::Vector<int> m_nsubsteps; // how many substeps on each level?
 
@@ -251,6 +254,15 @@ private:
 
     // save derived data to plot file
     bool m_save_derived = true;
+
+    // compute and output forces
+    bool m_compute_forces = false;
+
+    // file for forces
+    std::string m_forces_file{"forces.txt"};
+
+    // file handle for forces
+    std::fstream m_forces_stream;
 
     // Derived values (will be updated after reading in user inputs)
     amrex::Real m_mesh_speed = 1.0;
