@@ -178,14 +178,22 @@ void RotatedBox::build(
 
     amrex::Real rotation = 0;
     int rotation_axe = 0;
+    amrex::RealArray rotation_center({0.0});
     pp.query("box_rotation", rotation);
     pp.query("box_rotation_axe", rotation_axe);
+    pp.query("box_rotation_center", rotation_center);
+    const amrex::RealArray neg_rotation_center({AMREX_D_DECL(
+        -rotation_center[0], -rotation_center[1], -rotation_center[2])});
 
     rotation = (rotation / 180.) * M_PI;
 
     amrex::EB2::BoxIF bf(lo, hi, has_fluid_inside);
 
-    auto bf_rot = amrex::EB2::rotate(bf, rotation, rotation_axe);
+    auto bf_rot = amrex::EB2::translate(
+        amrex::EB2::rotate(
+            amrex::EB2::translate(bf, neg_rotation_center), rotation,
+            rotation_axe),
+        rotation_center);
     auto gshop = amrex::EB2::makeShop(bf_rot);
     amrex::EB2::Build(
         gshop, geom, max_coarsening_level, max_coarsening_level, 4, false);
