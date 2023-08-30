@@ -848,17 +848,17 @@ void LBM::initialize_is_fluid(const int lev)
     m_is_fluid[lev].FillBoundary(Geom(lev).periodicity());
 
     // Compute the boundary cells
-    const amrex::IntVect ng(m_is_fluid[lev].nGrowVect() - 1);
     amrex::ParallelFor(
-        m_is_fluid[lev], ng,
+        m_is_fluid[lev], m_is_fluid[lev].nGrowVect() - 1,
         [=] AMREX_GPU_DEVICE(int nbx, int i, int j, int k) noexcept {
             const amrex::IntVect iv(i, j, k);
             const auto if_arr = is_fluid_arrs[nbx];
 
             bool all_covered = true;
+            const amrex::IntVect nn(1);
             for (int idir = 0; idir < AMREX_SPACEDIM; idir++) {
                 const auto dimvec = amrex::IntVect::TheDimensionVector(idir);
-                for (int n = 1; n <= ng[idir]; n++) {
+                for (int n = 1; n <= nn[idir]; n++) {
                     all_covered &= (if_arr(iv - n * dimvec, 0) == 0) &&
                                    (if_arr(iv + n * dimvec, 0) == 0);
                 }
