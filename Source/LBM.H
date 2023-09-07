@@ -100,6 +100,9 @@ public:
     // Initialize is_fluid
     void initialize_is_fluid(const int lev);
 
+    // Initialize masks
+    void initialize_mask(const int lev);
+
     // Fill microdata inside the EB
     void fill_f_inside_eb(const int lev);
 
@@ -178,6 +181,9 @@ private:
     // open the forces file
     void open_forces_file(const bool initialize);
 
+    // write the forces to file
+    void output_forces_file(const amrex::Vector<amrex::Real>& forces);
+
     amrex::Vector<int> m_isteps;    // which step?
     amrex::Vector<int> m_nsubsteps; // how many substeps on each level?
 
@@ -204,6 +210,7 @@ private:
     amrex::Vector<amrex::MultiFab> m_derived;
     amrex::Vector<amrex::iMultiFab> m_is_fluid;
     amrex::Vector<amrex::MultiFab> m_plt_mf;
+    amrex::Vector<amrex::iMultiFab> m_mask;
 
     const int m_macrodata_nghost = 1;
     const int m_f_nghost = 2;

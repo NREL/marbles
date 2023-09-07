@@ -65,6 +65,7 @@ LBM::LBM()
     m_derived.resize(nlevs_max);
     m_is_fluid.resize(nlevs_max);
     m_plt_mf.resize(nlevs_max);
+    m_mask.resize(nlevs_max);
 
     m_factory.resize(nlevs_max);
 
@@ -134,6 +135,7 @@ void LBM::init_data()
         }
 
         open_forces_file(true);
+        compute_eb_forces();
     } else {
         // restart from a checkpoint
         read_checkpoint_file();
@@ -481,7 +483,7 @@ void LBM::post_time_step()
         compute_derived(lev);
     }
 
-    compute_forces();
+    compute_eb_forces();
 }
 
 // Stream the information to the neighbor particles
@@ -694,9 +696,58 @@ void LBM::compute_derived(const int lev)
 }
 
 // Compute forces on EB
-void LBM::compute_eb_forces(const int lev)
+void LBM::compute_eb_forces()
 {
     BL_PROFILE("LBM::compute_eb_forces()");
+
+    amrex::Vector<amrex::Real> forces(AMREX_SPACEDIM, 0);
+
+    const stencil::Stencil stencil;
+    const auto& evs = stencil.evs;
+    const auto& bounce_dirs = stencil.bounce_dirs;
+    for (int lev = 0; lev <= finest_level; ++lev) {
+        auto const& f_arrs = m_f[lev].const_arrays();
+        auto const& is_fluid_arrs = m_is_fluid[lev].const_arrays();
+        auto const& mask_arrs = m_mask[lev].const_arrays();
+
+        const auto cf = amrex::ParReduce(
+            amrex::TypeList<AMREX_D_DECL(
+                amrex::ReduceOpSum, amrex::ReduceOpSum, amrex::ReduceOpSum)>{},
+            amrex::TypeList<AMREX_D_DECL(
+                amrex::Real, amrex::Real, amrex::Real)>{},
+            m_f[lev], amrex::IntVect(0),
+            [=] AMREX_GPU_DEVICE(int nbx, int i, int j, int k) noexcept
+            -> amrex::GpuTuple<AMREX_D_DECL(
+                amrex::Real, amrex::Real, amrex::Real)> {
+                const amrex::IntVect iv(i, j, k);
+                if ((is_fluid_arrs[nbx](iv, 1) == 1) &&
+                    (mask_arrs[nbx](iv) == 0)) {
+                    const auto f_arr = f_arrs[nbx];
+                    amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> fs = {0.0};
+
+                    for (int q = 0; q < constants::N_MICRO_STATES; q++) {
+                        const auto& ev = evs[q];
+                        const amrex::IntVect ivr(iv + evs[bounce_dirs[q]]);
+
+                        for (int idir = 0; idir < AMREX_SPACEDIM; idir++) {
+                            fs[idir] += 2.0 * ev[idir] * f_arr(ivr, q) *
+                                        is_fluid_arrs[nbx](ivr, 0);
+                        }
+                    }
+                    return {AMREX_D_DECL(fs[0], fs[1], fs[2])};
+                } else {
+                    return {AMREX_D_DECL(0.0, 0.0, 0.0)};
+                }
+            });
+
+        AMREX_D_DECL(
+            forces[0] += amrex::get<0>(cf), forces[1] += amrex::get<1>(cf),
+            forces[2] += amrex::get<2>(cf));
+    }
+
+    amrex::ParallelDescriptor::ReduceRealSum(&forces[0], forces.size());
+
+    output_forces_file(forces);
 }
 
 // a wrapper for EstTimeStep
@@ -766,11 +817,14 @@ void LBM::MakeNewLevelFromCoarse(
     m_derived[lev].define(
         ba, dm, m_derived[lev - 1].nComp(), m_derived[lev - 1].nGrow(),
         amrex::MFInfo(), *(m_factory[lev]));
+    m_mask[lev].define(
+        ba, dm, m_mask[lev - 1].nComp(), m_mask[lev - 1].nGrow());
 
     m_ts_new[lev] = time;
     m_ts_old[lev] = constants::LOW_NUM;
 
     initialize_is_fluid(lev);
+    initialize_mask(lev);
     m_fillpatch_op->fillpatch_from_coarse(lev, time, m_f[lev]);
     m_macrodata[lev].setVal(0.0);
     m_eq[lev].setVal(0.0);
@@ -807,12 +861,14 @@ void LBM::MakeNewLevelFromScratch(
     m_derived[lev].define(
         ba, dm, constants::N_DERIVED, m_derived_nghost, amrex::MFInfo(),
         *(m_factory[lev]));
+    m_mask[lev].define(ba, dm, 1, 0);
 
     m_ts_new[lev] = time;
     m_ts_old[lev] = constants::LOW_NUM;
 
     // Initialize the data
     initialize_is_fluid(lev);
+    initialize_mask(lev);
     initialize_f(lev);
     m_macrodata[lev].setVal(0.0);
     m_eq[lev].setVal(0.0);
@@ -882,6 +938,20 @@ void LBM::initialize_is_fluid(const int lev)
         });
 }
 
+void LBM::initialize_mask(const int lev)
+{
+    BL_PROFILE("LBM::initialize_mask()");
+    m_mask[lev].setVal(0.0);
+
+    if (lev < finest_level) {
+        const amrex::iMultiFab mask = makeFineMask(
+            boxArray(lev), DistributionMap(lev), boxArray(lev + 1),
+            refRatio(lev));
+        amrex::iMultiFab::Copy(
+            m_mask[lev], mask, 0, 0, m_mask[lev].nComp(), m_mask[lev].nGrow());
+    }
+}
+
 void LBM::fill_f_inside_eb(const int lev)
 {
     BL_PROFILE("LBM::fill_f_inside_eb()");
@@ -938,6 +1008,7 @@ void LBM::ClearLevel(int lev)
     m_derived[lev].clear();
     m_is_fluid[lev].clear();
     m_plt_mf[lev].clear();
+    m_mask[lev].clear();
 }
 
 // Set the user defined BC functions
@@ -1337,6 +1408,7 @@ void LBM::read_checkpoint_file()
         m_derived[lev].define(
             ba, dm, constants::N_DERIVED, m_derived_nghost, amrex::MFInfo(),
             *(m_factory[lev]));
+        m_mask[lev].define(ba, dm, 1, 0);
     }
 
     // read in the MultiFab data
@@ -1349,6 +1421,7 @@ void LBM::read_checkpoint_file()
     // Populate the other data
     for (int lev = 0; lev <= finest_level; ++lev) {
         initialize_is_fluid(lev);
+        initialize_mask(lev);
         fill_f_inside_eb(lev);
         m_f[lev].FillBoundary(Geom(lev).periodicity());
         m_macrodata[lev].setVal(0.0);
@@ -1369,7 +1442,7 @@ void LBM::goto_next_line(std::istream& is)
 
 void LBM::open_forces_file(const bool initialize)
 {
-
+    BL_PROFILE("LBM::open_forces_file()");
     if (m_compute_forces) {
         if ((file_exists(m_forces_file)) && (!initialize)) {
             m_forces_stream.open(m_forces_file, std::ios::app);
@@ -1377,11 +1450,31 @@ void LBM::open_forces_file(const bool initialize)
             m_forces_stream.open(m_forces_file, std::ios::out);
             m_forces_stream << std::setw(constants::DATWIDTH)
                             << "          time";
-            m_forces_stream << std::setw(constants::DATWIDTH) << "          fx";
-            m_forces_stream << std::setw(constants::DATWIDTH) << "          fy";
-            m_forces_stream << std::setw(constants::DATWIDTH) << "          fz";
+            AMREX_D_DECL(
+                m_forces_stream << std::setw(constants::DATWIDTH)
+                                << "          fx",
+                m_forces_stream << std::setw(constants::DATWIDTH)
+                                << "          fy",
+                m_forces_stream << std::setw(constants::DATWIDTH)
+                                << "          fz");
             m_forces_stream << std::endl;
         }
+    }
+}
+
+void LBM::output_forces_file(const amrex::Vector<amrex::Real>& forces)
+{
+    BL_PROFILE("LBM::output_forces_file()");
+    if (m_compute_forces) {
+        m_forces_stream << std::setw(constants::DATWIDTH)
+                        << std::setprecision(constants::DATPRECISION)
+                        << m_ts_new[0];
+        for (const auto& val : forces) {
+            m_forces_stream << std::setw(constants::DATWIDTH)
+                            << std::setprecision(constants::DATPRECISION)
+                            << val;
+        }
+        m_forces_stream << std::endl;
     }
 }
 } // namespace lbm
