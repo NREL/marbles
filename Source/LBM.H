@@ -181,6 +181,9 @@ private:
     // open the forces file
     void open_forces_file(const bool initialize);
 
+    // close the forces file
+    void close_forces_file();
+
     // write the forces to file
     void output_forces_file(const amrex::Vector<amrex::Real>& forces);
 

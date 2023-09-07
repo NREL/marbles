@@ -108,12 +108,7 @@ LBM::LBM()
     }
 }
 
-LBM::~LBM()
-{
-    if (m_forces_stream) {
-        m_forces_stream.close();
-    }
-}
+LBM::~LBM() = default;
 
 void LBM::init_data()
 {
@@ -391,6 +386,7 @@ void LBM::evolve()
     if (m_plot_int > 0 && m_isteps[0] > last_plot_file_step) {
         write_plot_file();
     }
+    close_forces_file();
 }
 
 // advance a level by dt
@@ -1457,6 +1453,13 @@ void LBM::open_forces_file(const bool initialize)
     }
 }
 
+void LBM::close_forces_file()
+{
+    BL_PROFILE("LBM::close_forces_file()");
+    if (m_forces_stream) {
+        m_forces_stream.close();
+    }
+}
 void LBM::output_forces_file(const amrex::Vector<amrex::Real>& forces)
 {
     BL_PROFILE("LBM::output_forces_file()");
