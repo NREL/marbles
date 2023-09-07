@@ -91,6 +91,9 @@ public:
     // Compute derived quantities
     void compute_derived(const int lev);
 
+    // Compute forces on EB
+    void compute_eb_forces();
+
     // Initialize microdata
     void initialize_f(const int lev);
 

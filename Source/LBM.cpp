@@ -480,6 +480,8 @@ void LBM::post_time_step()
     for (int lev = 0; lev <= finest_level; ++lev) {
         compute_derived(lev);
     }
+
+    compute_forces();
 }
 
 // Stream the information to the neighbor particles
@@ -689,6 +691,12 @@ void LBM::compute_derived(const int lev)
             }
         });
     amrex::Gpu::synchronize();
+}
+
+// Compute forces on EB
+void LBM::compute_eb_forces(const int lev)
+{
+    BL_PROFILE("LBM::compute_eb_forces()");
 }
 
 // a wrapper for EstTimeStep
