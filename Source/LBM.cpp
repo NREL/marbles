@@ -1460,6 +1460,7 @@ void LBM::close_forces_file()
         m_forces_stream.close();
     }
 }
+
 void LBM::output_forces_file(const amrex::Vector<amrex::Real>& forces)
 {
     BL_PROFILE("LBM::output_forces_file()");
