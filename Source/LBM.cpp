@@ -720,24 +720,20 @@ void LBM::compute_eb_forces()
             -> amrex::GpuTuple<AMREX_D_DECL(
                 amrex::Real, amrex::Real, amrex::Real)> {
                 const amrex::IntVect iv(i, j, k);
+                amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> fs = {0.0};
                 if ((is_fluid_arrs[nbx](iv, 1) == 1) &&
                     (mask_arrs[nbx](iv) == 0)) {
-                    const auto f_arr = f_arrs[nbx];
-                    amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> fs = {0.0};
-
                     for (int q = 0; q < constants::N_MICRO_STATES; q++) {
                         const auto& ev = evs[q];
                         const amrex::IntVect ivr(iv + evs[bounce_dirs[q]]);
 
                         for (int idir = 0; idir < AMREX_SPACEDIM; idir++) {
-                            fs[idir] += 2.0 * ev[idir] * f_arr(ivr, q) *
+                            fs[idir] += 2.0 * ev[idir] * f_arrs[nbx](ivr, q) *
                                         is_fluid_arrs[nbx](ivr, 0);
                         }
                     }
-                    return {AMREX_D_DECL(fs[0], fs[1], fs[2])};
-                } else {
-                    return {AMREX_D_DECL(0.0, 0.0, 0.0)};
                 }
+                return {AMREX_D_DECL(fs[0], fs[1], fs[2])};
             });
 
         AMREX_D_DECL(
@@ -745,7 +741,8 @@ void LBM::compute_eb_forces()
             forces[2] += amrex::get<2>(cf));
     }
 
-    amrex::ParallelDescriptor::ReduceRealSum(&forces[0], forces.size());
+    amrex::ParallelDescriptor::ReduceRealSum(
+        forces.data(), static_cast<int>(forces.size()));
 
     output_forces_file(forces);
 }
@@ -928,9 +925,7 @@ void LBM::initialize_is_fluid(const int lev)
                 }
             }
 
-            if (all_covered) {
-                if_arr(iv, 1) = 0;
-            } else if (if_arr(iv, 0) == 1) {
+            if ((all_covered) || (if_arr(iv, 0) == 1)) {
                 if_arr(iv, 1) = 0;
             } else {
                 if_arr(iv, 1) = 1;
