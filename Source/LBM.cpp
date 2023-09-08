@@ -143,6 +143,11 @@ void LBM::init_data()
     }
 
     set_bcs();
+
+    if (amrex::ParallelDescriptor::IOProcessor()) {
+        amrex::Print() << "Grid summary: " << std::endl;
+        printGridSummary(amrex::OutStream(), 0, finest_level);
+    }
 }
 
 void LBM::read_parameters()
@@ -420,6 +425,11 @@ void LBM::time_step(const int lev, const amrex::Real time, const int iteration)
                 // dt gets halved here
                 for (int k = old_finest + 1; k <= finest_level; ++k) {
                     m_dts[k] = m_dts[k - 1] / MaxRefRatio(k - 1);
+                }
+                if (amrex::ParallelDescriptor::IOProcessor()) {
+                    amrex::Print()
+                        << "Grid summary after regrid: " << std::endl;
+                    printGridSummary(amrex::OutStream(), 0, finest_level);
                 }
             }
         }
