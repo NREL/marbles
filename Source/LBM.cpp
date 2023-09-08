@@ -891,6 +891,7 @@ void LBM::initialize_f(const int lev)
 
     m_f[lev].FillBoundary(Geom(lev).periodicity());
 }
+
 void LBM::initialize_is_fluid(const int lev)
 {
     BL_PROFILE("LBM::initialize_is_fluid()");
