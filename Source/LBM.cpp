@@ -939,6 +939,8 @@ void LBM::initialize_is_fluid(const int lev)
                 if_arr(iv, 1) = 1;
             }
         });
+
+    m_is_fluid[lev].FillBoundary(Geom(lev).periodicity());
 }
 
 void LBM::initialize_mask(const int lev)
