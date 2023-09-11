@@ -655,6 +655,7 @@ void LBM::f_to_macrodata(const int lev)
             }
         });
     amrex::Gpu::synchronize();
+    m_macrodata[lev].FillBoundary(Geom(lev).periodicity());
 }
 
 // Compute derived quantities
