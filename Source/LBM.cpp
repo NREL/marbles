@@ -612,6 +612,7 @@ void LBM::relax_f_to_equilibrium(const int lev)
             }
         });
     amrex::Gpu::synchronize();
+    m_f[lev].FillBoundary(Geom(lev).periodicity());
 }
 
 // calculate the macro fluid properties from the distributions
