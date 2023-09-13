@@ -29,6 +29,7 @@ LBM::LBM()
     m_deriveddata_varnames.push_back("vort_z");
     m_deriveddata_varnames.push_back("vort_mag");
     m_idata_varnames.push_back("is_fluid");
+    m_idata_varnames.push_back("eb_boundary");
     for (const auto& vname : m_macrodata_varnames) {
         m_lbm_varnames.push_back(vname);
     }
@@ -64,6 +65,7 @@ LBM::LBM()
     m_derived.resize(nlevs_max);
     m_is_fluid.resize(nlevs_max);
     m_plt_mf.resize(nlevs_max);
+    m_mask.resize(nlevs_max);
 
     m_factory.resize(nlevs_max);
 
@@ -127,9 +129,13 @@ void LBM::init_data()
             write_checkpoint_file();
         }
 
+        open_forces_file(true);
+        compute_eb_forces();
     } else {
         // restart from a checkpoint
         read_checkpoint_file();
+
+        open_forces_file(false);
     }
 
     if (m_plot_int > 0) {
@@ -137,6 +143,11 @@ void LBM::init_data()
     }
 
     set_bcs();
+
+    if (amrex::ParallelDescriptor::IOProcessor()) {
+        amrex::Print() << "Grid summary: " << std::endl;
+        printGridSummary(amrex::OutStream(), 0, finest_level);
+    }
 }
 
 void LBM::read_parameters()
@@ -231,6 +242,9 @@ void LBM::read_parameters()
 
         pp.query("save_streaming", m_save_streaming);
         pp.query("save_derived", m_save_derived);
+
+        pp.query("compute_forces", m_compute_forces);
+        pp.query("forces_file", m_forces_file);
 
         m_mesh_speed = m_dx_outer / m_dt_outer;
         m_cs = m_mesh_speed / constants::ROOT3;
@@ -377,6 +391,7 @@ void LBM::evolve()
     if (m_plot_int > 0 && m_isteps[0] > last_plot_file_step) {
         write_plot_file();
     }
+    close_forces_file();
 }
 
 // advance a level by dt
@@ -410,6 +425,11 @@ void LBM::time_step(const int lev, const amrex::Real time, const int iteration)
                 // dt gets halved here
                 for (int k = old_finest + 1; k <= finest_level; ++k) {
                     m_dts[k] = m_dts[k - 1] / MaxRefRatio(k - 1);
+                }
+                if (amrex::ParallelDescriptor::IOProcessor()) {
+                    amrex::Print()
+                        << "Grid summary after regrid: " << std::endl;
+                    printGridSummary(amrex::OutStream(), 0, finest_level);
                 }
             }
         }
@@ -468,6 +488,8 @@ void LBM::post_time_step()
     for (int lev = 0; lev <= finest_level; ++lev) {
         compute_derived(lev);
     }
+
+    compute_eb_forces();
 }
 
 // Stream the information to the neighbor particles
@@ -493,7 +515,7 @@ void LBM::stream(const int lev)
             const amrex::IntVect iv(i, j, k);
             const auto& ev = evs[q];
             const amrex::IntVect ivn(iv + ev);
-            if (is_fluid_arrs[nbx](iv) == 1) {
+            if (is_fluid_arrs[nbx](iv, 0) == 1) {
                 const auto f_arr = f_arrs[nbx];
                 const auto fs_arr = fs_arrs[nbx];
                 const auto& lb = amrex::lbound(f_arr);
@@ -502,7 +524,7 @@ void LBM::stream(const int lev)
                     amrex::IntVect(lb.x, lb.y, lb.z),
                     amrex::IntVect(ub.x, ub.y, ub.z));
                 if (fbox.contains(ivn)) {
-                    if (is_fluid_arrs[nbx](ivn) != 0) {
+                    if (is_fluid_arrs[nbx](ivn, 0) != 0) {
                         fs_arr(ivn, q) = f_arr(iv, q);
                     } else {
                         fs_arr(iv, bounce_dirs[q]) = f_arr(iv, q);
@@ -549,7 +571,7 @@ void LBM::macrodata_to_equilibrium(const int lev)
         m_eq[lev], m_eq[lev].nGrowVect(), constants::N_MICRO_STATES,
         [=] AMREX_GPU_DEVICE(int nbx, int i, int j, int k, int q) noexcept {
             const amrex::IntVect iv(i, j, k);
-            if (is_fluid_arrs[nbx](iv) == 1) {
+            if (is_fluid_arrs[nbx](iv, 0) == 1) {
 
                 const auto md_arr = md_arrs[nbx];
                 const auto eq_arr = eq_arrs[nbx];
@@ -583,13 +605,14 @@ void LBM::relax_f_to_equilibrium(const int lev)
         m_f[lev], m_eq[lev].nGrowVect(), constants::N_MICRO_STATES,
         [=] AMREX_GPU_DEVICE(int nbx, int i, int j, int k, int q) noexcept {
             const amrex::IntVect iv(i, j, k);
-            if (is_fluid_arrs[nbx](iv) == 1) {
+            if (is_fluid_arrs[nbx](iv, 0) == 1) {
                 const auto f_arr = f_arrs[nbx];
                 const auto eq_arr = eq_arrs[nbx];
                 f_arr(iv, q) -= 1.0 / tau * (f_arr(iv, q) - eq_arr(iv, q));
             }
         });
     amrex::Gpu::synchronize();
+    m_f[lev].FillBoundary(Geom(lev).periodicity());
 }
 
 // calculate the macro fluid properties from the distributions
@@ -607,7 +630,7 @@ void LBM::f_to_macrodata(const int lev)
         m_macrodata[lev], m_macrodata[lev].nGrowVect(),
         [=] AMREX_GPU_DEVICE(int nbx, int i, int j, int k) noexcept {
             const amrex::IntVect iv(i, j, k);
-            if (is_fluid_arrs[nbx](iv) == 1) {
+            if (is_fluid_arrs[nbx](iv, 0) == 1) {
 
                 const auto f_arr = f_arrs[nbx];
                 const auto md_arr = md_arrs[nbx];
@@ -633,6 +656,7 @@ void LBM::f_to_macrodata(const int lev)
             }
         });
     amrex::Gpu::synchronize();
+    m_macrodata[lev].FillBoundary(Geom(lev).periodicity());
 }
 
 // Compute derived quantities
@@ -654,7 +678,7 @@ void LBM::compute_derived(const int lev)
             const auto d_arr = d_arrs[nbx];
             const amrex::IntVect iv(i, j, k);
 
-            if (if_arr(iv) == 1) {
+            if (if_arr(iv, 0) == 1) {
                 const amrex::Real vx = gradient(
                     0, constants::VELY_IDX, iv, idx, dbox, if_arr, md_arr);
                 const amrex::Real wx = gradient(
@@ -677,6 +701,58 @@ void LBM::compute_derived(const int lev)
             }
         });
     amrex::Gpu::synchronize();
+}
+
+// Compute forces on EB
+void LBM::compute_eb_forces()
+{
+    BL_PROFILE("LBM::compute_eb_forces()");
+
+    amrex::Vector<amrex::Real> forces(AMREX_SPACEDIM, 0);
+
+    const stencil::Stencil stencil;
+    const auto& evs = stencil.evs;
+    const auto& bounce_dirs = stencil.bounce_dirs;
+    for (int lev = 0; lev <= finest_level; ++lev) {
+        auto const& f_arrs = m_f[lev].const_arrays();
+        auto const& is_fluid_arrs = m_is_fluid[lev].const_arrays();
+        auto const& mask_arrs = m_mask[lev].const_arrays();
+
+        const auto cf = amrex::ParReduce(
+            amrex::TypeList<AMREX_D_DECL(
+                amrex::ReduceOpSum, amrex::ReduceOpSum, amrex::ReduceOpSum)>{},
+            amrex::TypeList<AMREX_D_DECL(
+                amrex::Real, amrex::Real, amrex::Real)>{},
+            m_f[lev], amrex::IntVect(0),
+            [=] AMREX_GPU_DEVICE(int nbx, int i, int j, int k) noexcept
+            -> amrex::GpuTuple<AMREX_D_DECL(
+                amrex::Real, amrex::Real, amrex::Real)> {
+                const amrex::IntVect iv(i, j, k);
+                amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> fs = {0.0};
+                if ((is_fluid_arrs[nbx](iv, 1) == 1) &&
+                    (mask_arrs[nbx](iv) == 0)) {
+                    for (int q = 0; q < constants::N_MICRO_STATES; q++) {
+                        const auto& ev = evs[q];
+                        const amrex::IntVect ivr(iv + evs[bounce_dirs[q]]);
+
+                        for (int idir = 0; idir < AMREX_SPACEDIM; idir++) {
+                            fs[idir] += 2.0 * ev[idir] * f_arrs[nbx](ivr, q) *
+                                        is_fluid_arrs[nbx](ivr, 0);
+                        }
+                    }
+                }
+                return {AMREX_D_DECL(fs[0], fs[1], fs[2])};
+            });
+
+        AMREX_D_DECL(
+            forces[0] += amrex::get<0>(cf), forces[1] += amrex::get<1>(cf),
+            forces[2] += amrex::get<2>(cf));
+    }
+
+    amrex::ParallelDescriptor::ReduceRealSum(
+        forces.data(), static_cast<int>(forces.size()));
+
+    output_forces_file(forces);
 }
 
 // a wrapper for EstTimeStep
@@ -746,11 +822,14 @@ void LBM::MakeNewLevelFromCoarse(
     m_derived[lev].define(
         ba, dm, m_derived[lev - 1].nComp(), m_derived[lev - 1].nGrow(),
         amrex::MFInfo(), *(m_factory[lev]));
+    m_mask[lev].define(
+        ba, dm, m_mask[lev - 1].nComp(), m_mask[lev - 1].nGrow());
 
     m_ts_new[lev] = time;
     m_ts_old[lev] = constants::LOW_NUM;
 
     initialize_is_fluid(lev);
+    initialize_mask(lev);
     m_fillpatch_op->fillpatch_from_coarse(lev, time, m_f[lev]);
     m_macrodata[lev].setVal(0.0);
     m_eq[lev].setVal(0.0);
@@ -780,19 +859,21 @@ void LBM::MakeNewLevelFromScratch(
     m_f[lev].define(
         ba, dm, constants::N_MICRO_STATES, m_f_nghost, amrex::MFInfo(),
         *(m_factory[lev]));
-    m_is_fluid[lev].define(ba, dm, 1, m_f[lev].nGrow());
+    m_is_fluid[lev].define(ba, dm, constants::N_IS_FLUID, m_f[lev].nGrow());
     m_eq[lev].define(
         ba, dm, constants::N_MICRO_STATES, m_eq_nghost, amrex::MFInfo(),
         *(m_factory[lev]));
     m_derived[lev].define(
         ba, dm, constants::N_DERIVED, m_derived_nghost, amrex::MFInfo(),
         *(m_factory[lev]));
+    m_mask[lev].define(ba, dm, 1, 0);
 
     m_ts_new[lev] = time;
     m_ts_old[lev] = constants::LOW_NUM;
 
     // Initialize the data
     initialize_is_fluid(lev);
+    initialize_mask(lev);
     initialize_f(lev);
     m_macrodata[lev].setVal(0.0);
     m_eq[lev].setVal(0.0);
@@ -812,6 +893,7 @@ void LBM::initialize_f(const int lev)
 
     m_f[lev].FillBoundary(Geom(lev).periodicity());
 }
+
 void LBM::initialize_is_fluid(const int lev)
 {
     BL_PROFILE("LBM::initialize_is_fluid()");
@@ -819,17 +901,61 @@ void LBM::initialize_is_fluid(const int lev)
         static_cast<amrex::EBFArrayBoxFactory*>(m_factory[lev].get());
     auto const& flags = factory->getMultiEBCellFlagFab();
     auto const& flag_arrs = flags.const_arrays();
+    m_is_fluid[lev].setVal(0.0);
     auto const& is_fluid_arrs = m_is_fluid[lev].arrays();
     amrex::ParallelFor(
         m_is_fluid[lev], m_is_fluid[lev].nGrowVect(),
         [=] AMREX_GPU_DEVICE(int nbx, int i, int j, int k) noexcept {
-            is_fluid_arrs[nbx](i, j, k) =
-                !flag_arrs[nbx](i, j, k).isRegular() ? 0 : 1;
+            is_fluid_arrs[nbx](i, j, k, 0) =
+                !(flag_arrs[nbx](i, j, k).isRegular() ||
+                  flag_arrs[nbx](i, j, k).isSingleValued())
+                    ? 0
+                    : 1;
         });
 
     initialize_from_stl(Geom(lev), m_is_fluid[lev]);
 
     m_is_fluid[lev].FillBoundary(Geom(lev).periodicity());
+
+    // Compute the boundary cells
+    amrex::ParallelFor(
+        m_is_fluid[lev], m_is_fluid[lev].nGrowVect() - 1,
+        [=] AMREX_GPU_DEVICE(int nbx, int i, int j, int k) noexcept {
+            const amrex::IntVect iv(i, j, k);
+            const auto if_arr = is_fluid_arrs[nbx];
+
+            bool all_covered = true;
+            const amrex::IntVect nn(1);
+            for (int idir = 0; idir < AMREX_SPACEDIM; idir++) {
+                const auto dimvec = amrex::IntVect::TheDimensionVector(idir);
+                for (int n = 1; n <= nn[idir]; n++) {
+                    all_covered &= (if_arr(iv - n * dimvec, 0) == 0) &&
+                                   (if_arr(iv + n * dimvec, 0) == 0);
+                }
+            }
+
+            if ((all_covered) || (if_arr(iv, 0) == 1)) {
+                if_arr(iv, 1) = 0;
+            } else {
+                if_arr(iv, 1) = 1;
+            }
+        });
+
+    m_is_fluid[lev].FillBoundary(Geom(lev).periodicity());
+}
+
+void LBM::initialize_mask(const int lev)
+{
+    BL_PROFILE("LBM::initialize_mask()");
+    m_mask[lev].setVal(0.0);
+
+    if (lev < finest_level) {
+        const amrex::iMultiFab mask = makeFineMask(
+            boxArray(lev), DistributionMap(lev), boxArray(lev + 1),
+            refRatio(lev));
+        amrex::iMultiFab::Copy(
+            m_mask[lev], mask, 0, 0, m_mask[lev].nComp(), m_mask[lev].nGrow());
+    }
 }
 
 void LBM::fill_f_inside_eb(const int lev)
@@ -847,7 +973,7 @@ void LBM::fill_f_inside_eb(const int lev)
     amrex::ParallelFor(
         m_f[lev], m_f[lev].nGrowVect(), constants::N_MICRO_STATES,
         [=] AMREX_GPU_DEVICE(int nbx, int i, int j, int k, int q) noexcept {
-            if (is_fluid_arrs[nbx](i, j, k) == 0) {
+            if (is_fluid_arrs[nbx](i, j, k, 0) == 0) {
                 const amrex::Real wt = weight[q];
                 const auto& ev = evs[q];
 
@@ -888,6 +1014,7 @@ void LBM::ClearLevel(int lev)
     m_derived[lev].clear();
     m_is_fluid[lev].clear();
     m_plt_mf[lev].clear();
+    m_mask[lev].clear();
 }
 
 // Set the user defined BC functions
@@ -1280,13 +1407,14 @@ void LBM::read_checkpoint_file()
         m_macrodata[lev].define(
             ba, dm, constants::N_MACRO_STATES, m_macrodata_nghost,
             amrex::MFInfo(), *(m_factory[lev]));
-        m_is_fluid[lev].define(ba, dm, 1, m_f[lev].nGrow());
+        m_is_fluid[lev].define(ba, dm, constants::N_IS_FLUID, m_f[lev].nGrow());
         m_eq[lev].define(
             ba, dm, constants::N_MICRO_STATES, m_eq_nghost, amrex::MFInfo(),
             *(m_factory[lev]));
         m_derived[lev].define(
             ba, dm, constants::N_DERIVED, m_derived_nghost, amrex::MFInfo(),
             *(m_factory[lev]));
+        m_mask[lev].define(ba, dm, 1, 0);
     }
 
     // read in the MultiFab data
@@ -1299,6 +1427,7 @@ void LBM::read_checkpoint_file()
     // Populate the other data
     for (int lev = 0; lev <= finest_level; ++lev) {
         initialize_is_fluid(lev);
+        initialize_mask(lev);
         fill_f_inside_eb(lev);
         m_f[lev].FillBoundary(Geom(lev).periodicity());
         m_macrodata[lev].setVal(0.0);
@@ -1315,5 +1444,51 @@ void LBM::goto_next_line(std::istream& is)
 {
     constexpr std::streamsize bl_ignore_max{100000};
     is.ignore(bl_ignore_max, '\n');
+}
+
+void LBM::open_forces_file(const bool initialize)
+{
+    BL_PROFILE("LBM::open_forces_file()");
+    if (m_compute_forces) {
+        if ((file_exists(m_forces_file)) && (!initialize)) {
+            m_forces_stream.open(m_forces_file, std::ios::app);
+        } else {
+            m_forces_stream.open(m_forces_file, std::ios::out);
+            m_forces_stream << std::setw(constants::DATWIDTH)
+                            << "          time";
+            AMREX_D_DECL(
+                m_forces_stream << std::setw(constants::DATWIDTH)
+                                << "          fx",
+                m_forces_stream << std::setw(constants::DATWIDTH)
+                                << "          fy",
+                m_forces_stream << std::setw(constants::DATWIDTH)
+                                << "          fz");
+            m_forces_stream << std::endl;
+        }
+    }
+}
+
+void LBM::close_forces_file()
+{
+    BL_PROFILE("LBM::close_forces_file()");
+    if (m_forces_stream) {
+        m_forces_stream.close();
+    }
+}
+
+void LBM::output_forces_file(const amrex::Vector<amrex::Real>& forces)
+{
+    BL_PROFILE("LBM::output_forces_file()");
+    if (m_compute_forces) {
+        m_forces_stream << std::setw(constants::DATWIDTH)
+                        << std::setprecision(constants::DATPRECISION)
+                        << m_ts_new[0];
+        for (const auto& val : forces) {
+            m_forces_stream << std::setw(constants::DATWIDTH)
+                            << std::setprecision(constants::DATPRECISION)
+                            << val;
+        }
+        m_forces_stream << std::endl;
+    }
 }
 } // namespace lbm

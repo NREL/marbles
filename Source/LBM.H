@@ -91,11 +91,17 @@ public:
     // Compute derived quantities
     void compute_derived(const int lev);
 
+    // Compute forces on EB
+    void compute_eb_forces();
+
     // Initialize microdata
     void initialize_f(const int lev);
 
     // Initialize is_fluid
     void initialize_is_fluid(const int lev);
+
+    // Initialize masks
+    void initialize_mask(const int lev);
 
     // Fill microdata inside the EB
     void fill_f_inside_eb(const int lev);
@@ -172,6 +178,15 @@ private:
     // utility to skip to next line in Header
     static void goto_next_line(std::istream& is);
 
+    // open the forces file
+    void open_forces_file(const bool initialize);
+
+    // close the forces file
+    void close_forces_file();
+
+    // write the forces to file
+    void output_forces_file(const amrex::Vector<amrex::Real>& forces);
+
     amrex::Vector<int> m_isteps;    // which step?
     amrex::Vector<int> m_nsubsteps; // how many substeps on each level?
 
@@ -198,6 +213,7 @@ private:
     amrex::Vector<amrex::MultiFab> m_derived;
     amrex::Vector<amrex::iMultiFab> m_is_fluid;
     amrex::Vector<amrex::MultiFab> m_plt_mf;
+    amrex::Vector<amrex::iMultiFab> m_mask;
 
     const int m_macrodata_nghost = 1;
     const int m_f_nghost = 2;
@@ -251,6 +267,15 @@ private:
 
     // save derived data to plot file
     bool m_save_derived = true;
+
+    // compute and output forces
+    bool m_compute_forces = false;
+
+    // file for forces
+    std::string m_forces_file{"forces.txt"};
+
+    // file handle for forces
+    std::fstream m_forces_stream;
 
     // Derived values (will be updated after reading in user inputs)
     amrex::Real m_mesh_speed = 1.0;

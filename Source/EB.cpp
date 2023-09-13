@@ -78,10 +78,10 @@ void initialize_from_stl(
         auto const& marker_arrs = marker.const_arrays();
         auto const& is_fluid_arrs = is_fluid.arrays();
         amrex::ParallelFor(
-            is_fluid, is_fluid.nGrowVect(), is_fluid.nComp(),
-            [=] AMREX_GPU_DEVICE(int nbx, int i, int j, int k, int n) noexcept {
-                is_fluid_arrs[nbx](i, j, k, n) =
-                    static_cast<int>(marker_arrs[nbx](i, j, k, n));
+            is_fluid, is_fluid.nGrowVect(),
+            [=] AMREX_GPU_DEVICE(int nbx, int i, int j, int k) noexcept {
+                is_fluid_arrs[nbx](i, j, k, 0) =
+                    static_cast<int>(marker_arrs[nbx](i, j, k, 0));
             });
         amrex::Gpu::synchronize();
     } else if ((!name.empty()) && (geom_type != "all_regular")) {

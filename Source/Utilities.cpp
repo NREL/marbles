@@ -24,4 +24,9 @@ void average_down_with_ghosts(
     crse.ParallelCopy(cfine, 0, 0, cfine.nComp(), ng, amrex::IntVect(0));
 }
 
+bool file_exists(const std::string& fname)
+{
+    return static_cast<bool>(std::ifstream(fname));
+}
+
 } // namespace lbm

@@ -88,6 +88,7 @@ add_test_r(channel_cylinder)
 add_test_r(channel_regular)
 add_test_r(tg)
 add_test_r(single_cylinder)
+add_test_r(single_rotated_box)
 
 #=============================================================================
 # Regression tests excluded from CI

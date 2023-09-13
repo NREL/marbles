@@ -52,16 +52,16 @@ AMREX_GPU_DEVICE AMREX_INLINE amrex::Real gradient(
     const amrex::IntVect ivm(iv - amrex::IntVect::TheDimensionVector(dir));
     amrex::Real vp = 0.0, vc = 0.0, vm = 0.0;
 
-    if (((!bx.contains(ivp)) || (is_fluid(ivp) != 1)) &&
-        ((!bx.contains(ivm)) || (is_fluid(ivm) != 1))) {
+    if (((!bx.contains(ivp)) || (is_fluid(ivp, 0) != 1)) &&
+        ((!bx.contains(ivm)) || (is_fluid(ivm, 0) != 1))) {
         vp = 0.0;
         vc = 0.0;
         vm = 0.0;
-    } else if ((!bx.contains(ivp)) || (is_fluid(ivp) != 1)) {
+    } else if ((!bx.contains(ivp)) || (is_fluid(ivp, 0) != 1)) {
         vp = 0.0;
         vc = data(iv, comp);
         vm = -data(ivm, comp);
-    } else if ((!bx.contains(ivm)) || (is_fluid(ivm) != 1)) {
+    } else if ((!bx.contains(ivm)) || (is_fluid(ivm, 0) != 1)) {
         vp = data(ivp, comp);
         vc = -data(iv, comp);
         vm = 0.0;
@@ -80,5 +80,7 @@ void average_down_with_ghosts(
     amrex::MultiFab& crse,
     const amrex::IntVect ng,
     const amrex::IntVect ref_ratio);
+
+bool file_exists(const std::string& fname);
 } // namespace lbm
 #endif

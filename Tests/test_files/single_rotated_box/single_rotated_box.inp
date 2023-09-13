@@ -1,8 +1,8 @@
 max_step = 1000
 
 # geometry parameters
-geometry.prob_lo = 0.0 0.0 -2.0
-geometry.prob_hi = 246.0 576.0 2.0
+geometry.prob_lo = -123.0 0.0 -2.0
+geometry.prob_hi = 123.0 576.0 2.0
 geometry.is_periodic = 0 0 1
 
 # timestepping
@@ -20,7 +20,6 @@ lbm.dx_outer = 1.0
 lbm.dt_outer = 1.0
 lbm.nu = 0.006
 lbm.save_streaming = 0
-lbm.compute_forces = 1
 
 lbm.velocity_bc_type = "parabolic"
 velocity_bc_parabolic.um = 0.015
@@ -31,12 +30,13 @@ lbm.ic_type = "constant"
 ic_constant.density = 1.0
 ic_constant.velocity = 0.0 0.0 0.0
 
-eb2.geom_type = "cylinder"
-eb2.cylinder_radius = 30.0
-eb2.cylinder_center = 120.0 120.0 0.0
-eb2.cylinder_has_fluid_inside = 0
-eb2.cylinder_height = 1000.0
-eb2.cylinder_direction = 2
+eb2.geom_type = "rotated_box"
+eb2.box_lo =  -30.0  90.0 -1000.0
+eb2.box_hi =   30.0 150.0  1000.0
+eb2.box_rotation =  45.0
+eb2.box_rotation_axe = 2
+eb2.box_rotation_center = 0.0 120.0 0.0
+eb2.box_has_fluid_inside = 0
 
 amrex.fpe_trap_invalid = 1
 amrex.fpe_trap_zero = 1
