@@ -642,24 +642,25 @@ void LBM::f_to_macrodata(const int lev)
                 const auto f_arr = f_arrs[nbx];
                 const auto md_arr = md_arrs[nbx];
 
-                amrex::Real rho = 0.0, u = 0.0, v = 0.0, w = 0.0;
+                amrex::Real rho = 0.0, AMREX_D_DECL(u = 0.0, v = 0.0, w = 0.0);
                 for (int q = 0; q < constants::N_MICRO_STATES; q++) {
                     rho += f_arr(iv, q);
                     const auto& ev = evs[q];
-                    u += ev[0] * f_arr(iv, q);
-                    v += ev[1] * f_arr(iv, q);
-                    w += ev[2] * f_arr(iv, q);
+                    AMREX_D_DECL(
+                        u += ev[0] * f_arr(iv, q), v += ev[1] * f_arr(iv, q),
+                        w += ev[2] * f_arr(iv, q));
                 }
-                u *= l_mesh_speed / rho;
-                v *= l_mesh_speed / rho;
-                w *= l_mesh_speed / rho;
+                AMREX_D_DECL(
+                    u *= l_mesh_speed / rho, v *= l_mesh_speed / rho,
+                    w *= l_mesh_speed / rho);
 
                 md_arr(iv, constants::RHO_IDX) = rho;
-                md_arr(iv, constants::VELX_IDX) = u;
-                md_arr(iv, constants::VELY_IDX) = v;
-                md_arr(iv, constants::VELZ_IDX) = w;
+                AMREX_D_DECL(
+                    md_arr(iv, constants::VELX_IDX) = u,
+                    md_arr(iv, constants::VELY_IDX) = v,
+                    md_arr(iv, constants::VELZ_IDX) = w);
                 md_arr(iv, constants::VMAG_IDX) =
-                    std::sqrt(u * u + v * v + w * w);
+                    std::sqrt(AMREX_D_TERM(u * u, +v * v, +w * w));
             }
         });
     amrex::Gpu::synchronize();

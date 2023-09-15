@@ -18,9 +18,10 @@ AMREX_GPU_DEVICE AMREX_INLINE void set_equilibrium_value(
     amrex::Real& eq)
 {
     const amrex::Real e_dot_u =
-        mesh_speed * (ev[0] * vel[0] + ev[1] * vel[1] + ev[2] * vel[2]);
+        mesh_speed *
+        (AMREX_D_TERM(ev[0] * vel[0], +ev[1] * vel[1], +ev[2] * vel[2]));
     const amrex::Real umag_2 =
-        vel[0] * vel[0] + vel[1] * vel[1] + vel[2] * vel[2];
+        AMREX_D_TERM(vel[0] * vel[0], +vel[1] * vel[1], +vel[2] * vel[2]);
     const amrex::Real cs = mesh_speed / constants::ROOT3;
     const amrex::Real cs_2 = cs * cs;
 

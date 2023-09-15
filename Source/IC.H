@@ -60,17 +60,22 @@ struct TaylorGreen
             const amrex::Real* dx = geom.CellSize();
             const amrex::Real x = prob_lo[0] + (iv[0] + 0.5) * dx[0];
             const amrex::Real y = prob_lo[1] + (iv[1] + 0.5) * dx[1];
-            const amrex::Real z = prob_lo[2] + (iv[2] + 0.5) * dx[2];
+            const amrex::Real z =
+                AMREX_D_PICK(, 0.0, prob_lo[2] + (iv[2] + 0.5) * dx[2]);
+            const amrex::Real omega0 = omega[0];
+            const amrex::Real omega1 = omega[1];
+            const amrex::Real omega2 = AMREX_D_PICK(, 0.0, omega[2]);
 
             rho = rho0 + rho0 * v0 * v0 / 16.0 *
-                             (std::cos(2.0 * omega[0] * x / L) +
-                              std::cos(2.0 * omega[1] * y / L)) *
-                             (std::cos(2.0 * omega[2] * z / L) + 2.0);
-            vel[0] = v0 * std::sin(omega[0] * x / L) *
-                     std::cos(omega[1] * y / L) * std::cos(omega[2] * z / L);
-            vel[1] = -v0 * std::cos(omega[0] * x / L) *
-                     std::sin(omega[1] * y / L) * std::cos(omega[2] * z / L);
-            vel[2] = 0.0;
+                             (std::cos(2.0 * omega0 * x / L) +
+                              std::cos(2.0 * omega1 * y / L)) *
+                             (std::cos(2.0 * omega2 * z / L) + 2.0);
+            AMREX_D_DECL(
+                vel[0] = v0 * std::sin(omega0 * x / L) *
+                         std::cos(omega1 * y / L) * std::cos(omega2 * z / L),
+                vel[1] = -v0 * std::cos(omega[0] * x / L) *
+                         std::sin(omega1 * y / L) * std::cos(omega2 * z / L),
+                vel[2] = 0.0);
         }
     };
 

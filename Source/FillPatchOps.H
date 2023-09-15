@@ -71,7 +71,8 @@ public:
                     const amrex::IntVect iv(AMREX_D_DECL(i, j, k));
                     const amrex::IntVect iv_ev = iv + ev;
                     if (!dbox.contains(iv) && dbox.contains(iv_ev) &&
-                        f_arrs[nbx].contains(iv_ev[0], iv_ev[1], iv_ev[2])) {
+                        f_arrs[nbx].contains(
+                            iv_ev[0], iv_ev[1], AMREX_D_PICK(, 0, iv_ev[2]))) {
                         // Copy last streamed values (after collision)
                         // f_arrs[nbx](iv, q) = f_arrs[nbx](iv_ev, q);
                         // Copy bounce back values
