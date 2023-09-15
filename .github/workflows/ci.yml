@@ -393,6 +393,14 @@ jobs:
   Lint-cppcheck:
     needs: Formatting
     runs-on: macos-latest
+    strategy:
+      matrix:
+        dimension: [2D, 3D]
+        include:
+          - dimension: 2D
+              spacedim: 2
+          - dimension: 3D
+              spacedim: 3
     steps:
       - name: Clone
         uses: actions/checkout@v3
@@ -403,7 +411,7 @@ jobs:
       - name: Configure
         run: |
           cmake -B${{runner.workspace}}/build-cppcheck \
-          -DMARBLES_DIM:STRING=3 \
+          -DMARBLES_DIM:STRING=${{matrix.spacedim}} \
           -DMARBLES_ENABLE_MPI:BOOL=OFF \
           -DMARBLES_TEST_WITH_FCOMPARE:BOOL=OFF \
           -DMARBLES_ENABLE_CPPCHECK:BOOL=ON \
@@ -425,6 +433,14 @@ jobs:
   Lint-clang-tidy:
     needs: Formatting
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        dimension: [2D, 3D]
+        include:
+          - dimension: 2D
+              spacedim: 2
+          - dimension: 3D
+              spacedim: 3
     steps:
       - name: Clone
         uses: actions/checkout@v3
@@ -437,7 +453,7 @@ jobs:
           -DCMAKE_BUILD_TYPE:STRING=Debug \
           -DCMAKE_CXX_COMPILER:STRING=clang++ \
           -DCMAKE_C_COMPILER:STRING=clang \
-          -DMARBLES_DIM:STRING=3 \
+          -DMARBLES_DIM:STRING=${{matrix.spacedim}} \
           -DMARBLES_ENABLE_MPI:BOOL=OFF \
           -DMARBLES_TEST_WITH_FCOMPARE:BOOL=OFF \
           -DMARBLES_ENABLE_ALL_WARNINGS:BOOL=ON \
