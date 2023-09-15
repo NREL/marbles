@@ -182,17 +182,19 @@ struct BCFill
         // change" in the direction across the boundary.
         amrex::IntVect iv_shift(amrex::IntVect::TheDimensionVector(idir));
 
-        if (ndir * iv_shift[0] == ev[0] && ndir * iv_shift[1] == ev[1] &&
-            ndir * iv_shift[2] == ev[2]) {
+        if (AMREX_D_TERM(
+                ndir * iv_shift[0] == ev[0], &&ndir * iv_shift[1] == ev[1],
+                &&ndir * iv_shift[2] == ev[2])) {
 
             amrex::Real rho = 0.0;
             amrex::RealVect vel(AMREX_D_DECL(0.0, 0.0, 0.0));
             for (int qq = 0; qq < constants::N_MICRO_STATES; qq++) {
                 rho += data(iv + ndir * iv_shift, qq);
                 const auto& ev_qq = m_evs[qq];
-                vel[0] += ev_qq[0] * data(iv + ndir * iv_shift, qq);
-                vel[1] += ev_qq[1] * data(iv + ndir * iv_shift, qq);
-                vel[2] += ev_qq[2] * data(iv + ndir * iv_shift, qq);
+                AMREX_D_DECL(
+                    vel[0] += ev_qq[0] * data(iv + ndir * iv_shift, qq),
+                    vel[1] += ev_qq[1] * data(iv + ndir * iv_shift, qq),
+                    vel[2] += ev_qq[2] * data(iv + ndir * iv_shift, qq));
             }
 
             vel *= m_mesh_speed / rho;
