@@ -32,7 +32,7 @@ struct BCFill
 
     const amrex::Real m_mesh_speed;
     const amrex::GpuArray<int, AMREX_SPACEDIM* 2> m_bc_type = {0};
-    const amrex::IntVect m_ng = {0, 0, 0};
+    const amrex::IntVect m_ng = {AMREX_D_DECL(0, 0, 0)};
     const VelBCOpType m_vel_bc_op;
 
     AMREX_GPU_HOST
@@ -157,7 +157,7 @@ struct BCFill
             }
         }
 
-        amrex::RealVect vel_bc(0.0, 0.0, 0.0);
+        amrex::RealVect vel_bc(AMREX_D_DECL(0.0, 0.0, 0.0));
         vel_bc[idir] = ndir * (1.0 - (rho_out + rho_tan) / rho_bc);
 
         set_equilibrium_value(
@@ -186,7 +186,7 @@ struct BCFill
             ndir * iv_shift[2] == ev[2]) {
 
             amrex::Real rho = 0.0;
-            amrex::RealVect vel(0.0, 0.0, 0.0);
+            amrex::RealVect vel(AMREX_D_DECL(0.0, 0.0, 0.0));
             for (int qq = 0; qq < constants::N_MICRO_STATES; qq++) {
                 rho += data(iv + ndir * iv_shift, qq);
                 const auto& ev_qq = m_evs[qq];
@@ -273,9 +273,9 @@ struct BCFill
                     const auto& lb = amrex::lbound(data);
                     const auto& ub = amrex::ubound(data);
                     const amrex::IntVect liv(
-                        amrex::IntVect(lb.x, lb.y, lb.z) + m_ng);
+                        amrex::IntVect(AMREX_D_DECL(lb.x, lb.y, lb.z)) + m_ng);
                     const amrex::IntVect uiv(
-                        amrex::IntVect(ub.x, ub.y, ub.z) - m_ng);
+                        amrex::IntVect(AMREX_D_DECL(ub.x, ub.y, ub.z)) - m_ng);
                     const amrex::Box inside(liv, uiv);
 
                     for (int q = 0; q < constants::N_MICRO_STATES; q++) {
@@ -291,7 +291,8 @@ struct BCFill
                             if (m_bc_type[bc_idx] == 1) {
                                 bounce_back_bc(iv, q, ev, data);
                             } else if (m_bc_type[bc_idx] == 2) {
-                                amrex::RealVect vel_bc(0.0, 0.0, 0.0);
+                                amrex::RealVect vel_bc(
+                                    AMREX_D_DECL(0.0, 0.0, 0.0));
                                 m_vel_bc_op(
                                     iv, idir, normal_dir, time, geom, vel_bc);
                                 velocity_bc(
@@ -335,7 +336,7 @@ struct BCOpCreator
 
     const amrex::Real m_mesh_speed;
     const amrex::GpuArray<int, AMREX_SPACEDIM* 2> m_bc_type = {0};
-    const amrex::IntVect m_ng = {0, 0, 0};
+    const amrex::IntVect m_ng = {AMREX_D_DECL(0, 0, 0)};
     VelBCOp m_vel_bc_op;
 };
 

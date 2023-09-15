@@ -15,7 +15,7 @@ struct Constant
     struct DeviceOp
     {
         amrex::Real density{1.0};
-        amrex::RealVect velocity = {0.0, 0.0, 0.0};
+        amrex::RealVect velocity = {AMREX_D_DECL(0.0, 0.0, 0.0)};
 
         AMREX_GPU_DEVICE
         inline void operator()(
@@ -46,7 +46,7 @@ struct TaylorGreen
     {
         amrex::Real rho0{1.0};
         amrex::Real v0{1.0};
-        amrex::RealVect omega = {1.0, 1.0, 1.0};
+        amrex::RealVect omega = {AMREX_D_DECL(1.0, 1.0, 1.0)};
         amrex::Real L{1.0 / M_PI};
 
         AMREX_GPU_DEVICE
@@ -124,9 +124,9 @@ public:
                 const amrex::Real wt = weight[q];
                 const auto& ev = evs[q];
 
-                const amrex::IntVect iv(i, j, k);
+                const amrex::IntVect iv(AMREX_D_DECL(i, j, k));
                 amrex::Real rho = 1.0;
-                amrex::RealVect vel(0.0, 0.0, 0.0);
+                amrex::RealVect vel(AMREX_D_DECL(0.0, 0.0, 0.0));
                 ic(iv, geom, rho, vel);
 
                 set_equilibrium_value(
