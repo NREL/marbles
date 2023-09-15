@@ -1,6 +1,6 @@
 #Set amrex options
 set(USE_XSDK_DEFAULTS OFF)
-set(AMReX_SPACEDIM 3)
+set(AMReX_SPACEDIM "${MARBLES_DIM}" CACHE STRING "Number of physical dimensions" FORCE)
 set(AMReX_AMRDATA OFF)
 set(AMReX_AMRLEVEL OFF)
 set(AMReX_ASSERTIONS OFF)

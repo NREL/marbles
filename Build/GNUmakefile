@@ -1,5 +1,5 @@
-LBM_HOME = ../
-AMREX_HOME ?= $(LBM_HOME)/Submodules/AMReX
+MARBLES_HOME = ../
+AMREX_HOME ?= $(MARBLES_HOME)/Submodules/AMReX
 
 EBASE = marbles
 
@@ -26,10 +26,10 @@ include $(AMREX_HOME)/Src/EB/Make.package
 include $(AMREX_HOME)/Src/Boundary/Make.package
 include $(AMREX_HOME)/Src/AmrCore/Make.package
 
-include $(LBM_HOME)/Source/Make.package
+include $(MARBLES_HOME)/Source/Make.package
 
-INCLUDE_LOCATIONS += $(LBM_HOME)/Source
-VPATH_LOCATIONS   += $(LBM_HOME)/Source
+INCLUDE_LOCATIONS += $(MARBLES_HOME)/Source
+VPATH_LOCATIONS   += $(MARBLES_HOME)/Source
 
 include $(AMREX_HOME)/Tools/GNUMake/Make.rules
 
