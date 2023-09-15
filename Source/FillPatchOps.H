@@ -65,12 +65,14 @@ public:
             amrex::ParallelFor(
                 m_f[lev], m_f[lev].nGrowVect(), constants::N_MICRO_STATES,
                 [=] AMREX_GPU_DEVICE(
-                    int nbx, int i, int j, int k, int q) noexcept {
+                    int nbx, int i, int j, int AMREX_D_PICK(, /*k*/, k),
+                    int q) noexcept {
                     const auto& ev = evs[q];
-                    const amrex::IntVect iv(i, j, k);
+                    const amrex::IntVect iv(AMREX_D_DECL(i, j, k));
                     const amrex::IntVect iv_ev = iv + ev;
                     if (!dbox.contains(iv) && dbox.contains(iv_ev) &&
-                        f_arrs[nbx].contains(iv_ev[0], iv_ev[1], iv_ev[2])) {
+                        f_arrs[nbx].contains(
+                            iv_ev[0], iv_ev[1], AMREX_D_PICK(, 0, iv_ev[2]))) {
                         // Copy last streamed values (after collision)
                         // f_arrs[nbx](iv, q) = f_arrs[nbx](iv_ev, q);
                         // Copy bounce back values

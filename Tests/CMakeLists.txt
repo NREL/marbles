@@ -84,11 +84,18 @@ endfunction(add_test_re)
 #=============================================================================
 # Regression tests
 #=============================================================================
-add_test_r(channel_cylinder)
 add_test_r(channel_regular)
 add_test_r(tg)
-add_test_r(single_cylinder)
 add_test_r(single_rotated_box)
+
+if(PELEC_DIM EQUAL 2)
+  add_test_r(single_cylinder_2d)
+endif()
+  
+if(PELEC_DIM EQUAL 3)
+  add_test_r(single_cylinder)
+  add_test_r(channel_cylinder)
+endif()
 
 #=============================================================================
 # Regression tests excluded from CI

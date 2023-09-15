@@ -11,7 +11,11 @@ static constexpr int VELY_IDX = 2;
 static constexpr int VELZ_IDX = 3;
 static constexpr int VMAG_IDX = 4;
 
+#if AMREX_SPACEDIM == 2
+static constexpr int N_MICRO_STATES = 9;
+#else
 static constexpr int N_MICRO_STATES = 27;
+#endif
 
 static constexpr int N_DERIVED = 4;
 static constexpr int VORTX_IDX = 0;

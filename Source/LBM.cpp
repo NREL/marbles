@@ -511,8 +511,10 @@ void LBM::stream(const int lev)
     const auto& bounce_dirs = stencil.bounce_dirs;
     amrex::ParallelFor(
         m_f[lev], m_f[lev].nGrowVect(), constants::N_MICRO_STATES,
-        [=] AMREX_GPU_DEVICE(int nbx, int i, int j, int k, int q) noexcept {
-            const amrex::IntVect iv(i, j, k);
+        [=] AMREX_GPU_DEVICE(
+            int nbx, int i, int j, int AMREX_D_PICK(, /*k*/, k),
+            int q) noexcept {
+            const amrex::IntVect iv(AMREX_D_DECL(i, j, k));
             const auto& ev = evs[q];
             const amrex::IntVect ivn(iv + ev);
             if (is_fluid_arrs[nbx](iv, 0) == 1) {
@@ -521,8 +523,8 @@ void LBM::stream(const int lev)
                 const auto& lb = amrex::lbound(f_arr);
                 const auto& ub = amrex::ubound(f_arr);
                 const amrex::Box fbox(
-                    amrex::IntVect(lb.x, lb.y, lb.z),
-                    amrex::IntVect(ub.x, ub.y, ub.z));
+                    amrex::IntVect(AMREX_D_DECL(lb.x, lb.y, lb.z)),
+                    amrex::IntVect(AMREX_D_DECL(ub.x, ub.y, ub.z)));
                 if (fbox.contains(ivn)) {
                     if (is_fluid_arrs[nbx](ivn, 0) != 0) {
                         fs_arr(ivn, q) = f_arr(iv, q);
@@ -569,18 +571,20 @@ void LBM::macrodata_to_equilibrium(const int lev)
     const auto& weight = stencil.weights;
     amrex::ParallelFor(
         m_eq[lev], m_eq[lev].nGrowVect(), constants::N_MICRO_STATES,
-        [=] AMREX_GPU_DEVICE(int nbx, int i, int j, int k, int q) noexcept {
-            const amrex::IntVect iv(i, j, k);
+        [=] AMREX_GPU_DEVICE(
+            int nbx, int i, int j, int AMREX_D_PICK(, /*k*/, k),
+            int q) noexcept {
+            const amrex::IntVect iv(AMREX_D_DECL(i, j, k));
             if (is_fluid_arrs[nbx](iv, 0) == 1) {
 
                 const auto md_arr = md_arrs[nbx];
                 const auto eq_arr = eq_arrs[nbx];
 
                 const amrex::Real rho = md_arr(iv, constants::RHO_IDX);
-                const amrex::RealVect vel = {
+                const amrex::RealVect vel = {AMREX_D_DECL(
                     md_arr(iv, constants::VELX_IDX),
                     md_arr(iv, constants::VELY_IDX),
-                    md_arr(iv, constants::VELZ_IDX)};
+                    md_arr(iv, constants::VELZ_IDX))};
 
                 const amrex::Real wt = weight[q];
 
@@ -603,8 +607,10 @@ void LBM::relax_f_to_equilibrium(const int lev)
     const amrex::Real tau = m_nu / (m_dts[lev] * m_cs_2) + 0.5;
     amrex::ParallelFor(
         m_f[lev], m_eq[lev].nGrowVect(), constants::N_MICRO_STATES,
-        [=] AMREX_GPU_DEVICE(int nbx, int i, int j, int k, int q) noexcept {
-            const amrex::IntVect iv(i, j, k);
+        [=] AMREX_GPU_DEVICE(
+            int nbx, int i, int j, int AMREX_D_PICK(, /*k*/, k),
+            int q) noexcept {
+            const amrex::IntVect iv(AMREX_D_DECL(i, j, k));
             if (is_fluid_arrs[nbx](iv, 0) == 1) {
                 const auto f_arr = f_arrs[nbx];
                 const auto eq_arr = eq_arrs[nbx];
@@ -628,31 +634,33 @@ void LBM::f_to_macrodata(const int lev)
     const auto& evs = stencil.evs;
     amrex::ParallelFor(
         m_macrodata[lev], m_macrodata[lev].nGrowVect(),
-        [=] AMREX_GPU_DEVICE(int nbx, int i, int j, int k) noexcept {
-            const amrex::IntVect iv(i, j, k);
+        [=] AMREX_GPU_DEVICE(
+            int nbx, int i, int j, int AMREX_D_PICK(, /*k*/, k)) noexcept {
+            const amrex::IntVect iv(AMREX_D_DECL(i, j, k));
             if (is_fluid_arrs[nbx](iv, 0) == 1) {
 
                 const auto f_arr = f_arrs[nbx];
                 const auto md_arr = md_arrs[nbx];
 
-                amrex::Real rho = 0.0, u = 0.0, v = 0.0, w = 0.0;
+                amrex::Real rho = 0.0, AMREX_D_DECL(u = 0.0, v = 0.0, w = 0.0);
                 for (int q = 0; q < constants::N_MICRO_STATES; q++) {
                     rho += f_arr(iv, q);
                     const auto& ev = evs[q];
-                    u += ev[0] * f_arr(iv, q);
-                    v += ev[1] * f_arr(iv, q);
-                    w += ev[2] * f_arr(iv, q);
+                    AMREX_D_DECL(
+                        u += ev[0] * f_arr(iv, q), v += ev[1] * f_arr(iv, q),
+                        w += ev[2] * f_arr(iv, q));
                 }
-                u *= l_mesh_speed / rho;
-                v *= l_mesh_speed / rho;
-                w *= l_mesh_speed / rho;
+                AMREX_D_DECL(
+                    u *= l_mesh_speed / rho, v *= l_mesh_speed / rho,
+                    w *= l_mesh_speed / rho);
 
                 md_arr(iv, constants::RHO_IDX) = rho;
-                md_arr(iv, constants::VELX_IDX) = u;
-                md_arr(iv, constants::VELY_IDX) = v;
-                md_arr(iv, constants::VELZ_IDX) = w;
+                AMREX_D_DECL(
+                    md_arr(iv, constants::VELX_IDX) = u,
+                    md_arr(iv, constants::VELY_IDX) = v,
+                    md_arr(iv, constants::VELZ_IDX) = w);
                 md_arr(iv, constants::VMAG_IDX) =
-                    std::sqrt(u * u + v * v + w * w);
+                    std::sqrt(AMREX_D_TERM(u * u, +v * v, +w * w));
             }
         });
     amrex::Gpu::synchronize();
@@ -672,11 +680,12 @@ void LBM::compute_derived(const int lev)
     const amrex::Box& dbox = geom[lev].Domain();
     amrex::ParallelFor(
         m_derived[lev], m_derived[lev].nGrowVect(),
-        [=] AMREX_GPU_DEVICE(int nbx, int i, int j, int k) noexcept {
+        [=] AMREX_GPU_DEVICE(
+            int nbx, int i, int j, int AMREX_D_PICK(, /*k*/, k)) noexcept {
             const auto md_arr = md_arrs[nbx];
             const auto if_arr = is_fluid_arrs[nbx];
             const auto d_arr = d_arrs[nbx];
-            const amrex::IntVect iv(i, j, k);
+            const amrex::IntVect iv(AMREX_D_DECL(i, j, k));
 
             if (if_arr(iv, 0) == 1) {
                 const amrex::Real vx = gradient(
@@ -724,10 +733,11 @@ void LBM::compute_eb_forces()
             amrex::TypeList<AMREX_D_DECL(
                 amrex::Real, amrex::Real, amrex::Real)>{},
             m_f[lev], amrex::IntVect(0),
-            [=] AMREX_GPU_DEVICE(int nbx, int i, int j, int k) noexcept
+            [=] AMREX_GPU_DEVICE(
+                int nbx, int i, int j, int AMREX_D_PICK(, /*k*/, k)) noexcept
             -> amrex::GpuTuple<AMREX_D_DECL(
                 amrex::Real, amrex::Real, amrex::Real)> {
-                const amrex::IntVect iv(i, j, k);
+                const amrex::IntVect iv(AMREX_D_DECL(i, j, k));
                 amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> fs = {0.0};
                 if ((is_fluid_arrs[nbx](iv, 1) == 1) &&
                     (mask_arrs[nbx](iv) == 0)) {
@@ -920,8 +930,9 @@ void LBM::initialize_is_fluid(const int lev)
     // Compute the boundary cells
     amrex::ParallelFor(
         m_is_fluid[lev], m_is_fluid[lev].nGrowVect() - 1,
-        [=] AMREX_GPU_DEVICE(int nbx, int i, int j, int k) noexcept {
-            const amrex::IntVect iv(i, j, k);
+        [=] AMREX_GPU_DEVICE(
+            int nbx, int i, int j, int AMREX_D_PICK(, /*k*/, k)) noexcept {
+            const amrex::IntVect iv(AMREX_D_DECL(i, j, k));
             const auto if_arr = is_fluid_arrs[nbx];
 
             bool all_covered = true;
@@ -962,7 +973,7 @@ void LBM::fill_f_inside_eb(const int lev)
 {
     BL_PROFILE("LBM::fill_f_inside_eb()");
     const amrex::Real rho_inside = 0.0;
-    const amrex::RealVect vel_inside(0.0, 0.0, 0.0);
+    const amrex::RealVect vel_inside(AMREX_D_DECL(0.0, 0.0, 0.0));
     const amrex::Real l_mesh_speed = m_mesh_speed;
 
     auto const& f_arrs = m_f[lev].arrays();
@@ -1141,7 +1152,7 @@ void LBM::average_down_to(int crse_lev)
 {
     BL_PROFILE("LBM::average_down_to()");
 
-    const amrex::IntVect crse_ng(1, 1, 1);
+    const amrex::IntVect crse_ng(AMREX_D_DECL(1, 1, 1));
     average_down_with_ghosts(
         m_f[crse_lev + 1], m_f[crse_lev], crse_ng, refRatio(crse_lev));
 

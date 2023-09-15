@@ -79,8 +79,9 @@ struct Channel
         {
             const int* domhi = geom.Domain().hiVect();
             const amrex::Real c1 = iv[1] * (domhi[1] - iv[1]);
-            const amrex::Real c2 = iv[2] * (domhi[2] - iv[2]);
-            vel[0] = 16.0 * u_ref * c1 * c2 / std::pow((domhi[2] + 1), 4);
+            const amrex::Real c2 =
+                AMREX_D_PICK(, c1, iv[2] * (domhi[2] - iv[2]));
+            vel[0] = 16.0 * u_ref * c1 * c2 / std::pow((domhi[1] + 1), 4);
         }
     };
 

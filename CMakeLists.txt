@@ -6,6 +6,11 @@ include(CMakePackageConfigHelpers)
 include(GNUInstallDirs)
 include(marbles-utils)
 
+set(MARBLES_DIM "3" CACHE STRING "Number of physical dimensions")
+if(MARBLES_DIM EQUAL 1)
+  message(FATAL_ERROR "Marbles does not enable 1D.")
+endif()
+
 option(MARBLES_ENABLE_ALL_WARNINGS "Show most warnings for most compilers" ON)
 option(MARBLES_ENABLE_CLANG_TIDY "Compile with clang-tidy static analysis" OFF)
 option(MARBLES_ENABLE_CPPCHECK "Enable cppcheck static analysis target" OFF)
