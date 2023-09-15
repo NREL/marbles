@@ -65,7 +65,8 @@ public:
             amrex::ParallelFor(
                 m_f[lev], m_f[lev].nGrowVect(), constants::N_MICRO_STATES,
                 [=] AMREX_GPU_DEVICE(
-                    int nbx, int i, int j, int k, int q) noexcept {
+                    int nbx, int i, int j, int AMREX_D_PICK(, /*k*/, k),
+                    int q) noexcept {
                     const auto& ev = evs[q];
                     const amrex::IntVect iv(AMREX_D_DECL(i, j, k));
                     const amrex::IntVect iv_ev = iv + ev;

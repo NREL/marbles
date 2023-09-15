@@ -511,7 +511,9 @@ void LBM::stream(const int lev)
     const auto& bounce_dirs = stencil.bounce_dirs;
     amrex::ParallelFor(
         m_f[lev], m_f[lev].nGrowVect(), constants::N_MICRO_STATES,
-        [=] AMREX_GPU_DEVICE(int nbx, int i, int j, int k, int q) noexcept {
+        [=] AMREX_GPU_DEVICE(
+            int nbx, int i, int j, int AMREX_D_PICK(, /*k*/, k),
+            int q) noexcept {
             const amrex::IntVect iv(AMREX_D_DECL(i, j, k));
             const auto& ev = evs[q];
             const amrex::IntVect ivn(iv + ev);
@@ -569,7 +571,9 @@ void LBM::macrodata_to_equilibrium(const int lev)
     const auto& weight = stencil.weights;
     amrex::ParallelFor(
         m_eq[lev], m_eq[lev].nGrowVect(), constants::N_MICRO_STATES,
-        [=] AMREX_GPU_DEVICE(int nbx, int i, int j, int k, int q) noexcept {
+        [=] AMREX_GPU_DEVICE(
+            int nbx, int i, int j, int AMREX_D_PICK(, /*k*/, k),
+            int q) noexcept {
             const amrex::IntVect iv(AMREX_D_DECL(i, j, k));
             if (is_fluid_arrs[nbx](iv, 0) == 1) {
 
@@ -603,7 +607,9 @@ void LBM::relax_f_to_equilibrium(const int lev)
     const amrex::Real tau = m_nu / (m_dts[lev] * m_cs_2) + 0.5;
     amrex::ParallelFor(
         m_f[lev], m_eq[lev].nGrowVect(), constants::N_MICRO_STATES,
-        [=] AMREX_GPU_DEVICE(int nbx, int i, int j, int k, int q) noexcept {
+        [=] AMREX_GPU_DEVICE(
+            int nbx, int i, int j, int AMREX_D_PICK(, /*k*/, k),
+            int q) noexcept {
             const amrex::IntVect iv(AMREX_D_DECL(i, j, k));
             if (is_fluid_arrs[nbx](iv, 0) == 1) {
                 const auto f_arr = f_arrs[nbx];
@@ -628,7 +634,8 @@ void LBM::f_to_macrodata(const int lev)
     const auto& evs = stencil.evs;
     amrex::ParallelFor(
         m_macrodata[lev], m_macrodata[lev].nGrowVect(),
-        [=] AMREX_GPU_DEVICE(int nbx, int i, int j, int k) noexcept {
+        [=] AMREX_GPU_DEVICE(
+            int nbx, int i, int j, int AMREX_D_PICK(, /*k*/, k)) noexcept {
             const amrex::IntVect iv(AMREX_D_DECL(i, j, k));
             if (is_fluid_arrs[nbx](iv, 0) == 1) {
 
@@ -672,7 +679,8 @@ void LBM::compute_derived(const int lev)
     const amrex::Box& dbox = geom[lev].Domain();
     amrex::ParallelFor(
         m_derived[lev], m_derived[lev].nGrowVect(),
-        [=] AMREX_GPU_DEVICE(int nbx, int i, int j, int k) noexcept {
+        [=] AMREX_GPU_DEVICE(
+            int nbx, int i, int j, int AMREX_D_PICK(, /*k*/, k)) noexcept {
             const auto md_arr = md_arrs[nbx];
             const auto if_arr = is_fluid_arrs[nbx];
             const auto d_arr = d_arrs[nbx];
@@ -724,7 +732,8 @@ void LBM::compute_eb_forces()
             amrex::TypeList<AMREX_D_DECL(
                 amrex::Real, amrex::Real, amrex::Real)>{},
             m_f[lev], amrex::IntVect(0),
-            [=] AMREX_GPU_DEVICE(int nbx, int i, int j, int k) noexcept
+            [=] AMREX_GPU_DEVICE(
+                int nbx, int i, int j, int AMREX_D_PICK(, /*k*/, k)) noexcept
             -> amrex::GpuTuple<AMREX_D_DECL(
                 amrex::Real, amrex::Real, amrex::Real)> {
                 const amrex::IntVect iv(AMREX_D_DECL(i, j, k));
@@ -920,7 +929,8 @@ void LBM::initialize_is_fluid(const int lev)
     // Compute the boundary cells
     amrex::ParallelFor(
         m_is_fluid[lev], m_is_fluid[lev].nGrowVect() - 1,
-        [=] AMREX_GPU_DEVICE(int nbx, int i, int j, int k) noexcept {
+        [=] AMREX_GPU_DEVICE(
+            int nbx, int i, int j, int AMREX_D_PICK(, /*k*/, k)) noexcept {
             const amrex::IntVect iv(AMREX_D_DECL(i, j, k));
             const auto if_arr = is_fluid_arrs[nbx];
 
