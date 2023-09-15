@@ -107,6 +107,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest]
         build_type: [Release, Debug]
+        dimension: [2, 3]
         include:
           - os: macos-latest
             install_deps: brew install mpich automake ccache
@@ -161,7 +162,7 @@ jobs:
           -DCMAKE_INSTALL_PREFIX:PATH=${{runner.workspace}}/install-${{matrix.os}}-${{matrix.build_type}} \
           -DCMAKE_BUILD_TYPE:STRING=${{matrix.build_type}} \
           -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON \
-          -DMARBLES_DIM:STRING=3 \
+          -DMARBLES_DIM:STRING=${{matrix.os}} \
           -DMARBLES_ENABLE_MPI:BOOL=ON \
           -DCMAKE_CXX_COMPILER_LAUNCHER:STRING=ccache \
           ${{github.workspace}}
