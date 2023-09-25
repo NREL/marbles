@@ -124,7 +124,7 @@ jobs:
           - build_type: Release
             ctest_args: -LE no_ci
           - build_type: Debug
-            ctest_args: -L unit
+            ctest_args: -LE no_ci
           - dimension: 2D
             spacedim: 2
           - dimension: 3D
