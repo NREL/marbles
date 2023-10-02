@@ -13,3 +13,4 @@ Getting Started
    InputFiles
    Tutorials
    Testing
+   Linting
