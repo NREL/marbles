@@ -16,6 +16,11 @@ function clean(){
     rm -rf Testing
     rm -rf Tests
     rm -rf marbles_obj
+    rm -rf clang-tidy-full-report.txt
+    rm -rf clang-tidy-ci-report.txt
+    rm -rf cppcheck-ci-report.txt
+    rm -rf cppcheck
+    rm -rf build-docs
 }
 
 CLEAN='false'
@@ -44,6 +49,7 @@ done
 if ${CLEAN}; then
     echo "Cleaning build"
     clean
+    exit
 fi
 
 cmake -DCMAKE_INSTALL_PREFIX:PATH=./install \

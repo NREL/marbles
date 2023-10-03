@@ -35,22 +35,31 @@ To compile and run `MARBLES`, one needs a C++ compiler that supports the C++17 s
    B. The example file can be any file from the `Tests/test_files` directories.
    C. In addition to informative output to the terminal, periodic plotfiles are written in the run folder.  These may be viewed with AMReX's `Amrvis <https://amrex-codes.github.io/amrex/docs_html/Visualization.html>`_ or `VisIt <https://visit-dav.github.io/visit-website/>`_:
 
-      1. In VisIt, direct the File->Open dialogue to select the file named "Header" that is inside each plotfile folder..
+      1. In VisIt, direct the File->Open dialogue to select the file named "Header" that is inside each plotfile folder.
       2. With Amrvis, `$ amrvis3d plt00030`, for example.
 
+Alternatively, one can use cmake to build the code ::
+
+    $ cd Build
+    $ ./cmake.sh
+    $ ./marbles example.inp
 
 Dependencies
 ~~~~~~~~~~~~
 
-`MARBLES` is built on the `AMReX` library.
+`MARBLES` is built on the `AMReX <https://github.com/AMReX-Codes/amrex>`_ library.
 
 
 Documentation
 ~~~~~~~~~~~~~
 
-The full documentation for `MARBLES` exists in the Docs directory; at present this is maintained inline using `Sphinx <http://www.sphinx-doc.org>`_.
+The full documentation for `MARBLES` exists in the Docs directory; at present this is maintained inline using `Sphinx <http://www.sphinx-doc.org>`_. To build the documentation ::
 
-    cd Docs && mkdir build && cd build && sphinx-build -M html ../sphinx .
+    $ cd Docs && mkdir build && cd build && sphinx-build -M html ../sphinx .
+
+Or, using cmake ::
+
+    $ cd Build && cmake -B build-docs ../Docs && cmake --build build-docs
 
 
 Acknowledgment
