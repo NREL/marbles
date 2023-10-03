@@ -384,14 +384,6 @@ void LBM::evolve()
             write_checkpoint_file();
         }
 
-        // sanity check
-        for (int lev = 0; lev <= finest_level; ++lev) {
-            for (int q = 0; q < constants::N_MICRO_STATES; q++) {
-                AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                    m_f[lev].min(q) >= 0.0, "Negative number found in f");
-            }
-        }
-
         if (cur_time >= m_stop_time - 1.e-6 * m_dts[0]) {
             break;
         }
@@ -487,6 +479,8 @@ void LBM::advance(
     }
 
     collide(lev);
+
+    sanity_check_f(lev);
 }
 
 void LBM::post_time_step()
@@ -908,6 +902,8 @@ void LBM::initialize_f(const int lev)
     fill_f_inside_eb(lev);
 
     m_f[lev].FillBoundary(Geom(lev).periodicity());
+
+    sanity_check_f(lev);
 }
 
 void LBM::initialize_is_fluid(const int lev)
@@ -1163,6 +1159,16 @@ void LBM::average_down_to(int crse_lev, amrex::IntVect crse_ng)
         refRatio(crse_lev));
 
     amrex::Gpu::synchronize();
+}
+
+void LBM::sanity_check_f(const int lev)
+{
+    BL_PROFILE("LBM::sanity_check_f()");
+
+    for (int q = 0; q < constants::N_MICRO_STATES; q++) {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            m_f[lev].min(q) >= 0.0, "Negative number found in f");
+    }
 }
 
 // tag cells for refinement

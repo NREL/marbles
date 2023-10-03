@@ -151,6 +151,9 @@ private:
     // multiple levels
     void average_down_to(int crse_lev, amrex::IntVect crse_ng);
 
+    // Check distribution
+    void sanity_check_f(const int lev);
+
     // Set the user defined BC functions
     void set_bcs();
 
