@@ -7,8 +7,7 @@ MARBLES: Multi-scale Adaptively Refined Boltzmann LatticE Solver
 
    Introduction
    GettingStarted
-   Equations
-   Algorithms
+   LBM
    VandV
 
 
