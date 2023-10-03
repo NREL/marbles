@@ -387,7 +387,8 @@ void LBM::evolve()
         // sanity check
         for (int lev = 0; lev <= finest_level; ++lev) {
             for (int q = 0; q < constants::N_MICRO_STATES; q++) {
-                AMREX_ALWAYS_ASSERT(m_f[lev].min(q) >= 0.0);
+                AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    m_f[lev].min(q) >= 0.0, "Negative number found in f");
             }
         }
 

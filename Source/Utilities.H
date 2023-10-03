@@ -91,7 +91,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void masked_avgdown(
 {
     const int facx = ratio[0];
     const int facy = ratio[1];
-    const int facz = ratio[2];
+    const int facz = AMREX_D_PICK(1, 1, ratio[2]);
     const int ii = i * facx;
     const int jj = j * facy;
     const int kk = k * facz;
