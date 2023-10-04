@@ -121,7 +121,7 @@ void LBM::init_data()
         const amrex::Real time = 0.0;
         set_ics();
         InitFromScratch(time);
-        average_down();
+        average_down(amrex::IntVect(0));
 
         compute_dt();
 
@@ -475,10 +475,12 @@ void LBM::advance(
     stream(lev);
 
     if (lev < finest_level) {
-        average_down_to(lev);
+        average_down_to(lev, amrex::IntVect(1));
     }
 
     collide(lev);
+
+    sanity_check_f(lev);
 }
 
 void LBM::post_time_step()
@@ -500,7 +502,7 @@ void LBM::stream(const int lev)
     amrex::MultiFab f_star(
         boxArray(lev), DistributionMap(lev), constants::N_MICRO_STATES,
         m_f[lev].nGrow(), amrex::MFInfo(), *(m_factory[lev]));
-    f_star.setVal(0.0);
+    f_star.setVal(-1.0);
 
     auto const& fs_arrs = f_star.arrays();
     auto const& is_fluid_arrs = m_is_fluid[lev].const_arrays();
@@ -536,12 +538,10 @@ void LBM::stream(const int lev)
         });
     amrex::Gpu::synchronize();
 
-    // FIXME. I think this needs to copy the ng ghosts too
-    // amrex::MultiFab::Copy(m_f[lev], f_star, 0, 0, constants::N_MICRO_STATES,
-    // 0);
     amrex::MultiFab::Copy(
         m_f[lev], f_star, 0, 0, constants::N_MICRO_STATES,
         m_f[lev].nGrowVect());
+    m_f[lev].FillBoundary(Geom(lev).periodicity());
 }
 
 // Collide the particles
@@ -902,6 +902,8 @@ void LBM::initialize_f(const int lev)
     fill_f_inside_eb(lev);
 
     m_f[lev].FillBoundary(Geom(lev).periodicity());
+
+    sanity_check_f(lev);
 }
 
 void LBM::initialize_is_fluid(const int lev)
@@ -1138,28 +1140,35 @@ LBM::get_field(const std::string& name, const int lev, const int ngrow)
 }
 
 // set covered coarse cells to be the average of overlying fine cells
-void LBM::average_down()
+void LBM::average_down(amrex::IntVect crse_ng)
 {
     BL_PROFILE("LBM::average_down()");
     for (int lev = finest_level - 1; lev >= 0; --lev) {
-        average_down_to(lev);
+        average_down_to(lev, crse_ng);
     }
 }
 
 // more flexible version of AverageDown() that lets you average down across
 // multiple levels
-void LBM::average_down_to(int crse_lev)
+void LBM::average_down_to(int crse_lev, amrex::IntVect crse_ng)
 {
     BL_PROFILE("LBM::average_down_to()");
 
-    const amrex::IntVect crse_ng(AMREX_D_DECL(1, 1, 1));
     average_down_with_ghosts(
-        m_f[crse_lev + 1], m_f[crse_lev], crse_ng, refRatio(crse_lev));
+        m_f[crse_lev + 1], m_f[crse_lev], Geom(crse_lev), crse_ng,
+        refRatio(crse_lev));
 
-    // FIXME this is necessary? Hopefully just on the covered cells
-    // FToMacrodata(crse_lev);
-    // MacrodataToEquilibrium(crse_lev);
     amrex::Gpu::synchronize();
+}
+
+void LBM::sanity_check_f(const int lev)
+{
+    BL_PROFILE("LBM::sanity_check_f()");
+
+    for (int q = 0; q < constants::N_MICRO_STATES; q++) {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            m_f[lev].min(q) >= 0.0, "Negative number found in f");
+    }
 }
 
 // tag cells for refinement

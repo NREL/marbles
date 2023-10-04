@@ -73,7 +73,7 @@ struct TaylorGreen
             AMREX_D_DECL(
                 vel[0] = v0 * std::sin(omega0 * x / L) *
                          std::cos(omega1 * y / L) * std::cos(omega2 * z / L),
-                vel[1] = -v0 * std::cos(omega[0] * x / L) *
+                vel[1] = -v0 * std::cos(omega0 * x / L) *
                          std::sin(omega1 * y / L) * std::cos(omega2 * z / L),
                 vel[2] = 0.0);
         }

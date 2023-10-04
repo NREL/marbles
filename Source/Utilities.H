@@ -75,10 +75,49 @@ AMREX_GPU_DEVICE AMREX_INLINE amrex::Real gradient(
     return (vp + vc + vm) * idx[dir];
 }
 
+// version of amrex_avgdown that masks out certain values
+template <typename T>
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void masked_avgdown(
+    int i,
+    int j,
+    int k,
+    int n,
+    amrex::Array4<T> const& crse,
+    amrex::Array4<T const> const& fine,
+    int ccomp,
+    int fcomp,
+    amrex::IntVect const& ratio,
+    const T masked_val = -1.0) noexcept
+{
+    const int facx = ratio[0];
+    const int facy = ratio[1];
+    const int facz = AMREX_D_PICK(1, 1, ratio[2]);
+    const int ii = i * facx;
+    const int jj = j * facy;
+    const int kk = k * facz;
+    T c = 0;
+    T vol = 0;
+    for (int kref = 0; kref < facz; ++kref) {
+        for (int jref = 0; jref < facy; ++jref) {
+            for (int iref = 0; iref < facx; ++iref) {
+                const T fval = fine(ii + iref, jj + jref, kk + kref, n + fcomp);
+                if (std::abs(fval - masked_val) > constants::SMALL_NUM) {
+                    c += fval;
+                    vol += T(1.0);
+                }
+            }
+        }
+    }
+    if (vol > 0.0) {
+        crse(i, j, k, n + ccomp) = c / vol;
+    }
+}
+
 // Version of average_down that also averages down fine ghost cells
 void average_down_with_ghosts(
     const amrex::MultiFab& fine,
     amrex::MultiFab& crse,
+    const amrex::Geometry& geom,
     const amrex::IntVect ng,
     const amrex::IntVect ref_ratio);
 
