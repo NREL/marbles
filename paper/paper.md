@@ -45,13 +45,15 @@ MARBLES is written in C++ and is built upon the AMReX library. This library impl
 
 # Statement of Need
 
-Several software tools that implement the Lattice Boltzmann method can found online, including aPyTorch based solver, Lettuce [@bedrunka2021lettuce], the commonly used OpenLB [@krause2021openlb], Palabos [@latt2021palabos], waLBerla [@bauer2021walberla; @godenschwager2013framework], and others [@schmieschek2017lb3d; @mora2020concise; @pastewka2019hpc].
+Several software tools that implement the Lattice Boltzmann method can found online, including a PyTorch based solver, Lettuce [@bedrunka2021lettuce], the commonly used OpenLB [@krause2021openlb], Palabos [@latt2021palabos], waLBerla [@bauer2021walberla; @godenschwager2013framework], and others [@schmieschek2017lb3d; @mora2020concise; @pastewka2019hpc].
 
 In contrast with these solvers, MARBLES is
 
 Its unique features consist in combining
 
-achieve high performances from a small desktop station to the world's largest supercomputer.
+To the authors' knowledge, MARBLES is the only AMReX-based Lattice Boltzmann code that leverages all the modern programming models implemented in that library.
+
+MARBLES, through its use of vendor-agnostic programming models implemented in AMReX, achieves high performances from a small desktop station to the world's largest supercomputer.
 
 MARBLES is intended for students, researchers and engineers interested in simulating mesoscale and macroscale flows with the Lattice Boltzmann method on modern high performance computing hardware. With performance portability and being vendor agnostic foremost considerations in the design of the code, MARBLES can leverage the computational resources available on the latest heterogeneous exascale platforms, include graphics processing units. To achieve (some statement of the current world's energy needs). In this context, MARBLES is a valuable tool to study (application examples)
 
