@@ -51,7 +51,7 @@ In contrast with these solvers, MARBLES is
 
 Its unique features consist in combining
 
-To the authors' knowledge, MARBLES is the only AMReX-based Lattice Boltzmann code that leverages all the modern programming models implemented in that library.
+To the authors' knowledge, MARBLES is the only AMReX-based Lattice Boltzmann code that leverages the modern programming models implemented in that library. Because of this, MARBLES is easily extensible to other capabilities and will automatically perform well on emerging architectures.
 
 MARBLES, through its use of vendor-agnostic programming models implemented in AMReX, achieves high performances from a small desktop station to the world's largest supercomputer.
 
