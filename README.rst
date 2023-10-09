@@ -7,7 +7,7 @@ MARBLES: Multi-scale Adaptively Refined Boltzmann LatticE Solver
    :target: https://github.com/NREL/marbles/actions
 
 .. |Documentation Badge| image:: https://github.com/NREL/marbles/workflows/MARBLES-Docs/badge.svg
-   :target: https://marbles.github.io
+   :target: https://https://nrel.github.io/marbles
 
 .. |License Badge| image:: https://img.shields.io/badge/License-Apache%20v2.0-blue.svg
    :target: https://www.apache.org/licenses/LICENSE-2.0
