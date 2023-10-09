@@ -262,7 +262,6 @@ private:
     // User-input quantities (will be overridden by ParmParse)
     amrex::Real m_dx_outer = 1.0;
     amrex::Real m_dt_outer = 1.0;
-    // amrex::Real reynolds = 1.0;
     amrex::Real m_nu = 1.0;
 
     // save streaming data to plot file
