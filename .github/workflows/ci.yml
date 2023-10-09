@@ -520,10 +520,6 @@ jobs:
           echo "CCACHE_COMPRESSLEVEL=5" >> $GITHUB_ENV
           echo "CCACHE_LOGFILE=${{github.workspace}}/ccache.log.txt" >> $GITHUB_ENV
           echo "CCACHE_MAXSIZE=1G" >> $GITHUB_ENV
-      - name: Dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y ninja-build
       - name: Install Ccache
         run: |
           wget https://github.com/ccache/ccache/releases/download/v4.8/ccache-4.8-linux-x86_64.tar.xz
@@ -544,11 +540,11 @@ jobs:
           config-file: ./.github/codeql/codeql-config.yml
       - name: Configure
         run: |
-          cmake -G Ninja \
-            -B ${{runner.workspace}}/build-ci-codeql \
+          cmake -B ${{runner.workspace}}/build-ci-codeql \
             -DCMAKE_INSTALL_PREFIX:PATH=${{runner.workspace}}/install-codeql \
             -DCMAKE_BUILD_TYPE:STRING=Debug \
             -DCMAKE_CXX_COMPILER:STRING=clang++ \
+            -DCMAKE_CXX_COMPILER_LAUNCHER:STRING=ccache \
             -DCMAKE_C_COMPILER:STRING=clang \
             -DMARBLES_ENABLE_MPI:BOOL=OFF \
             -DMARBLES_TEST_WITH_FCOMPARE:BOOL=OFF \
