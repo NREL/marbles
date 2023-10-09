@@ -36,11 +36,11 @@ jobs:
            echo "::add-matcher::.github/problem-matchers/sphinx.json"
            cmake --build ${{runner.workspace}}/build-docs
            touch ${{runner.workspace}}/build-docs/sphinx/html/.nojekyll
-      #- name: Deploy
-      #  if: github.event_name == 'push' && github.ref == 'refs/heads/development'
-      #  uses: JamesIves/github-pages-deploy-action@releases/v3
-      #  with:
-      #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #    BRANCH: gh-pages
-      #    FOLDER: ${{runner.workspace}}/build-docs/sphinx/html
-      #    SINGLE_COMMIT: true
+      - name: Deploy
+       if: github.event_name == 'push'
+       uses: JamesIves/github-pages-deploy-action@releases/v3
+       with:
+         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+         BRANCH: gh-pages
+         FOLDER: ${{runner.workspace}}/build-docs/sphinx/html
+         SINGLE_COMMIT: true
