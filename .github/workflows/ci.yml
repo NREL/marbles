@@ -37,7 +37,7 @@ jobs:
         run: |
           echo "NPROCS=$(nproc)" >> $GITHUB_ENV
           echo "CCACHE_COMPRESS=1" >> $GITHUB_ENV
-          echo "CCACHE_COMPRESSLEVEL=10" >> $GITHUB_ENV
+          echo "CCACHE_COMPRESSLEVEL=5" >> $GITHUB_ENV
           echo "CCACHE_LOGFILE=${{github.workspace}}/ccache.log.txt" >> $GITHUB_ENV
           echo "CCACHE_MAXSIZE=1G" >> $GITHUB_ENV
       - name: Install Ccache
@@ -141,7 +141,7 @@ jobs:
         run: |
           echo "NPROCS=${{matrix.procs}}" >> $GITHUB_ENV
           echo "CCACHE_COMPRESS=1" >> $GITHUB_ENV
-          echo "CCACHE_COMPRESSLEVEL=10" >> $GITHUB_ENV
+          echo "CCACHE_COMPRESSLEVEL=5" >> $GITHUB_ENV
           echo "CCACHE_LOGFILE=${{github.workspace}}/ccache.log.txt" >> $GITHUB_ENV
           echo "CCACHE_MAXSIZE=1G" >> $GITHUB_ENV
           cmake -E make_directory ${{runner.workspace}}/deps
@@ -159,9 +159,9 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ${{matrix.ccache_cache}}
-          key: ccache-${{github.workflow}}-${{github.job}}-${{matrix.os}}-${{matrix.build_type}}-git-${{github.sha}}
+          key: ccache-${{github.workflow}}-${{github.job}}-${{matrix.os}}-${{matrix.build_type}}-${{matrix.dimension}}-git-${{github.sha}}
           restore-keys: |
-               ccache-${{github.workflow}}-${{github.job}}-${{matrix.os}}-${{matrix.build_type}}-git-
+               ccache-${{github.workflow}}-${{github.job}}-${{matrix.os}}-${{matrix.build_type}}-${{matrix.dimension}}-git-
       - name: Configure
         run: |
           cmake -B${{runner.workspace}}/build-${{matrix.os}}-${{matrix.build_type}} \
@@ -273,7 +273,7 @@ jobs:
         run: |
           echo "NPROCS=$(nproc)" >> $GITHUB_ENV
           echo "CCACHE_COMPRESS=1" >> $GITHUB_ENV
-          echo "CCACHE_COMPRESSLEVEL=10" >> $GITHUB_ENV
+          echo "CCACHE_COMPRESSLEVEL=5" >> $GITHUB_ENV
           echo "CCACHE_LOGFILE=${{github.workspace}}/ccache.log.txt" >> $GITHUB_ENV
           echo "CCACHE_MAXSIZE=1G" >> $GITHUB_ENV
       - name: Dependencies
@@ -343,7 +343,7 @@ jobs:
         run: |
           echo "NPROCS=$(nproc)" >> $GITHUB_ENV
           echo "CCACHE_COMPRESS=1" >> $GITHUB_ENV
-          echo "CCACHE_COMPRESSLEVEL=10" >> $GITHUB_ENV
+          echo "CCACHE_COMPRESSLEVEL=5" >> $GITHUB_ENV
           echo "CCACHE_LOGFILE=${{github.workspace}}/ccache.log.txt" >> $GITHUB_ENV
           echo "CCACHE_MAXSIZE=1G" >> $GITHUB_ENV
           echo "CCACHE_DEPEND=1" >> $GITHUB_ENV
@@ -455,7 +455,7 @@ jobs:
         run: |
           echo "NPROCS=$(nproc)" >> $GITHUB_ENV
           echo "CCACHE_COMPRESS=1" >> $GITHUB_ENV
-          echo "CCACHE_COMPRESSLEVEL=10" >> $GITHUB_ENV
+          echo "CCACHE_COMPRESSLEVEL=5" >> $GITHUB_ENV
           echo "CCACHE_LOGFILE=${{github.workspace}}/ccache.log.txt" >> $GITHUB_ENV
           echo "CCACHE_MAXSIZE=1G" >> $GITHUB_ENV
       - name: Install Ccache
@@ -505,57 +505,57 @@ jobs:
           cat clang-tidy-warnings.txt
           export return=$(tail -n 1 clang-tidy-warnings.txt | awk '{print $2}')
           exit ${return}
-  # Lint-codeql:
-  #   needs: Formatting
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Clone
-  #       uses: actions/checkout@v3
-  #       with:
-  #         submodules: true
-  #     - name: Dependencies
-  #       run: |
-  #         sudo apt-get update
-  #         sudo apt-get install -y ninja-build
-  #     - name: Initialize CodeQL
-  #       uses: github/codeql-action/init@v2
-  #       with:
-  #         languages: cpp
-  #         queries: +security-and-quality
-  #         config-file: ./.github/codeql/codeql-config.yml
-  #     - name: Configure
-  #       run: |
-  #         echo "NPROCS=$(nproc)" >> $GITHUB_ENV
-  #         cmake -G Ninja \
-  #           -B ${{runner.workspace}}/build-ci-codeql \
-  #           -DCMAKE_INSTALL_PREFIX:PATH=${{runner.workspace}}/install-codeql \
-  #           -DCMAKE_BUILD_TYPE:STRING=Debug \
-  #           -DCMAKE_CXX_COMPILER:STRING=clang++ \
-  #           -DCMAKE_C_COMPILER:STRING=clang \
-  #           -DMARBLES_ENABLE_MPI:BOOL=OFF \
-  #           -DMARBLES_TEST_WITH_FCOMPARE:BOOL=OFF \
-  #           ${{github.workspace}}
-  #     - name: Build
-  #       working-directory: ${{runner.workspace}}/build-ci-codeql
-  #       run: |
-  #         cmake --build . --parallel ${{env.NPROCS}}
-  #     - name: Perform CodeQL Analysis
-  #       uses: github/codeql-action/analyze@v2
-  #       with:
-  #         category: "/language:cpp"
-  #         upload: False
-  #         output: sarif-results
-  #     - name: Filter CodeQL sarif
-  #       uses: advanced-security/filter-sarif@v1
-  #       with:
-  #         patterns: |
-  #           -**/Submodules/**
-  #         input: sarif-results/cpp.sarif
-  #         output: sarif-results/cpp.sarif
-  #     - name: Upload CodeQL sarif
-  #       uses: github/codeql-action/upload-sarif@v2
-  #       with:
-  #         sarif_file: sarif-results/cpp.sarif
+  Lint-codeql:
+    needs: Formatting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+      - name: Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: cpp
+          queries: +security-and-quality
+          config-file: ./.github/codeql/codeql-config.yml
+      - name: Configure
+        run: |
+          echo "NPROCS=$(nproc)" >> $GITHUB_ENV
+          cmake -G Ninja \
+            -B ${{runner.workspace}}/build-ci-codeql \
+            -DCMAKE_INSTALL_PREFIX:PATH=${{runner.workspace}}/install-codeql \
+            -DCMAKE_BUILD_TYPE:STRING=Debug \
+            -DCMAKE_CXX_COMPILER:STRING=clang++ \
+            -DCMAKE_C_COMPILER:STRING=clang \
+            -DMARBLES_ENABLE_MPI:BOOL=OFF \
+            -DMARBLES_TEST_WITH_FCOMPARE:BOOL=OFF \
+            ${{github.workspace}}
+      - name: Build
+        working-directory: ${{runner.workspace}}/build-ci-codeql
+        run: |
+          cmake --build . --parallel ${{env.NPROCS}}
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+        with:
+          category: "/language:cpp"
+          upload: False
+          output: sarif-results
+      - name: Filter CodeQL sarif
+        uses: advanced-security/filter-sarif@v1
+        with:
+          patterns: |
+            -**/Submodules/**
+          input: sarif-results/cpp.sarif
+          output: sarif-results/cpp.sarif
+      - name: Upload CodeQL sarif
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: sarif-results/cpp.sarif
   Lint-codespell:
     needs: Formatting
     runs-on: ubuntu-latest
