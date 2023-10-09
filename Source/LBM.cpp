@@ -228,16 +228,8 @@ void LBM::read_parameters()
 
         pp.get("ic_type", m_ic_type);
 
-        // const amrex::Real reynolds = 20.0;
-        // const amrex::Real u_max = 0.1;
-        // const amrex::Real diam = 3.9*2.0;
-        // const amrex::Real nu = u_max*(4.0/9.0)*diam/reynolds;
-        // const amrex::Real dim_tau = 3.0*nu + 0.5;
-        // tau = dim_tau;
-
         pp.query("dx_outer", m_dx_outer);
         pp.query("dt_outer", m_dt_outer);
-        // pp.query("reynolds", reynolds);
         pp.query("nu", m_nu);
 
         pp.query("save_streaming", m_save_streaming);
@@ -1237,7 +1229,6 @@ amrex::Vector<const amrex::MultiFab*> LBM::plot_file_mf()
                     is_fluid_arrs[nbx](i, j, k, n);
             });
         amrex::Gpu::synchronize();
-        // cnt += is_fluid[lev].nComp();
 
         r.push_back(&m_plt_mf[lev]);
     }
