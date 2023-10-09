@@ -159,9 +159,9 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ${{matrix.ccache_cache}}
-          key: ccache-${{github.workflow}}-${{github.job}}-${{matrix.os}}-${{matrix.build_type}}-git-${{github.sha}}
+          key: ccache-${{github.workflow}}-${{github.job}}-${{matrix.os}}-${{matrix.build_type}}-${{matrix.dimension}}-git-${{github.sha}}
           restore-keys: |
-               ccache-${{github.workflow}}-${{github.job}}-${{matrix.os}}-${{matrix.build_type}}-git-
+               ccache-${{github.workflow}}-${{github.job}}-${{matrix.os}}-${{matrix.build_type}}-${{matrix.dimension}}-git-
       - name: Configure
         run: |
           cmake -B${{runner.workspace}}/build-${{matrix.os}}-${{matrix.build_type}} \
