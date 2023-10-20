@@ -35,11 +35,11 @@ bibliography: paper.bib
 
 # Summary
 
-MARBLES is a computational fluid dynamics solver that leverages the Lattice Boltzmann method and block-structured adaptive mesh refinement (AMR) to simulate flows in complex media. The solver leverages the AMReX [@AMReX] library, a library that provides underlying data structures and programming models to run on massively parallel computing architectures.
+MARBLES is a computational fluid dynamics solver that leverages the lattice Boltzmann method (LBM) and block-structured adaptive mesh refinement (AMR) to simulate flows in complex media. The solver leverages the AMReX [@AMReX] library, a library that provides underlying data structures and programming models to run on massively parallel computing architectures.
 
-MARBLES (insert technical detail)
+MARBLES implements LBM, a mesoscopic approach to computational fluid dynamics in which the macroscopic fluid behavior is driven by the advection and collision of fictitious particles which approximate molecular behaviors. The time evolution equation of LBM is frequently presented in two parts: a "streaming" step in which particles representing distribution functions at grid cells transfer information about their current state to their nearest neighbors and a "collision" step in which these advected quantities give rise to new velocities and densities and subsequently relax toward their equilibrium distributions over some characteristic time. In MARBLES, these steps are carried out on parallelized AMReX blocks in which the phase space is discretized using 27 grid neighbors in 3d (d3q27) which provides high accuracy and slightly increased memory consumption compared to other LBM stencils. This d3q27 stencil can be sub-divided and applied locally in a region with half the grid spacing using an implementation of the explode and coalesce algorithm [@chen2006grid], where refined cells process two timesteps per every step of the parent grid assuming a 2x grid refinement. This cylcing between refinement levels and interpolation between grids is managed by AMReX functionality and minimizes communication between parallel blocks to enable excellent scaling performance.
 
-MARBLES uses the Embedded Boundary (EB) formulation in AMReX to represent complex geometries. In this approach, an arbitrary surface is defined by the user, using either compositions of simple shapes or an STL file. This is used to intersect the Cartesian mesh and defined cells that are covered by the geometry (i.e., inside the body). Bounce back conditions are imposed on these surfaces to capture the effect of the geometry on the fluid flow. This leads to a very robust handling of very complex geometry, including the flow through porous media.
+MARBLES uses the Embedded Boundary (EB) formulation in AMReX to represent complex geometries. In this approach, an arbitrary surface is defined by the user, using either compositions of simple shapes or an STL file. This is used to intersect the Cartesian mesh and defined cells that are covered by the geometry (i.e., inside the body). Bounce back conditions are imposed on these surfaces as part of the streaming step to capture the effect of the geometry on the fluid flow. This leads to a very robust handling of very complex geometry, including flow through porous media.
 
 MARBLES is written in C++ and is built upon the AMReX library. This library implements the parallel paradigms, grid structures, domain decomposition, and portability framework. MARBLES uses a MPI+X approach: the AMR grid patches are distributed on different CPU ranks using MPI. Each grid can be either (i) logically tiled and solved on different threads on multi-core CPU machine using OpenMP, or (ii) solved on GPU threads on GPU nodes using CUDA, HIP, and SYCL.
 
@@ -47,9 +47,9 @@ MARBLES is written in C++ and is built upon the AMReX library. This library impl
 
 Several software tools that implement the Lattice Boltzmann method can found online, including a PyTorch based solver, Lettuce [@bedrunka2021lettuce], the commonly used OpenLB [@krause2021openlb], Palabos [@latt2021palabos], waLBerla [@bauer2021walberla; @godenschwager2013framework], and others [@schmieschek2017lb3d; @mora2020concise; @pastewka2019hpc].
 
-In contrast with these solvers, MARBLES is
+In contrast with these solvers, MARBLES is the only code to the authors' knowledge to be built on AMReX data structures which allows us to tackle exascale problems and take advantage of both CPU and GPU hardware with little change to the underlying code. Additionally, AMReX provides tools to naturally track regions of the fluid in need of refinement (e.g., around an evolving fluid-vapor interface or near the surface of a deforming solid obstacle) and communicate variables between grid refinement levels in a highly performant manner. 
 
-Its unique features consist in combining
+Its unique features consist in combining 
 
 To the authors' knowledge, MARBLES is the only AMReX-based Lattice Boltzmann code that leverages the modern programming models implemented in that library. Because of this, MARBLES is easily extensible to other capabilities and will automatically perform well on emerging architectures.
 
