@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Clone
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     - name: Check formatting
       uses: DoozyX/clang-format-lint-action@v0.16.2
       with:
@@ -533,7 +533,7 @@ jobs:
           restore-keys: |
                ccache-${{github.workflow}}-${{github.job}}-git-
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v2
+        uses: github/codeql-action/init@v3
         with:
           languages: cpp
           queries: +security-and-quality
@@ -558,7 +558,7 @@ jobs:
           ccache -s
           du -hs ${HOME}/.cache/ccache
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v2
+        uses: github/codeql-action/analyze@v3
         with:
           category: "/language:cpp"
           upload: False
@@ -571,7 +571,7 @@ jobs:
           input: sarif-results/cpp.sarif
           output: sarif-results/cpp.sarif
       - name: Upload CodeQL sarif
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: sarif-results/cpp.sarif
   Lint-codespell:
@@ -602,7 +602,7 @@ jobs:
           PR_NUMBER: ${{ github.event.number }}
         run: |
           echo $PR_NUMBER > pr_number.txt
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: pr_number
           path: pr_number.txt
