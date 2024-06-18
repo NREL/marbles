@@ -31,7 +31,7 @@ struct BCFill
         stencil::Stencil().weights;
 
     const amrex::Real m_mesh_speed;
-    const amrex::GpuArray<int, AMREX_SPACEDIM* 2> m_bc_type = {0};
+    const amrex::GpuArray<int, AMREX_SPACEDIM * 2> m_bc_type = {0};
     const amrex::IntVect m_ng = {AMREX_D_DECL(0, 0, 0)};
     const VelBCOpType m_vel_bc_op;
 
@@ -337,7 +337,7 @@ struct BCOpCreator
     }
 
     const amrex::Real m_mesh_speed;
-    const amrex::GpuArray<int, AMREX_SPACEDIM* 2> m_bc_type = {0};
+    const amrex::GpuArray<int, AMREX_SPACEDIM * 2> m_bc_type = {0};
     const amrex::IntVect m_ng = {AMREX_D_DECL(0, 0, 0)};
     VelBCOp m_vel_bc_op;
 };

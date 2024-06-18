@@ -34,7 +34,7 @@ macro(init_amrex)
     include(AMReX_SetupCUDA)
   endif()
   add_subdirectory(${AMREX_SUBMOD_LOCATION})
-  set(FCOMPARE_EXE ${CMAKE_BINARY_DIR}/Submodules/AMReX/Tools/Plotfile/fcompare
+  set(FCOMPARE_EXE ${CMAKE_BINARY_DIR}/Submodules/AMReX/Tools/Plotfile/amrex_fcompare
     CACHE INTERNAL "Path to fcompare executable for regression tests")
 endmacro(init_amrex)
 

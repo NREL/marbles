@@ -688,10 +688,14 @@ void LBM::compute_derived(const int lev)
                     1, constants::VELX_IDX, iv, idx, dbox, if_arr, md_arr);
                 const amrex::Real wy = gradient(
                     1, constants::VELZ_IDX, iv, idx, dbox, if_arr, md_arr);
-                const amrex::Real uz = gradient(
-                    2, constants::VELX_IDX, iv, idx, dbox, if_arr, md_arr);
-                const amrex::Real vz = gradient(
-                    2, constants::VELY_IDX, iv, idx, dbox, if_arr, md_arr);
+                const amrex::Real uz = AMREX_D_PICK(
+                    0, 0,
+                    gradient(
+                        2, constants::VELX_IDX, iv, idx, dbox, if_arr, md_arr));
+                const amrex::Real vz = AMREX_D_PICK(
+                    0, 0,
+                    gradient(
+                        2, constants::VELY_IDX, iv, idx, dbox, if_arr, md_arr));
 
                 d_arr(iv, constants::VORTX_IDX) = wy - vz;
                 d_arr(iv, constants::VORTY_IDX) = uz - wx;
