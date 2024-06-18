@@ -225,7 +225,7 @@ private:
 
     amrex::Vector<int> m_bc_lo{0, 0, 0};
     amrex::Vector<int> m_bc_hi{0, 0, 0};
-    amrex::GpuArray<int, AMREX_SPACEDIM* 2> m_bc_type = {0};
+    amrex::GpuArray<int, AMREX_SPACEDIM * 2> m_bc_type = {0};
     std::string m_velocity_bc_type{"noop"};
 
     // this is essentially a 2*DIM integer array storing the physical boundary
