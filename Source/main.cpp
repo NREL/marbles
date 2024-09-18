@@ -11,9 +11,9 @@ int main(int argc, char* argv[])
 {
     amrex::Initialize(argc, argv);
 
-    BL_PROFILE("LBM::main()");
-
     {
+        BL_PROFILE("LBM::main()");
+
         lbm::LBM lbm_obj;
 
         lbm_obj.init_data();
