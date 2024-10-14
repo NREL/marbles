@@ -330,7 +330,7 @@ struct BCOpCreator
         : m_mesh_speed(mesh_speed), m_bc_type(bc_type), m_ng(ng), m_vel_bc_op()
     {}
 
-    inline FunctorType operator()() const
+    FunctorType operator()() const
     {
         return FunctorType{
             m_mesh_speed, m_bc_type, m_ng, m_vel_bc_op.device_instance()};
