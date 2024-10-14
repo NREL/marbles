@@ -731,8 +731,8 @@ void LBM::compute_eb_forces()
             m_f[lev], amrex::IntVect(0),
             [=] AMREX_GPU_DEVICE(
                 int nbx, int i, int j, int AMREX_D_PICK(, /*k*/, k)) noexcept
-                -> amrex::GpuTuple<AMREX_D_DECL(
-                    amrex::Real, amrex::Real, amrex::Real)> {
+            -> amrex::GpuTuple<AMREX_D_DECL(
+                amrex::Real, amrex::Real, amrex::Real)> {
                 const amrex::IntVect iv(AMREX_D_DECL(i, j, k));
                 amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> fs = {0.0};
                 if ((is_fluid_arrs[nbx](iv, 1) == 1) &&
