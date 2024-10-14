@@ -18,7 +18,7 @@ struct Constant
         amrex::RealVect velocity = {AMREX_D_DECL(0.0, 0.0, 0.0)};
 
         AMREX_GPU_DEVICE
-        inline void operator()(
+        void operator()(
             const amrex::IntVect& /*iv*/,
             amrex::GeometryData const& /*geom*/,
             amrex::Real& rho,
@@ -50,7 +50,7 @@ struct TaylorGreen
         amrex::Real L{1.0 / M_PI};
 
         AMREX_GPU_DEVICE
-        inline void operator()(
+        void operator()(
             const amrex::IntVect& iv,
             amrex::GeometryData const& geom,
             amrex::Real& rho,

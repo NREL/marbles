@@ -14,7 +14,7 @@ struct NoOp
     struct DeviceOp
     {
         AMREX_GPU_DEVICE
-        inline void operator()(
+        void operator()(
             const amrex::IntVect& /*iv*/,
             const int /*idir*/,
             const int /*ndir*/,
@@ -41,7 +41,7 @@ struct Constant
         amrex::Real u0{0.0};
 
         AMREX_GPU_DEVICE
-        inline void operator()(
+        void operator()(
             const amrex::IntVect& /*iv*/,
             const int /*idir*/,
             const int /*ndir*/,
@@ -69,7 +69,7 @@ struct Channel
         amrex::Real u_ref{1.0};
 
         AMREX_GPU_DEVICE
-        inline void operator()(
+        void operator()(
             const amrex::IntVect& iv,
             const int /*idir*/,
             const int /*ndir*/,
@@ -103,7 +103,7 @@ struct Parabolic
         amrex::Real um{1.0};
 
         AMREX_GPU_DEVICE
-        inline void operator()(
+        void operator()(
             const amrex::IntVect& iv,
             const int /*idir*/,
             const int /*ndir*/,
