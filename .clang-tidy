@@ -12,10 +12,10 @@ Checks: 'bugprone-*,
          -readability-isolate-declaration,
          -readability-avoid-const-params-in-decls,
          -readability-identifier-length,
+         -readability-math-missing-parentheses,
          -readability-function-cognitive-complexity'
 WarningsAsErrors: ''
 HeaderFilterRegex: '.*'
-AnalyzeTemporaryDtors: false
 FormatStyle:     none
 User:            user
 CheckOptions:
