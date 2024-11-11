@@ -4,12 +4,17 @@
 #include <AMReX_REAL.H>
 
 namespace lbm::constants {
-static constexpr int N_MACRO_STATES = 5;
+static constexpr int N_MACRO_STATES = 9; //ns: was 5, added 1 for energy and 3 for Qcorrections
 static constexpr int RHO_IDX = 0;
 static constexpr int VELX_IDX = 1;
 static constexpr int VELY_IDX = 2;
 static constexpr int VELZ_IDX = 3;
 static constexpr int VMAG_IDX = 4;
+
+static constexpr int twoRhoE_IDX = 5; //ns: This is the total energy
+static constexpr int QCorrX_IDX  = 6; //ns
+static constexpr int QCorrY_IDX  = 7; //ns
+static constexpr int QCorrZ_IDX  = 8; //ns
 
 #if AMREX_SPACEDIM == 2
 static constexpr int N_MICRO_STATES = 9;
@@ -17,11 +22,15 @@ static constexpr int N_MICRO_STATES = 9;
 static constexpr int N_MICRO_STATES = 27;
 #endif
 
-static constexpr int N_DERIVED = 4;
+static constexpr int N_DERIVED = 7; //ns: was 4, added 3 more for holding corrections
 static constexpr int VORTX_IDX = 0;
 static constexpr int VORTY_IDX = 1;
 static constexpr int VORTZ_IDX = 2;
 static constexpr int VORTM_IDX = 3;
+
+static constexpr int dQCorrX_IDX = 4; //ns
+static constexpr int dQCorrY_IDX = 5; //ns
+static constexpr int dQCorrZ_IDX = 6; //ns
 
 static constexpr int N_IS_FLUID = 2;
 

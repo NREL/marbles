@@ -11,6 +11,10 @@ Constant::Constant()
     for (int n = 0; n < velocity.size(); n++) {
         m_op.velocity[n] = velocity[n];
     }
+
+    pp.query("initialTemperature", m_op.initialTemperature); //ns:initial condition temperature 
+    pp.query("adiabaticExponent", m_op.adiabaticExponent); //ns: reference gamma
+
 }
 
 TaylorGreen::TaylorGreen()

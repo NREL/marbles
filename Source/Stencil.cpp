@@ -1,4 +1,4 @@
-#include "Stencil.H"
+#include "Stencil_D3Q27.H"
 
 namespace lbm::stencil {
 
@@ -8,6 +8,9 @@ void check_stencil()
     const auto& evs = stencil.evs;
     const auto& weight = stencil.weights;
     const auto& bounce_dirs = stencil.bounce_dirs;
+    //const auto& bounce_Xdir = stencil.bounce_Xdir;
+    //const auto& bounce_Ydir = stencil.bounce_Ydir;
+    //const auto& bounce_Zdir = stencil.bounce_Zdir;
     for (int q = 0; q < constants::N_MICRO_STATES; q++) {
         const int bounce_q = bounce_dirs[q];
 

@@ -17,6 +17,9 @@ struct Constant
         amrex::Real density{1.0};
         amrex::RealVect velocity = {AMREX_D_DECL(0.0, 0.0, 0.0)};
 
+        amrex::Real initialTemperature=1.0/3.0; //ns: Safe default, lattice temperature
+        amrex::Real adiabaticExponent=5.0/3.0; //ns: Safe default, monoatomic gas. 1.4 for air
+
         AMREX_GPU_DEVICE
         void operator()(
             const amrex::IntVect& /*iv*/,
@@ -26,6 +29,20 @@ struct Constant
         {
             rho = density;
             vel = velocity;
+        }
+
+        //ns: hoping the overloading works
+        AMREX_GPU_DEVICE
+        void operator()(
+            const amrex::IntVect& /*iv*/,
+            amrex::GeometryData const& /*geom*/,
+            amrex::Real& rho,
+            amrex::RealVect& vel, amrex::Real& temperature, amrex::Real& gamma) const
+        {
+            rho = density;
+            vel = velocity;
+            temperature = initialTemperature;
+            gamma = adiabaticExponent;
         }
     };
 
@@ -134,8 +151,18 @@ public:
                 amrex::RealVect vel(AMREX_D_DECL(0.0, 0.0, 0.0));
                 ic(iv, geom, rho, vel);
 
+                //ns: The initialization sequence is extrememly convoluted
+                // if (m_model_type=="energyD3Q27")
+                // {
+                // set_equilibrium_value_D3Q27(
+                //     rho, vel, l_mesh_speed, wt, ev, f_arrs[nbx](i, j, k, q));
+                // }
+                // else
+                //{
                 set_equilibrium_value(
                     rho, vel, l_mesh_speed, wt, ev, f_arrs[nbx](i, j, k, q));
+                //}
+
             });
         amrex::Gpu::synchronize();
     }
