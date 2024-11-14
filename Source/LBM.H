@@ -308,6 +308,21 @@ private:
     //ns: LBM Scheme selector. "energyD3Q27" activates product equilibrium, energy equation etc.
     std::string m_model_type = "isothermal";
 
+    //ns: Initial temperature. Very sorry for (also) saving this here. 
+    amrex::Real m_initialTemperature = 1.0/3.0;
+
+    //ns: Adiabatic exponent. Very sorry for (also) saving this here
+    const amrex::Real m_adiabaticExponent = 5.0/3.0; //const for safety
+
+    //ns: Universal Gas constant, LB unit. Never change. Very sorry for (also) saving this here
+    const amrex::Real m_R_u=28.96;              
+    
+    //ns: mean molecular mass, Safe default air. Unit kg/kmol. Very sorry for (also) saving this here
+    amrex::Real m_m_bar=28.96;
+
+    //ns: set the actual reference speed of sound
+    amrex::Real m_speedOfSound_Ref=std::sqrt(m_adiabaticExponent*(m_R_u/m_m_bar)*m_initialTemperature);                 
+
 };
 } // namespace lbm
 #endif

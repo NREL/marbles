@@ -43,6 +43,7 @@ AMREX_GPU_DEVICE AMREX_INLINE void set_equilibrium_value(
 AMREX_GPU_DEVICE AMREX_INLINE void set_equilibrium_value_D3Q27(
     const amrex::Real& rho,
     const amrex::RealVect& vel,
+    const amrex::Real& Rtemperature,
     const amrex::Real& mesh_speed,
     const amrex::Real& wt,
     const amrex::IntVect& ev,
@@ -74,10 +75,10 @@ AMREX_GPU_DEVICE AMREX_INLINE void set_equilibrium_value_D3Q27(
     // eq = rho * wt * (1.0 + c1 + c2 + c3);
 
     //write here
-    const amrex::Real temperature = 1.0/3.0; //Warning! Achtung! Placeholder for isothermal and w/o correction only
-    const amrex::Real Pxx = vel[0]*vel[0] + temperature;
-    const amrex::Real Pyy = vel[1]*vel[1] + temperature;
-    const amrex::Real Pzz = vel[2]*vel[2] + temperature;
+    //const amrex::Real temperature = 1.0/3.0; //Warning! Achtung! Placeholder for isothermal and w/o correction only
+    const amrex::Real Pxx = vel[0]*vel[0] + Rtemperature;
+    const amrex::Real Pyy = vel[1]*vel[1] + Rtemperature;
+    const amrex::Real Pzz = vel[2]*vel[2] + Rtemperature;
 
     const amrex::Real Phix = ev[0]*0.5*vel[0] + std::abs(ev[0])*(1.50*Pxx-1.0)-Pxx+1.0;
     const amrex::Real Phiy = ev[1]*0.5*vel[1] + std::abs(ev[1])*(1.50*Pyy-1.0)-Pyy+1.0;

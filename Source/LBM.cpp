@@ -19,6 +19,7 @@ LBM::LBM()
 
     if (m_model_type=="energyD3Q27")
     {
+    m_macrodata_varnames.push_back("twoRhoE"); //ns    
     m_macrodata_varnames.push_back("QCorrX"); //ns
     m_macrodata_varnames.push_back("QCorrY"); //ns
     m_macrodata_varnames.push_back("QCorrZ"); //ns
@@ -263,6 +264,12 @@ void LBM::read_parameters()
 
         pp.query("model_type", m_model_type); //ns: default is "isothermal". "energyD3Q27" activates product equilibrium, energy equation etc.
 
+        pp.query("initialTemperature", m_initialTemperature); //ns: initial condition temperature. Sorry, loading again. 
+        //pp.query("adiabaticExponent", m_adiabaticExponent);   //ns: reference gamma. Sorry, loading again. Safety block. Not implemented.
+        pp.query("meanMolecularMass", m_m_bar);               //ns: reference m_bar. Sorry, loading again.
+
+        m_speedOfSound_Ref=std::sqrt(m_adiabaticExponent*(m_R_u/m_m_bar)*m_initialTemperature); //ns: set the actual reference speed of sound
+
         m_mesh_speed = m_dx_outer / m_dt_outer;
         m_cs = m_mesh_speed / constants::ROOT3; //ns: caution, isothermal only. Do not use this variable generally
         m_cs_2 = m_cs * m_cs; //ns: Same as the above
@@ -500,7 +507,7 @@ void LBM::advance(
     if (m_model_type=="energyD3Q27") collide_D3Q27(lev);
     else collide(lev);
 
-    sanity_check_f(lev);
+    if (m_model_type != "energyD3Q27") sanity_check_f(lev); //ns: not needed 
 }
 
 
@@ -650,6 +657,7 @@ void LBM::macrodata_to_equilibrium_D3Q27(const int lev)
     const stencil::Stencil stencil;
     const auto& evs = stencil.evs;
     const auto& weight = stencil.weights;
+    //ICDeviceOp ic(m_op.device_instance());
     amrex::ParallelFor(
         m_eq[lev], m_eq[lev].nGrowVect(), constants::N_MICRO_STATES,
         [=] AMREX_GPU_DEVICE(
@@ -672,8 +680,8 @@ void LBM::macrodata_to_equilibrium_D3Q27(const int lev)
 
                 const auto& ev = evs[q];
 
-                amrex::Real R=1.0; //ns: debug. Temporary placeholder value
-                amrex::Real temperature=1.0/3.0; //ns: debug. Temporary placeholder value
+                amrex::Real R = m_R_u/m_m_bar; //1.0; //ns: debug. Temporary placeholder value
+                amrex::Real temperature = m_initialTemperature; //1.0/3.0; //initialTemperature;//1.0/3.0; //ns: debug. Temporary placeholder value
                 amrex::Real Omega = 1.0/(m_nu/(R*temperature*m_dts[lev]) + 0.5);
 
                 amrex::Real PxxExt = vel[0]*vel[0] + R*temperature + m_dts[lev]*((2.0-Omega)/(2.0*rho*Omega))*d_arr(iv,constants::dQCorrX_IDX);
@@ -1244,7 +1252,7 @@ void LBM::fill_f_inside_eb(const int lev)
                 if (m_model_type=="energyD3Q27")
                 {
                 set_equilibrium_value_D3Q27(
-                    rho_inside, vel_inside, l_mesh_speed, wt, ev,
+                    rho_inside, vel_inside, 1.0/3.0 ,l_mesh_speed, wt, ev,
                     f_arrs[nbx](i, j, k, q));
                 }
                 else

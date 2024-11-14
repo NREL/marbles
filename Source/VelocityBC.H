@@ -101,6 +101,15 @@ struct Parabolic
         int normal_dir{0};
         int tangential_dir{1};
         amrex::Real um{1.0};
+        
+        amrex::Real initialTemperature=1.0/3.0; //ns: Safe default, lattice temperature, LB unit
+        const amrex::Real adiabaticExponent=5.0/3.0;  //ns: Safe default, monoatomic gas. 1.4 for air, non-dimensional. Safety constant decalaration.
+        const amrex::Real R_u=28.96;              //ns: Universal Gas constant, LB unit. Never change.
+        amrex::Real m_bar=28.96;                //ns: mean molecular mass, Safe default air. Unit kg/kmol.
+        amrex::Real speedOfSound_Ref=std::sqrt(adiabaticExponent*(R_u/m_bar)*initialTemperature); //the actual speed of sound
+
+        std::string m_model_type = "isothermal";
+        amrex::Real Mach_m{0.05}; //ns: mean Mach number
 
         AMREX_GPU_DEVICE
         void operator()(
@@ -118,8 +127,17 @@ struct Parabolic
                 prob_hi[normal_dir] - prob_lo[normal_dir];
             const amrex::Real x =
                 prob_lo[normal_dir] + (iv[normal_dir] + 0.5) * dx[normal_dir];
-            vel[tangential_dir] =
+            
+            // if (m_model_type=="energyD3Q27") 
+            // {
+            //     vel[tangential_dir] =
+            //     4.0 * Mach_m*speedOfSound_Ref * x * (height - x) / (height * height);
+            // }
+            // else
+            //{
+                vel[tangential_dir] =
                 4.0 * um * x * (height - x) / (height * height);
+            //}
         }
     };
 
