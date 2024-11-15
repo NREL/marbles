@@ -1097,7 +1097,9 @@ void LBM::MakeNewLevelFromCoarse(
     if (m_model_type=="energyD3Q27") f_to_macrodata_D3Q27(lev); //ns: Caution! For D3Q27 with correction only. Macrodata has 9 variables
     else f_to_macrodata(lev);
     
-    macrodata_to_equilibrium(lev);
+    if (m_model_type=="energyD3Q27") macrodata_to_equilibrium_D3Q27(lev);
+    else macrodata_to_equilibrium(lev);
+    
     compute_derived(lev);
 
     if (m_model_type=="energyD3Q27") compute_QCorrections(lev); //ns: seems like the MakeNewLevelFromCoarse function is never called
@@ -1146,7 +1148,9 @@ void LBM::MakeNewLevelFromScratch(
     if (m_model_type=="energyD3Q27") f_to_macrodata_D3Q27(lev); //ns: Caution! For D3Q27 with correction only. Macrodata has 9 variables 
     else f_to_macrodata(lev);
     
-    macrodata_to_equilibrium(lev);
+    if (m_model_type=="energyD3Q27") macrodata_to_equilibrium_D3Q27(lev);
+    else macrodata_to_equilibrium(lev);
+    
     compute_derived(lev);
     
     if (m_model_type=="energyD3Q27") compute_QCorrections(lev); //ns: Seems like MakeNewLevelFromScratch is never called

@@ -34,6 +34,8 @@ Parabolic::Parabolic()
 
     if (m_op.m_model_type == "energyD3Q27") m_op.um = m_op.Mach_m*m_op.speedOfSound_Ref;
 
+    //std::cout<<"m_op.um is "<<m_op.um<<std::endl; //ns: debug line
+
 }
 
 } // namespace lbm::bc

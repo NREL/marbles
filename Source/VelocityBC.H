@@ -128,16 +128,12 @@ struct Parabolic
             const amrex::Real x =
                 prob_lo[normal_dir] + (iv[normal_dir] + 0.5) * dx[normal_dir];
             
-            // if (m_model_type=="energyD3Q27") 
-            // {
-            //     vel[tangential_dir] =
-            //     4.0 * Mach_m*speedOfSound_Ref * x * (height - x) / (height * height);
-            // }
-            // else
-            //{
+            
+                //std::cout<<"um is "<<um<<std::endl; //ns: debug line
+
                 vel[tangential_dir] =
                 4.0 * um * x * (height - x) / (height * height);
-            //}
+            
         }
     };
 
