@@ -179,9 +179,62 @@ struct BCFill
         const amrex::Real rho_bc =
             (rho_out + rho_tan) / (1.0 - ndir * vel_bc[idir]);
 
-        set_equilibrium_value(
-            rho_bc, vel_bc, m_mesh_speed, m_weights[q], ev, data(iv, q));
+        set_equilibrium_value(rho_bc, vel_bc, m_mesh_speed, m_weights[q], ev, data(iv, q));
+
+        //set_equilibrium_value_D3Q27(rho_bc, vel_bc, m_mesh_speed, m_weights[q], ev, data(iv, q));    
     }
+
+AMREX_GPU_DEVICE
+    AMREX_FORCE_INLINE
+    void velocity_bc(
+        const amrex::IntVect& iv,
+        const int q,
+        const amrex::IntVect& ev,
+        const int idir,
+        const int ndir,
+        const amrex::RealVect& vel_bc, const amrex::Real &RT,
+        amrex::Array4<amrex::Real> const& data) const
+    {
+        // Prepare the ghost cell layer of f_ for
+        // streaming due to a prescribed velocity. This
+        // is done by assigning all the values of f_ on
+        // this ghost layer to be the equilibrium
+        // distributions associated with the desired
+        // velocity. They will naturally exert their
+        // effect on the interior fluid points during
+        // the streaming step.
+
+        // In this case, a value for u, v, and w must be
+        // specified, either hard coded or set by a
+        // user-specified function
+        amrex::Real rho_out = 0.0;
+        amrex::Real rho_tan = 0.0;
+
+        const amrex::IntVect ivn(iv + ev);
+
+        // Build the 3-part rho calculation at the
+        // (iv+ev) fluid cell
+        for (int qq = 0; qq < constants::N_MICRO_STATES; qq++) {
+
+            const auto& evn_out = m_evs[qq];
+            const int bounce_qq = m_bounce_dirs[qq];
+            const auto& evn_in = m_evs[bounce_qq];
+
+            if (evn_in[idir] == -ndir) {
+                rho_out += 2.0 * data(ivn + evn_out, bounce_qq);
+            } else if (evn_in[idir] == 0) {
+                rho_tan += 1.0 * data(ivn + evn_out, bounce_qq);
+            }
+        }
+
+        const amrex::Real rho_bc =
+            (rho_out + rho_tan) / (1.0 - ndir * vel_bc[idir]);
+
+        //set_equilibrium_value(rho_bc, vel_bc, m_mesh_speed, m_weights[q], ev, data(iv, q));
+
+        set_equilibrium_value_D3Q27(
+            rho_bc, vel_bc,RT, m_mesh_speed, m_weights[q], ev, data(iv, q));    
+    }    
 
     AMREX_GPU_DEVICE
     AMREX_FORCE_INLINE
@@ -361,10 +414,16 @@ struct BCFill
                             } else if (m_bc_type[bc_idx] == 2) {
                                 amrex::RealVect vel_bc(
                                     AMREX_D_DECL(0.0, 0.0, 0.0));
+                                amrex::Real RT(1.0/3.0); //ns:default for isothermal. 
+                                //ns: Achtung! Very risky changes here. The round bracket operator was 
+                                //already overloded in the code to execute some functions
+                                //There is now further overloading of the bracket opertor to retreive 
+                                //the product of RT. This looks like magic but can be confusing and
+                                //dangerous
                                 m_vel_bc_op(
-                                    iv, idir, normal_dir, time, geom, vel_bc);
+                                    iv, idir, normal_dir, time, geom, vel_bc,RT);
                                 velocity_bc(
-                                    iv, q, ev, idir, normal_dir, vel_bc, data);
+                                    iv, q, ev, idir, normal_dir, vel_bc,RT, data);
                             } else if (m_bc_type[bc_idx] == 3) {
                                 const amrex::Real rho_bc = 1.0;
                                 pressure_bc(

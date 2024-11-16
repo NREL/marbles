@@ -22,6 +22,16 @@ struct NoOp
             amrex::GeometryData const& /*geom*/,
             amrex::RealVect& /*vel*/) const
         {}
+
+        AMREX_GPU_DEVICE
+        void operator()(
+            const amrex::IntVect& /*iv*/,
+            const int /*idir*/,
+            const int /*ndir*/,
+            const amrex::Real /*time*/,
+            amrex::GeometryData const& /*geom*/,
+            amrex::RealVect& /*vel*/,amrex::Real& /*RT*/) const
+        {}
     };
 
     using DeviceType = DeviceOp;
@@ -50,6 +60,20 @@ struct Constant
             amrex::RealVect& vel) const
         {
             vel[dir] = u0;
+        }
+   
+
+        AMREX_GPU_DEVICE
+        void operator()(
+            const amrex::IntVect& /*iv*/,
+            const int /*idir*/,
+            const int /*ndir*/,
+            const amrex::Real /*time*/,
+            amrex::GeometryData const& /*geom*/,
+            amrex::RealVect& vel,amrex::Real& RT) const
+        {
+            vel[dir] = u0;
+            RT=1.0/3.0;
         }
     };
 
@@ -82,6 +106,23 @@ struct Channel
             const amrex::Real c2 =
                 AMREX_D_PICK(, c1, iv[2] * (domhi[2] - iv[2]));
             vel[0] = 16.0 * u_ref * c1 * c2 / std::pow((domhi[1] + 1), 4);
+        }
+
+        AMREX_GPU_DEVICE
+        void operator()(
+            const amrex::IntVect& iv,
+            const int /*idir*/,
+            const int /*ndir*/,
+            const amrex::Real /*time*/,
+            amrex::GeometryData const& geom,
+            amrex::RealVect& vel,amrex::Real& RT) const
+        {
+            const int* domhi = geom.Domain().hiVect();
+            const amrex::Real c1 = iv[1] * (domhi[1] - iv[1]);
+            const amrex::Real c2 =
+                AMREX_D_PICK(, c1, iv[2] * (domhi[2] - iv[2]));
+            vel[0] = 16.0 * u_ref * c1 * c2 / std::pow((domhi[1] + 1), 4);
+            RT=1.0/3.0;//(R_u/m_bar)*initialTemperature;
         }
     };
 
@@ -133,6 +174,33 @@ struct Parabolic
 
                 vel[tangential_dir] =
                 4.0 * um * x * (height - x) / (height * height);
+            
+        }
+
+        AMREX_GPU_DEVICE
+        void operator()(
+            const amrex::IntVect& iv,
+            const int /*idir*/,
+            const int /*ndir*/,
+            const amrex::Real /*time*/,
+            amrex::GeometryData const& geom,
+            amrex::RealVect& vel,amrex::Real& RT) const
+        {
+            const amrex::Real* prob_lo = geom.ProbLo();
+            const amrex::Real* prob_hi = geom.ProbHi();
+            const amrex::Real* dx = geom.CellSize();
+            const amrex::Real height =
+                prob_hi[normal_dir] - prob_lo[normal_dir];
+            const amrex::Real x =
+                prob_lo[normal_dir] + (iv[normal_dir] + 0.5) * dx[normal_dir];
+            
+            
+                //std::cout<<"um is "<<um<<std::endl; //ns: debug line
+
+                vel[tangential_dir] =
+                4.0 * um * x * (height - x) / (height * height);
+
+                RT=(R_u/m_bar)*initialTemperature;
             
         }
     };

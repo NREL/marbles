@@ -10,8 +10,8 @@ amr.n_cell  = 246 576 4
 amr.max_level = 0
 amr.max_grid_size = 32
 amr.blocking_factor = 2
-amr.plot_int = 10
-amr.chk_int = 10
+amr.plot_int = 100
+amr.chk_int = 100
 amr.file_name_digits = 5
 
 # select model type. "energyD3Q27" activates product equilibrium, energy equation etc.
@@ -23,7 +23,7 @@ lbm.bc_lo = 11 2 0
 lbm.bc_hi = 11 5 0
 lbm.dx_outer = 1.0
 lbm.dt_outer = 1.0
-lbm.nu = 0.1
+lbm.nu = 0.01
 lbm.save_streaming = 0
 lbm.compute_forces = 1
 
@@ -40,7 +40,7 @@ velocity_bc_parabolic.Mach_m = 0.10
 lbm.ic_type = "constant"
 ic_constant.density = 1.0
 ic_constant.velocity = 0.0 0.0 0.0
-ic_constant.MachComponents = 0.0 0.10 0.0
+ic_constant.MachComponents = 0.0 0.0 0.0
 
 ic_constant.initialTemperature = 0.03333
 ic_constant.adiabaticExponent = 1.6667
