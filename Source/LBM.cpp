@@ -741,8 +741,8 @@ void LBM::relax_f_to_equilibrium_D3Q27(const int lev)
                 const auto eq_arr = eq_arrs[nbx];
                 //f_arr(iv, q) -= 1.0 / tau * (f_arr(iv, q) - eq_arr(iv, q));
 
-                amrex::Real R=1.0; //ns: debug. Temporary placeholder value
-                amrex::Real temperature=1.0/3.0; //ns: debug. Temporary placeholder value
+                amrex::Real R=(m_R_u/m_m_bar); //ns: debug. Temporary placeholder value
+                amrex::Real temperature=m_initialTemperature; //ns: debug. Temporary placeholder value
                 amrex::Real Omega = 1.0/(m_nu/(R*temperature*m_dts[lev]) + 0.5);
 
                 f_arr(iv, q) += Omega * (eq_arr(iv, q) - f_arr(iv, q));
@@ -839,8 +839,8 @@ void LBM::f_to_macrodata_D3Q27(const int lev)
                 md_arr(iv, constants::VMAG_IDX) =
                     std::sqrt(AMREX_D_TERM(u * u, +v * v, +w * w));
 
-                amrex::Real R=1.0; //ns: debug, placeholder for R
-                amrex::Real temperature=1.0/3.0; //ns: debug, placeholder for Temperature
+                amrex::Real R=m_R_u/m_m_bar; //ns: debug, placeholder for R
+                amrex::Real temperature=m_initialTemperature; //ns: debug, placeholder for Temperature
                 md_arr(iv, constants::QCorrX_IDX) = rho*u*((1.0-3.0*R*temperature)-u*u);
                 md_arr(iv, constants::QCorrY_IDX) = rho*v*((1.0-3.0*R*temperature)-v*v);
                 md_arr(iv, constants::QCorrZ_IDX) = rho*w*((1.0-3.0*R*temperature)-w*w);
@@ -1166,7 +1166,7 @@ void LBM::initialize_f(const int lev)
 
     m_f[lev].FillBoundary(Geom(lev).periodicity());
 
-    sanity_check_f(lev);
+    if (m_model_type != "energyD3Q27")  sanity_check_f(lev); //ns: not applicable for the corrected model
 }
 
 void LBM::initialize_is_fluid(const int lev)
@@ -1342,6 +1342,9 @@ void LBM::set_ics()
     } else if (m_ic_type == "taylorgreen") {
         m_ic_op = std::make_unique<ic::Initializer<ic::TaylorGreen>>(
             m_mesh_speed, ic::TaylorGreen(ic::TaylorGreen()), m_f);
+    } else if (m_ic_type == "viscosityTest") {
+        m_ic_op = std::make_unique<ic::Initializer<ic::viscosityTest>>(
+            m_mesh_speed, ic::viscosityTest(ic::viscosityTest()), m_f);
     } else {
         amrex::Abort(
             "LBM::set_ics(): User must specify a valid initial condition");
