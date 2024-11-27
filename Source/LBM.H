@@ -223,8 +223,7 @@ private:
     amrex::Vector<std::string> m_microdata_varnames;
     amrex::Vector<std::string> m_deriveddata_varnames;
     amrex::Vector<std::string> m_idata_varnames;
-    //amrex::Vector<std::string> m_auxdata_varnames; //ns_comment: name holder for the Q correction grid
-
+    
     // array of multifabs to store the solution at each level of refinement
     amrex::Vector<amrex::MultiFab> m_macrodata;
     amrex::Vector<amrex::MultiFab> m_f;
@@ -233,14 +232,12 @@ private:
     amrex::Vector<amrex::iMultiFab> m_is_fluid;
     amrex::Vector<amrex::MultiFab> m_plt_mf;
     amrex::Vector<amrex::iMultiFab> m_mask;
-    //amrex::Vector<amrex::MultiFab> m_auxdata; //ns_comment: grid to hold Q corrections
-
+    
     const int m_macrodata_nghost = 1;
     const int m_f_nghost = 2;
     const int m_eq_nghost = 0;
     const int m_derived_nghost = 0;
-    //const int m_auxdata_nghost = 1; //ns_comment: ghost points for the Q correction grid
-
+    
     amrex::Vector<int> m_bc_lo{0, 0, 0};
     amrex::Vector<int> m_bc_hi{0, 0, 0};
     amrex::GpuArray<int, AMREX_SPACEDIM * 2> m_bc_type = {0};

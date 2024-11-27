@@ -12,10 +12,12 @@ struct Stencil
     Stencil() = default;
 
 #if AMREX_SPACEDIM == 2
-    //Warning! Achtung! This stencil is for 3D only. 
-    //Make Z direction periodic and keep the number of points 1 in Z direction for 2D simulation
-    //For a strictly 2D lattice, please use the Stencil.H header
-
+    //Warning! Achtung! New features are currently being written for the D3Q27 lattice only.
+    //This 2D stencil can be used only for isotermal simulations and with temperature 1/3 only 
+    //For a strictly 2D lattice, please use the Stencil.H header instead
+    //For 2D simualtions with new model, please make Z direction periodic and keep the number of points 3 in Z direction
+    //Thank you for your understanding. LB Emergency? nsawant@nrel.gov
+    
     const amrex::GpuArray<amrex::IntVect, constants::N_MICRO_STATES> evs = {
         amrex::IntVect(0, 0),   amrex::IntVect(1, 0),  amrex::IntVect(-1, 0),
         amrex::IntVect(0, 1),   amrex::IntVect(0, -1), amrex::IntVect(1, 1),
@@ -27,40 +29,8 @@ struct Stencil
     const amrex::GpuArray<amrex::Real, constants::N_MICRO_STATES> weights = {
         4.0 / 9.0,  1.0 / 9.0,  1.0 / 9.0,  1.0 / 9.0, 1.0 / 9.0,
         1.0 / 36.0, 1.0 / 36.0, 1.0 / 36.0, 1.0 / 36.0};
-
-    //const amrex::GpuArray<int, constants::N_MICRO_STATES> bounce_Xdir={};
-    //const amrex::GpuArray<int, constants::N_MICRO_STATES> bounce_Ydir={};
-    //const amrex::GpuArray<int, constants::N_MICRO_STATES> bounce_Zdir={};
     
-
 #else
-    // const amrex::GpuArray<amrex::IntVect, constants::N_MICRO_STATES> evs = {
-    //     amrex::IntVect(0, 0, 0),    amrex::IntVect(1, 0, 0),
-    //     amrex::IntVect(-1, 0, 0),   amrex::IntVect(0, 1, 0),
-    //     amrex::IntVect(0, -1, 0),   amrex::IntVect(0, 0, 1),
-    //     amrex::IntVect(0, 0, -1),   amrex::IntVect(1, 1, 0),
-    //     amrex::IntVect(-1, -1, 0),  amrex::IntVect(1, -1, 0),
-    //     amrex::IntVect(-1, 1, 0),   amrex::IntVect(1, 0, 1),
-    //     amrex::IntVect(-1, 0, -1),  amrex::IntVect(1, 0, -1),
-    //     amrex::IntVect(-1, 0, 1),   amrex::IntVect(0, 1, 1),
-    //     amrex::IntVect(0, -1, -1),  amrex::IntVect(0, 1, -1),
-    //     amrex::IntVect(0, -1, 1),   amrex::IntVect(1, 1, 1),
-    //     amrex::IntVect(-1, -1, -1), amrex::IntVect(1, 1, -1),
-    //     amrex::IntVect(-1, -1, 1),  amrex::IntVect(1, -1, 1),
-    //     amrex::IntVect(-1, 1, -1),  amrex::IntVect(-1, 1, 1),
-    //     amrex::IntVect(1, -1, -1)};
-
-    // const amrex::GpuArray<int, constants::N_MICRO_STATES> bounce_dirs = {
-    //     0,  2,  1,  4,  3,  6,  5,  8,  7,  10, 9,  12, 11, 14,
-    //     13, 16, 15, 18, 17, 20, 19, 22, 21, 24, 23, 26, 25};
-
-    // const amrex::GpuArray<amrex::Real, constants::N_MICRO_STATES> weights = {
-    //     8.0 / 27.0,  2.0 / 27.0,  2.0 / 27.0,  2.0 / 27.0,  2.0 / 27.0,
-    //     2.0 / 27.0,  2.0 / 27.0,  1.0 / 54.0,  1.0 / 54.0,  1.0 / 54.0,
-    //     1.0 / 54.0,  1.0 / 54.0,  1.0 / 54.0,  1.0 / 54.0,  1.0 / 54.0,
-    //     1.0 / 54.0,  1.0 / 54.0,  1.0 / 54.0,  1.0 / 54.0,  1.0 / 216.0,
-    //     1.0 / 216.0, 1.0 / 216.0, 1.0 / 216.0, 1.0 / 216.0, 1.0 / 216.0,
-    //     1.0 / 216.0, 1.0 / 216.0};
 
     const int cSC1 = 1; //simple cubic
     const int cFCC1= 1; //face centered cubic

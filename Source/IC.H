@@ -17,8 +17,7 @@ struct Constant
         amrex::Real density{1.0};
         amrex::RealVect velocity = {AMREX_D_DECL(0.0, 0.0, 0.0)};
         amrex::RealVect MachComponents = {AMREX_D_DECL(0.0, 0.0, 0.0)};
-        //amrex::Vector<amrex::Real> MachComponents = {AMREX_D_DECL(0.0, 0.0, 0.0)};
-
+        
         amrex::Real initialTemperature=1.0/3.0; //ns: Safe default, lattice temperature, LB unit
         const amrex::Real adiabaticExponent=5.0/3.0;  //ns: Safe default, monoatomic gas. 1.4 for air, non-dimensional. Safety constant decalaration.
         const amrex::Real R_u=28.96;              //ns: Universal Gas constant, LB unit. Never change.
@@ -39,7 +38,6 @@ struct Constant
             vel = velocity;
         }
 
-        //ns: overloading did not work
         AMREX_GPU_DEVICE
         void thermalInitialise
         (
@@ -50,11 +48,7 @@ struct Constant
         {
             rho = density;
             vel = velocity;
-            
-            //for (int n = 0; n < MachComponents.size(); n++) velocity[n] = MachComponents[n]*speedOfSound_Ref;
-            
-            //for (int n = 0; n < MachComponents.size(); n++) vel[n] = MachComponents[n]*speedOfSound_Ref;
-            
+                
             temperature = initialTemperature;
             R = R_u/m_bar;             //ns: Specific gas constant. Implemented.
             gamma = adiabaticExponent; //ns: not implemented yet            
@@ -80,8 +74,14 @@ struct TaylorGreen
         amrex::Real v0{1.0};
         amrex::RealVect omega = {AMREX_D_DECL(1.0, 1.0, 1.0)};
         amrex::Real L{1.0 / M_PI};
-        //ns: LBM Scheme selector. "energyD3Q27" activates product equilibrium, energy equation etc.
+        
+        amrex::Real initialTemperature=1.0/3.0; //ns: Safe default, lattice temperature, LB unit
+        const amrex::Real adiabaticExponent=5.0/3.0;  //ns: Safe default, monoatomic gas. 1.4 for air, non-dimensional. Safety constant decalaration.
         const amrex::Real R_u=28.96;              //ns: Universal Gas constant, LB unit. Never change.
+        amrex::Real m_bar=28.96;                //ns: mean molecular mass, Safe default air. Unit kg/kmol.
+        amrex::Real speedOfSound_Ref=std::sqrt(adiabaticExponent*(R_u/m_bar)*initialTemperature); //the actual speed of sound
+
+        //ns: LBM Scheme selector. "energyD3Q27" activates product equilibrium, energy equation etc.
         std::string m_model_type = "isothermal";
 
         AMREX_GPU_DEVICE
@@ -140,6 +140,10 @@ struct TaylorGreen
                 vel[1] = -v0 * std::cos(omega0 * x / L) *
                          std::sin(omega1 * y / L) * std::cos(omega2 * z / L),
                 vel[2] = 0.0);
+
+            temperature = initialTemperature;
+            R = R_u/m_bar;             //ns: Specific gas constant. Implemented.
+            gamma = adiabaticExponent; //ns: not implemented yet     
         }
 
     };
@@ -159,15 +163,6 @@ struct viscosityTest
 {
     struct DeviceOp
     {
-        // amrex::Real rho0{1.0};
-        // amrex::Real v0{1.0};
-        // amrex::RealVect omega = {AMREX_D_DECL(1.0, 1.0, 1.0)};
-        // amrex::Real L{1.0 / M_PI};
-        
-        // //ns: LBM Scheme selector. "energyD3Q27" activates product equilibrium, energy equation etc.
-        // const amrex::Real R_u=28.96;              //ns: Universal Gas constant, LB unit. Never change.
-        // std::string m_model_type = "isothermal";
-
         amrex::Real waveLength{1.0}; //number of points in Y
         amrex::Real density{1.0};
         amrex::RealVect velocity = {AMREX_D_DECL(0.0, 0.0, 0.0)};
@@ -192,24 +187,7 @@ struct viscosityTest
         { 
             const amrex::Real* prob_lo = geom.ProbLo();
             const amrex::Real* dx = geom.CellSize();
-            // const amrex::Real x = prob_lo[0] + (iv[0] + 0.5) * dx[0];
-            // const amrex::Real y = prob_lo[1] + (iv[1] + 0.5) * dx[1];
-            // const amrex::Real z =
-            //     AMREX_D_PICK(, 0.0, prob_lo[2] + (iv[2] + 0.5) * dx[2]);
-            // const amrex::Real omega0 = omega[0];
-            // const amrex::Real omega1 = omega[1];
-            // const amrex::Real omega2 = AMREX_D_PICK(, 0.0, omega[2]);
-
-            // rho = rho0 + rho0 * v0 * v0 / 16.0 *
-            //                  (std::cos(2.0 * omega0 * x / L) +
-            //                   std::cos(2.0 * omega1 * y / L)) *
-            //                  (std::cos(2.0 * omega2 * z / L) + 2.0);
-            // AMREX_D_DECL(
-            //     vel[0] = v0 * std::sin(omega0 * x / L) *
-            //              std::cos(omega1 * y / L) * std::cos(omega2 * z / L),
-            //     vel[1] = -v0 * std::cos(omega0 * x / L) *
-            //              std::sin(omega1 * y / L) * std::cos(omega2 * z / L),
-            //     vel[2] = 0.0);
+ 
             const amrex::Real x = prob_lo[0] + (iv[0] + 0.5*0.0) * dx[0];
             const amrex::Real y = prob_lo[1] + (iv[1] + 0.5*0.0) * dx[1];
             const amrex::Real z =
@@ -234,19 +212,7 @@ struct viscosityTest
             
             const amrex::Real* prob_lo = geom.ProbLo();
             const amrex::Real* dx = geom.CellSize();
-            // const amrex::Real x = prob_lo[0] + (iv[0] + 0.5) * dx[0];
-            // const amrex::Real y = prob_lo[1] + (iv[1] + 0.5) * dx[1];
-            // const amrex::Real z =
-            //     AMREX_D_PICK(, 0.0, prob_lo[2] + (iv[2] + 0.5) * dx[2]);
-            //const amrex::Real omega0 = omega[0];
-            //const amrex::Real omega1 = omega[1];
-            //const amrex::Real omega2 = AMREX_D_PICK(, 0.0, omega[2]);
-
-            // rho = rho0 + rho0 * v0 * v0 / 16.0 *
-            //                  (std::cos(2.0 * omega0 * x / L) +
-            //                   std::cos(2.0 * omega1 * y / L)) *
-            //                  (std::cos(2.0 * omega2 * z / L) + 2.0);
-
+ 
             const amrex::Real x = prob_lo[0] + (iv[0] + 0.5*0.0) * dx[0];
             const amrex::Real y = prob_lo[1] + (iv[1] + 0.5*0.0) * dx[1];
             const amrex::Real z =
@@ -259,13 +225,6 @@ struct viscosityTest
             vel[0] = velocity[0]+a0*std::sin(2.0*M_PI*y/waveLength);
             vel[1] = velocity[1];
             vel[2] = velocity[2];
-
-            // AMREX_D_DECL(
-            //     vel[0] = v0 * std::sin(omega0 * x / L) *
-            //              std::cos(omega1 * y / L) * std::cos(omega2 * z / L),
-            //     vel[1] = -v0 * std::cos(omega0 * x / L) *
-            //              std::sin(omega1 * y / L) * std::cos(omega2 * z / L),
-            //     vel[2] = 0.0);
 
             temperature = initialTemperature;
             R = R_u/m_bar;             //ns: Specific gas constant. Implemented.

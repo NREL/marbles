@@ -180,8 +180,7 @@ struct BCFill
             (rho_out + rho_tan) / (1.0 - ndir * vel_bc[idir]);
 
         set_equilibrium_value(rho_bc, vel_bc, m_mesh_speed, m_weights[q], ev, data(iv, q));
-
-        //set_equilibrium_value_D3Q27(rho_bc, vel_bc, m_mesh_speed, m_weights[q], ev, data(iv, q));    
+  
     }
 
 AMREX_GPU_DEVICE
@@ -229,8 +228,6 @@ AMREX_GPU_DEVICE
 
         const amrex::Real rho_bc =
             (rho_out + rho_tan) / (1.0 - ndir * vel_bc[idir]);
-
-        //set_equilibrium_value(rho_bc, vel_bc, m_mesh_speed, m_weights[q], ev, data(iv, q));
 
         set_equilibrium_value_D3Q27(
             rho_bc, vel_bc,RT, m_mesh_speed, m_weights[q], ev, data(iv, q));    
@@ -415,15 +412,10 @@ AMREX_GPU_DEVICE
                                 amrex::RealVect vel_bc(
                                     AMREX_D_DECL(0.0, 0.0, 0.0));
                                 amrex::Real RT(1.0/3.0); //ns:default for isothermal. 
-                                //ns: Achtung! Very risky changes here. The round bracket operator was 
-                                //already overloded in the code to execute some functions
-                                //There is now further overloading of the bracket opertor to retreive 
-                                //the product of RT. This looks like magic but can be confusing and
-                                //dangerous
-                                m_vel_bc_op(
-                                    iv, idir, normal_dir, time, geom, vel_bc,RT);
-                                velocity_bc(
-                                    iv, q, ev, idir, normal_dir, vel_bc,RT, data);
+                                //ns: The product form is always called. This is safe since RT remains 1/3 
+                                // in velocityBC
+                                m_vel_bc_op(iv, idir, normal_dir, time, geom, vel_bc,RT);
+                                velocity_bc(iv, q, ev, idir, normal_dir, vel_bc,RT, data);
                             } else if (m_bc_type[bc_idx] == 3) {
                                 const amrex::Real rho_bc = 1.0;
                                 pressure_bc(
