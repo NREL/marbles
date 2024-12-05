@@ -49,34 +49,45 @@ AMREX_GPU_DEVICE AMREX_INLINE void set_equilibrium_value_D3Q27(
     const amrex::IntVect& ev,
     amrex::Real& eq)
 {
-    //Warning! Achtung! Strictly for D3Q27 only
-    //This entropic equilibrium is very stable. Relaxes all 27 moments. Unfortunately D3Q27 lattice has only 24 independent moments.
-    //For the standard lattice, e.g. D3Q27, c_x^3 = c_x , think (-1)^3 = -1.
-    //So Qxxx, Qyyy and Qzzz are always wrong. We correct them in Pxx, Pyy and Pzz during collision.
+    // Warning! Achtung! Strictly for D3Q27 only
+    // This entropic equilibrium is very stable. Relaxes all 27 moments.
+    // Unfortunately D3Q27 lattice has only 24 independent moments. For the
+    // standard lattice, e.g. D3Q27, c_x^3 = c_x , think (-1)^3 = -1. So Qxxx,
+    // Qyyy and Qzzz are always wrong. We correct them in Pxx, Pyy and Pzz
+    // during collision.
 
-    const amrex::Real Pxx = vel[0]*vel[0] + Rtemperature;
-    const amrex::Real Pyy = vel[1]*vel[1] + Rtemperature;
-    const amrex::Real Pzz = vel[2]*vel[2] + Rtemperature;
+    const amrex::Real Pxx = vel[0] * vel[0] + Rtemperature;
+    const amrex::Real Pyy = vel[1] * vel[1] + Rtemperature;
+    const amrex::Real Pzz = vel[2] * vel[2] + Rtemperature;
 
-    const amrex::Real Phix = ev[0]*0.5*vel[0] + std::abs(ev[0])*(1.50*Pxx-1.0)-Pxx+1.0;
-    const amrex::Real Phiy = ev[1]*0.5*vel[1] + std::abs(ev[1])*(1.50*Pyy-1.0)-Pyy+1.0;
-    const amrex::Real Phiz = ev[2]*0.5*vel[2] + std::abs(ev[2])*(1.50*Pzz-1.0)-Pzz+1.0;
+    const amrex::Real Phix =
+        ev[0] * 0.5 * vel[0] + std::abs(ev[0]) * (1.50 * Pxx - 1.0) - Pxx + 1.0;
+    const amrex::Real Phiy =
+        ev[1] * 0.5 * vel[1] + std::abs(ev[1]) * (1.50 * Pyy - 1.0) - Pyy + 1.0;
+    const amrex::Real Phiz =
+        ev[2] * 0.5 * vel[2] + std::abs(ev[2]) * (1.50 * Pzz - 1.0) - Pzz + 1.0;
 
     eq = rho * Phix * Phiy * Phiz;
 }
 
 AMREX_GPU_DEVICE AMREX_INLINE void set_extended_equilibrium_value_D3Q27(
     const amrex::Real& rho,
-    const amrex::RealVect& vel, const amrex::Real& Pxx, const amrex::Real& Pyy, const amrex::Real& Pzz,
+    const amrex::RealVect& vel,
+    const amrex::Real& Pxx,
+    const amrex::Real& Pyy,
+    const amrex::Real& Pzz,
     const amrex::Real& mesh_speed,
     const amrex::Real& wt,
     const amrex::IntVect& ev,
     amrex::Real& eq)
 {
-    //Warning! Achtung! Strictly for D3Q27 only    
-    const amrex::Real Phix = ev[0]*0.5*vel[0] + std::abs(ev[0])*(1.50*Pxx-1.0)-Pxx+1.0;
-    const amrex::Real Phiy = ev[1]*0.5*vel[1] + std::abs(ev[1])*(1.50*Pyy-1.0)-Pyy+1.0;
-    const amrex::Real Phiz = ev[2]*0.5*vel[2] + std::abs(ev[2])*(1.50*Pzz-1.0)-Pzz+1.0;
+    // Warning! Achtung! Strictly for D3Q27 only
+    const amrex::Real Phix =
+        ev[0] * 0.5 * vel[0] + std::abs(ev[0]) * (1.50 * Pxx - 1.0) - Pxx + 1.0;
+    const amrex::Real Phiy =
+        ev[1] * 0.5 * vel[1] + std::abs(ev[1]) * (1.50 * Pyy - 1.0) - Pyy + 1.0;
+    const amrex::Real Phiz =
+        ev[2] * 0.5 * vel[2] + std::abs(ev[2]) * (1.50 * Pzz - 1.0) - Pzz + 1.0;
 
     eq = rho * Phix * Phiy * Phiz;
 }

@@ -179,11 +179,11 @@ struct BCFill
         const amrex::Real rho_bc =
             (rho_out + rho_tan) / (1.0 - ndir * vel_bc[idir]);
 
-        set_equilibrium_value(rho_bc, vel_bc, m_mesh_speed, m_weights[q], ev, data(iv, q));
-  
+        set_equilibrium_value(
+            rho_bc, vel_bc, m_mesh_speed, m_weights[q], ev, data(iv, q));
     }
 
-AMREX_GPU_DEVICE
+    AMREX_GPU_DEVICE
     AMREX_FORCE_INLINE
     void velocity_bc(
         const amrex::IntVect& iv,
@@ -191,7 +191,8 @@ AMREX_GPU_DEVICE
         const amrex::IntVect& ev,
         const int idir,
         const int ndir,
-        const amrex::RealVect& vel_bc, const amrex::Real &RT,
+        const amrex::RealVect& vel_bc,
+        const amrex::Real& RT,
         amrex::Array4<amrex::Real> const& data) const
     {
         // Prepare the ghost cell layer of f_ for
@@ -230,8 +231,8 @@ AMREX_GPU_DEVICE
             (rho_out + rho_tan) / (1.0 - ndir * vel_bc[idir]);
 
         set_equilibrium_value_D3Q27(
-            rho_bc, vel_bc,RT, m_mesh_speed, m_weights[q], ev, data(iv, q));    
-    }    
+            rho_bc, vel_bc, RT, m_mesh_speed, m_weights[q], ev, data(iv, q));
+    }
 
     AMREX_GPU_DEVICE
     AMREX_FORCE_INLINE
@@ -411,11 +412,17 @@ AMREX_GPU_DEVICE
                             } else if (m_bc_type[bc_idx] == 2) {
                                 amrex::RealVect vel_bc(
                                     AMREX_D_DECL(0.0, 0.0, 0.0));
-                                amrex::Real RT(1.0/3.0); //ns:default for isothermal. 
-                                //ns: The product form is always called. This is safe since RT remains 1/3 
-                                // in velocityBC
-                                m_vel_bc_op(iv, idir, normal_dir, time, geom, vel_bc,RT);
-                                velocity_bc(iv, q, ev, idir, normal_dir, vel_bc,RT, data);
+                                amrex::Real RT(
+                                    1.0 / 3.0); // ns:default for isothermal.
+                                // ns: The product form is always called. This
+                                // is safe since RT remains 1/3
+                                //  in velocityBC
+                                m_vel_bc_op(
+                                    iv, idir, normal_dir, time, geom, vel_bc,
+                                    RT);
+                                velocity_bc(
+                                    iv, q, ev, idir, normal_dir, vel_bc, RT,
+                                    data);
                             } else if (m_bc_type[bc_idx] == 3) {
                                 const amrex::Real rho_bc = 1.0;
                                 pressure_bc(
@@ -425,17 +432,13 @@ AMREX_GPU_DEVICE
                             } else if (m_bc_type[bc_idx] == 5) {
                                 simple_outflow_bc(
                                     iv, q, ev, idir, normal_dir, data);
-                            }
-                            else if (m_bc_type[bc_idx] == 11) {
+                            } else if (m_bc_type[bc_idx] == 11) {
                                 bounce_back_Xbc(iv, q, ev, data);
-                            }
-                            else if (m_bc_type[bc_idx] == 12) {
+                            } else if (m_bc_type[bc_idx] == 12) {
                                 bounce_back_Ybc(iv, q, ev, data);
-                            }
-                            else if (m_bc_type[bc_idx] == 13) {
+                            } else if (m_bc_type[bc_idx] == 13) {
                                 bounce_back_Zbc(iv, q, ev, data);
                             }
-
                         }
                     }
                 }
