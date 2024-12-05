@@ -4,17 +4,45 @@
 #include <AMReX_REAL.H>
 
 namespace lbm::constants {
-static constexpr int N_MACRO_STATES = 9; //ns: was 5, added 1 for energy and 3 for Qcorrections
+// static constexpr int N_MACRO_STATES = 9; //ns: was 5, added 1 for energy and
+// 3 for Qcorrections
+static constexpr int N_MACRO_STATES =
+    19; // ns: was 9, added 6 for pressure tensor and 3 for heat flux
 static constexpr int RHO_IDX = 0;
 static constexpr int VELX_IDX = 1;
 static constexpr int VELY_IDX = 2;
 static constexpr int VELZ_IDX = 3;
 static constexpr int VMAG_IDX = 4;
 
-static constexpr int twoRhoE_IDX = 5; //ns: This is the total energy
-static constexpr int QCorrX_IDX  = 6; //ns: Qxxx deviation from maxwell boltzmann distribution
-static constexpr int QCorrY_IDX  = 7; //ns: Qyyy deviation from maxwell boltzmann distribution
-static constexpr int QCorrZ_IDX  = 8; //ns: Qzzz deviation from maxwell boltzmann distribution
+static constexpr int twoRhoE_IDX = 5; // ns: This is the total energy
+static constexpr int QCorrX_IDX =
+    6; // ns: Qxxx deviation from maxwell boltzmann distribution
+static constexpr int QCorrY_IDX =
+    7; // ns: Qyyy deviation from maxwell boltzmann distribution
+static constexpr int QCorrZ_IDX =
+    8; // ns: Qzzz deviation from maxwell boltzmann distribution
+
+static constexpr int Pxx_IDX =
+    9; // ns: Contains non-equilibrium part of pressure also
+static constexpr int Pyy_IDX =
+    10; // ns: Contains non-equilibrium part of pressure also
+static constexpr int Pzz_IDX =
+    11; // ns: Contains non-equilibrium part of pressure also
+static constexpr int Pxy_IDX =
+    12; // ns: Contains non-equilibrium part of pressure also
+static constexpr int Pxz_IDX =
+    13; // ns: Contains non-equilibrium part of pressure also
+static constexpr int Pyz_IDX =
+    14; // ns: Contains non-equilibrium part of pressure also
+
+static constexpr int qx_IDX =
+    15; // ns: Contains non-equilibrium part of heat flux also
+static constexpr int qy_IDX =
+    16; // ns: Contains non-equilibrium part of heat flux also
+static constexpr int qz_IDX =
+    17; // ns: Contains non-equilibrium part of heat flux also
+
+static constexpr int temperature_IDX = 18; // ns: Temperature
 
 #if AMREX_SPACEDIM == 2
 static constexpr int N_MICRO_STATES = 9;
@@ -22,15 +50,22 @@ static constexpr int N_MICRO_STATES = 9;
 static constexpr int N_MICRO_STATES = 27;
 #endif
 
-static constexpr int N_DERIVED = 7; //ns: was 4, added 3 more for holding corrections
+static constexpr int N_DERIVED =
+    7; // ns: was 4, added 3 more for holding corrections
 static constexpr int VORTX_IDX = 0;
 static constexpr int VORTY_IDX = 1;
 static constexpr int VORTZ_IDX = 2;
 static constexpr int VORTM_IDX = 3;
 
-static constexpr int dQCorrX_IDX = 4; //ns: Actual correction term for Qxxx after gradient calculation of QCorrX_IDX
-static constexpr int dQCorrY_IDX = 5; //ns: Actual correction term for Qyyy after gradient calculation of QCorrY_IDX
-static constexpr int dQCorrZ_IDX = 6; //ns: Actual correction term for Qzzz after gradient calculation of QCorrZ_IDX
+static constexpr int dQCorrX_IDX =
+    4; // ns: Actual correction term for Qxxx after gradient calculation of
+       // QCorrX_IDX
+static constexpr int dQCorrY_IDX =
+    5; // ns: Actual correction term for Qyyy after gradient calculation of
+       // QCorrY_IDX
+static constexpr int dQCorrZ_IDX =
+    6; // ns: Actual correction term for Qzzz after gradient calculation of
+       // QCorrZ_IDX
 
 static constexpr int N_IS_FLUID = 2;
 
