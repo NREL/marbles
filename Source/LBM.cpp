@@ -142,9 +142,10 @@ void LBM::init_data()
         // start simulation from the beginning
         const amrex::Real time = 0.0;
         set_ics();
-        InitFromScratch(time); // ns: This function is at
-                               // ./amrex/Src/AmrCore/AMReX_AmrCore.cpp:79:AmrCore::InitFromScratch
-                               // (Real time)
+        InitFromScratch(
+            time); // ns: This function is at
+                   // ./amrex/Src/AmrCore/AMReX_AmrCore.cpp:79:AmrCore::InitFromScratch
+                   // (Real time)
         average_down(amrex::IntVect(0));
 
         compute_dt();
@@ -286,7 +287,7 @@ void LBM::read_parameters()
         m_cs =
             m_mesh_speed / constants::ROOT3; // ns: caution, isothermal only. Do
                                              // not use this variable generally
-        m_cs_2 = m_cs * m_cs; // ns: Same as the above
+        m_cs_2 = m_cs * m_cs;                // ns: Same as the above
     }
 }
 
@@ -996,8 +997,8 @@ void LBM::compute_eb_forces()
             m_f[lev], amrex::IntVect(0),
             [=] AMREX_GPU_DEVICE(
                 int nbx, int i, int j, int AMREX_D_PICK(, /*k*/, k)) noexcept
-                -> amrex::GpuTuple<AMREX_D_DECL(
-                    amrex::Real, amrex::Real, amrex::Real)> {
+            -> amrex::GpuTuple<AMREX_D_DECL(
+                amrex::Real, amrex::Real, amrex::Real)> {
                 const amrex::IntVect iv(AMREX_D_DECL(i, j, k));
                 amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> fs = {0.0};
                 if ((is_fluid_arrs[nbx](iv, 1) == 1) &&
