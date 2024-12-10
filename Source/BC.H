@@ -5,7 +5,7 @@
 #include <AMReX_PhysBCFunct.H>
 #include "Constants.H"
 #include "Utilities.H"
-#include "Stencil.H"
+#include "Stencil_D3Q27.H"
 #include "VelocityBC.H"
 
 namespace lbm::bc {
@@ -16,6 +16,9 @@ static constexpr int VELOCITY = 2;
 static constexpr int PRESSURE = 3;
 static constexpr int OUTFLOW = 4;
 static constexpr int OUTFLOW_ZEROTH_ORDER = 5;
+static constexpr int SLIPWALLXNORMAL = 11;
+static constexpr int SLIPWALLYNORMAL = 12;
+static constexpr int SLIPWALLZNORMAL = 13;
 
 template <typename VelBCOp>
 struct BCFill
@@ -27,6 +30,12 @@ struct BCFill
         stencil::Stencil().evs;
     const amrex::GpuArray<int, constants::N_MICRO_STATES> m_bounce_dirs =
         stencil::Stencil().bounce_dirs;
+    const amrex::GpuArray<int, constants::N_MICRO_STATES> m_bounce_Xdir =
+        stencil::Stencil().bounce_Xdir;
+    const amrex::GpuArray<int, constants::N_MICRO_STATES> m_bounce_Ydir =
+        stencil::Stencil().bounce_Ydir;
+    const amrex::GpuArray<int, constants::N_MICRO_STATES> m_bounce_Zdir =
+        stencil::Stencil().bounce_Zdir;
     const amrex::GpuArray<amrex::Real, constants::N_MICRO_STATES> m_weights =
         stencil::Stencil().weights;
 
@@ -65,6 +74,63 @@ struct BCFill
         // when the streaming step is performed.
 
         data(iv, q) = data(iv + ev, m_bounce_dirs[q]);
+    }
+
+    AMREX_GPU_DEVICE
+    AMREX_FORCE_INLINE
+    void bounce_back_Xbc(
+        const amrex::IntVect& iv,
+        const int q,
+        const amrex::IntVect& ev,
+        amrex::Array4<amrex::Real> const& data) const
+    {
+        // Prepare the ghost cell layer of f_ for
+        // streaming due to bounce back. 2D e.g., for
+        // the ghost cell at at (-1, -1), store the
+        // value f_(0, 0) associated with e=[-1, -1] and
+        // orient it such that it points e=[1, 1]. This
+        // reproduces the bounce back effect directly
+        // when the streaming step is performed.
+
+        data(iv, q) = data(iv + ev, m_bounce_Xdir[q]);
+    }
+
+    AMREX_GPU_DEVICE
+    AMREX_FORCE_INLINE
+    void bounce_back_Ybc(
+        const amrex::IntVect& iv,
+        const int q,
+        const amrex::IntVect& ev,
+        amrex::Array4<amrex::Real> const& data) const
+    {
+        // Prepare the ghost cell layer of f_ for
+        // streaming due to bounce back. 2D e.g., for
+        // the ghost cell at at (-1, -1), store the
+        // value f_(0, 0) associated with e=[-1, -1] and
+        // orient it such that it points e=[1, 1]. This
+        // reproduces the bounce back effect directly
+        // when the streaming step is performed.
+
+        data(iv, q) = data(iv + ev, m_bounce_Ydir[q]);
+    }
+
+    AMREX_GPU_DEVICE
+    AMREX_FORCE_INLINE
+    void bounce_back_Zbc(
+        const amrex::IntVect& iv,
+        const int q,
+        const amrex::IntVect& ev,
+        amrex::Array4<amrex::Real> const& data) const
+    {
+        // Prepare the ghost cell layer of f_ for
+        // streaming due to bounce back. 2D e.g., for
+        // the ghost cell at at (-1, -1), store the
+        // value f_(0, 0) associated with e=[-1, -1] and
+        // orient it such that it points e=[1, 1]. This
+        // reproduces the bounce back effect directly
+        // when the streaming step is performed.
+
+        data(iv, q) = data(iv + ev, m_bounce_Zdir[q]);
     }
 
     AMREX_GPU_DEVICE
@@ -115,6 +181,57 @@ struct BCFill
 
         set_equilibrium_value(
             rho_bc, vel_bc, m_mesh_speed, m_weights[q], ev, data(iv, q));
+    }
+
+    AMREX_GPU_DEVICE
+    AMREX_FORCE_INLINE
+    void velocity_bc(
+        const amrex::IntVect& iv,
+        const int q,
+        const amrex::IntVect& ev,
+        const int idir,
+        const int ndir,
+        const amrex::RealVect& vel_bc,
+        const amrex::Real& RT,
+        amrex::Array4<amrex::Real> const& data) const
+    {
+        // Prepare the ghost cell layer of f_ for
+        // streaming due to a prescribed velocity. This
+        // is done by assigning all the values of f_ on
+        // this ghost layer to be the equilibrium
+        // distributions associated with the desired
+        // velocity. They will naturally exert their
+        // effect on the interior fluid points during
+        // the streaming step.
+
+        // In this case, a value for u, v, and w must be
+        // specified, either hard coded or set by a
+        // user-specified function
+        amrex::Real rho_out = 0.0;
+        amrex::Real rho_tan = 0.0;
+
+        const amrex::IntVect ivn(iv + ev);
+
+        // Build the 3-part rho calculation at the
+        // (iv+ev) fluid cell
+        for (int qq = 0; qq < constants::N_MICRO_STATES; qq++) {
+
+            const auto& evn_out = m_evs[qq];
+            const int bounce_qq = m_bounce_dirs[qq];
+            const auto& evn_in = m_evs[bounce_qq];
+
+            if (evn_in[idir] == -ndir) {
+                rho_out += 2.0 * data(ivn + evn_out, bounce_qq);
+            } else if (evn_in[idir] == 0) {
+                rho_tan += 1.0 * data(ivn + evn_out, bounce_qq);
+            }
+        }
+
+        const amrex::Real rho_bc =
+            (rho_out + rho_tan) / (1.0 - ndir * vel_bc[idir]);
+
+        set_equilibrium_value_D3Q27(
+            rho_bc, vel_bc, RT, m_mesh_speed, m_weights[q], ev, data(iv, q));
     }
 
     AMREX_GPU_DEVICE
@@ -295,10 +412,17 @@ struct BCFill
                             } else if (m_bc_type[bc_idx] == 2) {
                                 amrex::RealVect vel_bc(
                                     AMREX_D_DECL(0.0, 0.0, 0.0));
+                                amrex::Real RT(
+                                    1.0 / 3.0); // ns:default for isothermal.
+                                // ns: The product form is always called. This
+                                // is safe since RT remains 1/3
+                                //  in velocityBC
                                 m_vel_bc_op(
-                                    iv, idir, normal_dir, time, geom, vel_bc);
+                                    iv, idir, normal_dir, time, geom, vel_bc,
+                                    RT);
                                 velocity_bc(
-                                    iv, q, ev, idir, normal_dir, vel_bc, data);
+                                    iv, q, ev, idir, normal_dir, vel_bc, RT,
+                                    data);
                             } else if (m_bc_type[bc_idx] == 3) {
                                 const amrex::Real rho_bc = 1.0;
                                 pressure_bc(
@@ -308,6 +432,12 @@ struct BCFill
                             } else if (m_bc_type[bc_idx] == 5) {
                                 simple_outflow_bc(
                                     iv, q, ev, idir, normal_dir, data);
+                            } else if (m_bc_type[bc_idx] == 11) {
+                                bounce_back_Xbc(iv, q, ev, data);
+                            } else if (m_bc_type[bc_idx] == 12) {
+                                bounce_back_Ybc(iv, q, ev, data);
+                            } else if (m_bc_type[bc_idx] == 13) {
+                                bounce_back_Zbc(iv, q, ev, data);
                             }
                         }
                     }
