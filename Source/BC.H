@@ -489,6 +489,7 @@ struct BCFill
                                
                                 if (isAnEnergyLattice)
                                 { 
+                                    rhoBC = 1.0; //debug. Temporary placeholder. Do not use this bc until fixed
                                     velocity_bc_g(
                                     iv, q, ev, idir, normal_dir, rhoBC, vel_bc, R, T,
                                     gamma, data);
