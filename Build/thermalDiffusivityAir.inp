@@ -33,8 +33,8 @@ lbm.bc_lo = 0 0 0
 lbm.bc_hi = 0 0 0
 lbm.dx_outer = 1.0
 lbm.dt_outer = 1.0
-lbm.nu = 0.00071
-lbm.alpha = 0.0010
+lbm.nu = 0.0071
+lbm.alpha = 0.010
 lbm.save_streaming = 0
 lbm.compute_forces = 1
 
@@ -48,10 +48,10 @@ ic_thermalDiffusivityTest.MachComponents = 0.0 0.0 0.0
 # one wave in the periodic domain
 ic_thermalDiffusivityTest.waveLength = 200.0
 
-ic_thermalDiffusivityTest.initialTemperature = 0.003333
+ic_thermalDiffusivityTest.initialTemperature = 0.03333
 ic_thermalDiffusivityTest.adiabaticExponent = 1.40
 ic_thermalDiffusivityTest.meanMolecularMass = 28.96
-lbm.initialTemperature = 0.003333
+lbm.initialTemperature = 0.03333
 lbm.adiabaticExponent = 1.40
 lbm.meanMolecularMass = 28.96
 

@@ -317,7 +317,7 @@ struct thermalDiffusivityTest
                 AMREX_D_PICK(, 0.0, prob_lo[2] + (iv[2] + 0.5 * 0.0) * dx[2]);
 
             const amrex::Real a0 =
-                0.010 * speedOfSound_Ref; // ns:the perturbation amplitude
+                0.0010 * initialTemperature; // ns:the perturbation amplitude
 
             rho = density + a0 * std::sin(2.0 * M_PI * y / waveLength);
 
@@ -346,17 +346,16 @@ struct thermalDiffusivityTest
                 AMREX_D_PICK(, 0.0, prob_lo[2] + (iv[2] + 0.5 * 0.0) * dx[2]);
 
             const amrex::Real a0 =
-                0.010 * speedOfSound_Ref; // ns:the perturbation amplitude
+                0.0010 * initialTemperature; // ns:the perturbation amplitude
 
+            R = R_u / m_bar; // ns: Specific gas constant. Implemented.
             const amrex::Real pressure = density * R * initialTemperature;
             rho = density + a0 * std::sin(2.0 * M_PI * y / waveLength);
 
             vel[0] = velocity[0];
             vel[1] = velocity[1];
             vel[2] = velocity[2];
-
-            // temperature = initialTemperature;
-            R = R_u / m_bar; // ns: Specific gas constant. Implemented.
+            
             gamma = adiabaticExponent; // ns: not implemented yet
 
             temperature = pressure / (rho * R);
