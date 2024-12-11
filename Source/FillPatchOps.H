@@ -37,12 +37,13 @@ public:
         const amrex::Vector<amrex::IntVect>& ref_ratio,
         const amrex::Vector<amrex::BCRec>& bcs,
         BCOpCreator bc_op,
-        amrex::Vector<amrex::MultiFab>& f_)
+        amrex::Vector<amrex::MultiFab>& f_,bool isAnEnergyLattice_=false)
         : m_geom(geom)
         , m_ref_ratio(ref_ratio)
         , m_bcs(bcs)
         , m_op(std::move(bc_op))
         , m_f(f_)
+        , isAnEnergyLattice(isAnEnergyLattice_)
     {}
 
     // compute a new multifab by coping in phi from valid region and filling
@@ -132,7 +133,9 @@ protected:
     const amrex::Vector<amrex::BCRec>& m_bcs;
     const BCOpCreator m_op;
     amrex::Vector<amrex::MultiFab>& m_f;
+    //amrex::Vector<amrex::MultiFab>& m_g;
     amrex::Interpolater* m_mapper = &amrex::cell_cons_interp;
+    bool isAnEnergyLattice;
 };
 } // namespace lbm
 #endif

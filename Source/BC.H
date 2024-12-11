@@ -45,6 +45,7 @@ struct BCFill
     const amrex::Real m_mesh_speed;
     const amrex::GpuArray<int, AMREX_SPACEDIM * 2> m_bc_type = {0};
     const amrex::IntVect m_ng = {AMREX_D_DECL(0, 0, 0)};
+    bool isAnEnergyLattice;
     const VelBCOpType m_vel_bc_op;
 
     AMREX_GPU_HOST
@@ -53,11 +54,11 @@ struct BCFill
 
         const amrex::GpuArray<int, AMREX_SPACEDIM * 2>& bc_type,
         const amrex::IntVect& ng,
-        const VelBCOpType& vel_bc_op)
+        const VelBCOpType& vel_bc_op,const bool& isAnEnergyLattice_)
         : m_mesh_speed(mesh_speed)
         , m_bc_type(bc_type)
         , m_ng(ng)
-        , m_vel_bc_op(vel_bc_op)
+        , m_vel_bc_op(vel_bc_op), isAnEnergyLattice(isAnEnergyLattice_)
     {}
 
     AMREX_GPU_DEVICE
@@ -188,18 +189,19 @@ struct BCFill
 
     AMREX_GPU_DEVICE
     AMREX_FORCE_INLINE
-    void velocity_bc(
+    void velocity_bc_g(
         const amrex::IntVect& iv,
         const int q,
         const amrex::IntVect& ev,
         const int idir,
         const int ndir,
+        const amrex::Real& rho_bc,
         const amrex::RealVect& vel_bc,
         const amrex::Real& R,
         const amrex::Real& temperature,
         const amrex::Real& adiabaticExponent,
-        amrex::Array4<amrex::Real> const& data_f,
-        amrex::Array4<amrex::Real> const& data_g) const
+        amrex::Array4<amrex::Real> const& data
+        ) const
     {
         // Prepare the ghost cell layer of f_ for
         // streaming due to a prescribed velocity. This
@@ -218,28 +220,6 @@ struct BCFill
 
         const amrex::IntVect ivn(iv + ev);
 
-        // Build the 3-part rho calculation at the
-        // (iv+ev) fluid cell
-        for (int qq = 0; qq < constants::N_MICRO_STATES; qq++) {
-
-            const auto& evn_out = m_evs[qq];
-            const int bounce_qq = m_bounce_dirs[qq];
-            const auto& evn_in = m_evs[bounce_qq];
-
-            if (evn_in[idir] == -ndir) {
-                rho_out += 2.0 * data_f(ivn + evn_out, bounce_qq);
-            } else if (evn_in[idir] == 0) {
-                rho_tan += 1.0 * data_f(ivn + evn_out, bounce_qq);
-            }
-        }
-
-        const amrex::Real rho_bc =
-            (rho_out + rho_tan) / (1.0 - ndir * vel_bc[idir]);
-
-        set_equilibrium_value_D3Q27(
-            rho_bc, vel_bc, R * temperature, m_mesh_speed, m_weights[q], ev,
-            data_f(iv, q));
-
         amrex::Real Cv = R / (adiabaticExponent - 1.0);
 
         amrex::Real twoRhoE =
@@ -256,12 +236,12 @@ struct BCFill
         set_extended_gradExpansion_generic(
             twoRhoE, heatFluxes, RxxEq, RyyEq, RzzEq, RxyEq, RxzEq, RyzEq,
             m_mesh_speed, m_weights[q], ev, theta0, zeroVec, 1.0,
-            data_g(iv, q));
+            data(iv, q));
     }
 
     AMREX_GPU_DEVICE
     AMREX_FORCE_INLINE
-    void velocity_bc(
+    void velocity_bc_f(
         const amrex::IntVect& iv,
         const int q,
         const amrex::IntVect& ev,
@@ -269,7 +249,7 @@ struct BCFill
         const int ndir,
         const amrex::RealVect& vel_bc,
         const amrex::Real& RT,
-        amrex::Array4<amrex::Real> const& data) const
+        amrex::Array4<amrex::Real> const& data,amrex::Real& rho_bcOut) const
     {
         // Prepare the ghost cell layer of f_ for
         // streaming due to a prescribed velocity. This
@@ -308,6 +288,8 @@ struct BCFill
 
         set_equilibrium_value_D3Q27(
             rho_bc, vel_bc, RT, m_mesh_speed, m_weights[q], ev, data(iv, q));
+        
+        rho_bcOut =rho_bc;    
     }
 
     AMREX_GPU_DEVICE
@@ -439,7 +421,6 @@ struct BCFill
     void operator()(
         const amrex::IntVect& iv,
         amrex::Array4<amrex::Real> const& data,
-        amrex::Array4<amrex::Real> const& data_g,
         const int /*dcomp*/,
         const int /*numcomp*/,
         amrex::GeometryData const& geom,
@@ -493,6 +474,8 @@ struct BCFill
                                     T(1.0 / 3.0); // ns:default for isothermal.
                                 amrex::Real gamma(
                                     5.0 / 3.0); // ns:default for monoatomic
+
+                                amrex::Real rhoBC(1.0);     
                                 // ns: The product form is always called. This
                                 // is safe since RT remains 1/3
                                 //  in velocityBC
@@ -502,10 +485,21 @@ struct BCFill
                                 m_vel_bc_op(
                                     iv, idir, normal_dir, time, geom, vel_bc, R,
                                     T, gamma);
-
-                                velocity_bc(
-                                    iv, q, ev, idir, normal_dir, vel_bc, R, T,
-                                    gamma, data, data_g);
+                                
+                               
+                                if (isAnEnergyLattice)
+                                { 
+                                    velocity_bc_g(
+                                    iv, q, ev, idir, normal_dir, rhoBC, vel_bc, R, T,
+                                    gamma, data);
+                                }
+                                else
+                                {
+                                    velocity_bc_f(
+                                    iv, q, ev, idir, normal_dir, vel_bc, R*T,
+                                    data,rhoBC);
+                                }
+                                        
 
                             } else if (m_bc_type[bc_idx] == 3) {
                                 const amrex::Real rho_bc = 1.0;
@@ -540,20 +534,22 @@ struct BCOpCreator
     explicit BCOpCreator(
         const amrex::Real& mesh_speed,
         const amrex::GpuArray<int, AMREX_SPACEDIM * 2>& bc_type,
-        const amrex::IntVect& ng)
-        : m_mesh_speed(mesh_speed), m_bc_type(bc_type), m_ng(ng), m_vel_bc_op()
+        const amrex::IntVect& ng,bool isAnEnergyLattice_=false)
+        : m_mesh_speed(mesh_speed), m_bc_type(bc_type), m_ng(ng), m_vel_bc_op(),isAnEnergyLattice(isAnEnergyLattice_)
     {}
 
     FunctorType operator()() const
     {
         return FunctorType{
-            m_mesh_speed, m_bc_type, m_ng, m_vel_bc_op.device_instance()};
+            m_mesh_speed, m_bc_type, m_ng, m_vel_bc_op.device_instance(),isAnEnergyLattice};
     }
 
     const amrex::Real m_mesh_speed;
     const amrex::GpuArray<int, AMREX_SPACEDIM * 2> m_bc_type = {0};
     const amrex::IntVect m_ng = {AMREX_D_DECL(0, 0, 0)};
+    bool isAnEnergyLattice;
     VelBCOp m_vel_bc_op;
+    
 };
 
 } // namespace lbm::bc

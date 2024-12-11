@@ -36,7 +36,7 @@ struct NoOp
             const amrex::Real /*time*/,
             amrex::GeometryData const& /*geom*/,
             amrex::RealVect& /*vel*/,
-            amrex::Real& /*RT*/) const
+            amrex::Real& /*R*/,amrex::Real& /*T*/,amrex::Real& /*gamma*/) const
         {}
     };
 

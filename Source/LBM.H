@@ -225,6 +225,7 @@ private:
     amrex::Vector<std::string> m_lbm_varnames;
     amrex::Vector<std::string> m_macrodata_varnames;
     amrex::Vector<std::string> m_microdata_varnames;
+    amrex::Vector<std::string> m_microdata_g_varnames; //ns: Save names of energy populations
     amrex::Vector<std::string> m_deriveddata_varnames;
     amrex::Vector<std::string> m_idata_varnames;
 
@@ -254,6 +255,7 @@ private:
     amrex::Vector<amrex::BCRec> m_bcs; // 1-component
 
     std::unique_ptr<FillPatchOpsBase> m_fillpatch_op;
+    std::unique_ptr<FillPatchOpsBase> m_fillpatch_g_op;
 
     amrex::Vector<std::unique_ptr<amrex::FabFactory<amrex::FArrayBox>>>
         m_factory;

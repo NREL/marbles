@@ -42,6 +42,17 @@ LBM::LBM()
             num_str;
         m_microdata_varnames.push_back("f_" + zero_padded_str);
     }
+
+    if (m_model_type == "energyD3Q27") {
+    for (int q = 0; q < constants::N_MICRO_STATES; q++) {
+        const auto num_str = std::to_string(q);
+        const auto zero_padded_str =
+            std::string(n_zero - std::min(n_zero, num_str.length()), '0') +
+            num_str;
+        m_microdata_g_varnames.push_back("g_" + zero_padded_str);
+    }
+    }
+
     m_deriveddata_varnames.push_back("vort_x");
     m_deriveddata_varnames.push_back("vort_y");
     m_deriveddata_varnames.push_back("vort_z");
@@ -61,6 +72,13 @@ LBM::LBM()
     if (m_save_streaming) {
         for (const auto& vname : m_microdata_varnames) {
             m_lbm_varnames.push_back(vname);
+        }
+
+        if (m_model_type == "energyD3Q27")
+        {
+        for (const auto& vname : m_microdata_g_varnames) {
+            m_lbm_varnames.push_back(vname);
+        }
         }
     }
     if (m_save_derived) {
@@ -93,7 +111,7 @@ LBM::LBM()
     m_is_fluid.resize(nlevs_max);
     m_plt_mf.resize(nlevs_max);
     m_mask.resize(nlevs_max);
-    // m_auxdata.resize(nlevs_max); //ns
+
 
     m_factory.resize(nlevs_max);
 
@@ -420,7 +438,7 @@ void LBM::evolve()
         m_fillpatch_op->fillpatch(0, cur_time, m_f[0]);
 
         if (m_model_type == "energyD3Q27")
-            m_fillpatch_op->fillpatch(0, cur_time, m_g[0]);
+            m_fillpatch_g_op->fillpatch(0, cur_time, m_g[0]);
 
         time_step(0, cur_time, 1);
 
@@ -504,7 +522,7 @@ void LBM::time_step(const int lev, const amrex::Real time, const int iteration)
         m_fillpatch_op->fillpatch(lev + 1, m_ts_new[lev + 1], m_f[lev + 1]);
 
         if (m_model_type == "energyD3Q27")
-            m_fillpatch_op->fillpatch(lev + 1, m_ts_new[lev + 1], m_g[lev + 1]);
+            m_fillpatch_g_op->fillpatch(lev + 1, m_ts_new[lev + 1], m_g[lev + 1]);
 
         for (int i = 1; i <= m_nsubsteps[lev + 1]; ++i) {
             time_step(lev + 1, time + (i - 1) * m_dts[lev + 1], i);
@@ -679,7 +697,7 @@ void LBM::collide_D3Q27(const int lev)
 {
     BL_PROFILE("LBM::collide()");
 
-    f_to_macrodata_D3Q27(lev);
+    f_to_macrodata_D3Q27(lev); // ns: also used the g lattice
 
     compute_QCorrections(lev); // ns: check if macrodata was communicated
 
@@ -907,11 +925,9 @@ void LBM::relax_f_to_equilibrium_D3Q27(const int lev)
                 const auto eq_arr_g = eq_arrs_g[nbx];
 
                 amrex::Real R =
-                    (m_R_u / m_m_bar); // ns: debug. Temporary placeholder value
+                    (m_R_u / m_m_bar); // ns: Specific gas constant
                 amrex::Real temperature = md_arr(
-                    iv, constants::temperature_IDX); // m_initialTemperature;
-                                                     // //ns: debug. Temporary
-                                                     // placeholder value
+                    iv, constants::temperature_IDX); // ns: Temeprature is live!
                 amrex::Real Omega =
                     1.0 / (m_nu / (R * temperature * m_dts[lev]) + 0.5);
 
@@ -1047,13 +1063,11 @@ void LBM::f_to_macrodata_D3Q27(const int lev)
                     md_arr(iv, constants::qz_IDX) = qz);
 
                 amrex::Real R =
-                    m_R_u / m_m_bar; // ns: debug, placeholder for constant R
+                    m_R_u / m_m_bar; // ns: specific gas constant
 
-                // amrex::Real temperature=m_initialTemperature; //ns: debug,
-                // placeholder for constant Temperature
                 amrex::Real Cv = R / (m_adiabaticExponent - 1.0);
                 amrex::Real temperature =
-                    getTemperature(twoRhoE, rho, u, v, w, Cv);
+                    getTemperature(twoRhoE, rho, u, v, w, Cv); //ns: temperature is live
 
                 md_arr(iv, constants::temperature_IDX) = temperature;
 
@@ -1295,9 +1309,10 @@ void LBM::MakeNewLevelFromCoarse(
     initialize_mask(lev);
     m_fillpatch_op->fillpatch_from_coarse(lev, time, m_f[lev]);
     if (m_model_type == "energyD3Q27")
-        m_fillpatch_op->fillpatch_from_coarse(lev, time, m_g[lev]);
+        m_fillpatch_g_op->fillpatch_from_coarse(lev, time, m_g[lev]);
     m_macrodata[lev].setVal(0.0);
     m_eq[lev].setVal(0.0);
+    m_eq_g[lev].setVal(0.0);
     m_derived[lev].setVal(0.0);
 
     if (m_model_type == "energyD3Q27")
@@ -1488,31 +1503,40 @@ void LBM::fill_f_inside_eb(const int lev)
                 const auto& ev = evs[q];
 
                 if (m_model_type == "energyD3Q27") {
-                    set_equilibrium_value_D3Q27(
-                        rho_inside, vel_inside, 1.0 / 3.0, l_mesh_speed, wt, ev,
-                        f_arrs[nbx](i, j, k, q));
 
-                    amrex::Real R = m_R_u / m_m_bar;
+                    // set_equilibrium_value_D3Q27(
+                    //     rho_inside, vel_inside, 1.0 / 3.0, l_mesh_speed, wt, ev,
+                    //     f_arrs[nbx](i, j, k, q));
 
-                    amrex::Real Cv = R / (m_adiabaticExponent - 1.0);
-                    amrex::Real temperature = m_initialTemperature;
+                    // amrex::Real R = m_R_u / m_m_bar;
 
-                    amrex::Real twoRhoE = getEnergy(
-                        temperature, rho_inside, vel_inside[0], vel_inside[1],
-                        vel_inside[2], Cv);
+                    // amrex::Real Cv = R / (m_adiabaticExponent - 1.0);
+                    // amrex::Real temperature = m_initialTemperature;
 
-                    amrex::Real qxEq, qyEq, qzEq, RxxEq, RyyEq, RzzEq, RxyEq,
-                        RxzEq, RyzEq;
-                    getEquilibriumMoments(
-                        rho_inside, vel_inside[0], vel_inside[1], vel_inside[2],
-                        twoRhoE, Cv, R, qxEq, qyEq, qzEq, RxxEq, RyyEq, RzzEq,
-                        RxyEq, RxzEq, RyzEq);
+                    // amrex::Real twoRhoE = getEnergy(
+                    //     temperature, rho_inside, vel_inside[0], vel_inside[1],
+                    //     vel_inside[2], Cv);
 
-                    const amrex::RealVect heatFluxes = {qxEq, qyEq, qzEq};
-                    set_extended_gradExpansion_generic(
-                        twoRhoE, heatFluxes, RxxEq, RyyEq, RzzEq, RxyEq, RxzEq,
-                        RyzEq, l_mesh_speed, wt, ev, stencil.theta0, zeroVec,
-                        1.0, g_arrs[nbx](i, j, k, q));
+                    // amrex::Real qxEq, qyEq, qzEq, RxxEq, RyyEq, RzzEq, RxyEq,
+                    //     RxzEq, RyzEq;
+                    // getEquilibriumMoments(
+                    //     rho_inside, vel_inside[0], vel_inside[1], vel_inside[2],
+                    //     twoRhoE, Cv, R, qxEq, qyEq, qzEq, RxxEq, RyyEq, RzzEq,
+                    //     RxyEq, RxzEq, RyzEq);
+
+                    // const amrex::RealVect heatFluxes = {qxEq, qyEq, qzEq};
+                    // set_extended_gradExpansion_generic(
+                    //     twoRhoE, heatFluxes, RxxEq, RyyEq, RzzEq, RxyEq, RxzEq,
+                    //     RyzEq, l_mesh_speed, wt, ev, stencil.theta0, zeroVec,
+                    //     1.0, g_arrs[nbx](i, j, k, q));
+
+                    //ns: Most of the above calculation is redundant. When the zeroth moment is 
+                    // 0.0, the only non-negative solution is all populations being 0.0.
+                    // We simply set all populations to 0.0 if density is zero.
+                    // This is also applicable to isothermal version, leaving that unchanged for now.  
+
+                    set_population_zero(f_arrs[nbx](i, j, k, q));
+                    set_population_zero(g_arrs[nbx](i, j, k, q));    
 
                     // flaghere
                 } else {
@@ -1567,43 +1591,55 @@ void LBM::set_bcs()
     // overloads :(
 
     BL_PROFILE("LBM::set_bcs()");
+    const bool isAnEnergyLattice(true);
+
     if (m_velocity_bc_type == "noop") {
+        
         using VelBCOp = bc::BCOpCreator<bc::NoOp>;
+        
         m_fillpatch_op = std::make_unique<FillPatchOps<VelBCOp>>(
             geom, refRatio(), m_bcs,
             VelBCOp(m_mesh_speed, m_bc_type, m_f[0].nGrowVect()), m_f);
+    
+        m_fillpatch_g_op = std::make_unique<FillPatchOps<VelBCOp>>(
+            geom, refRatio(), m_bcs,
+            VelBCOp(m_mesh_speed, m_bc_type, m_g[0].nGrowVect(),isAnEnergyLattice), m_g,isAnEnergyLattice);
+
     } else if (m_velocity_bc_type == "constant") {
 
-        if (m_model_type == "energyD3Q27") {
             using VelBCOp = bc::BCOpCreator<bc::Constant>;
-            m_fillpatch_op = std::make_unique<FillPatchOps<VelBCOp>>(
-                geom, refRatio(), m_bcs,
-                VelBCOp(m_mesh_speed, m_bc_type, m_f[0].nGrowVect()), m_f, m_g);
-        } else {
-            using VelBCOp = bc::BCOpCreator<bc::Constant>;
+            
             m_fillpatch_op = std::make_unique<FillPatchOps<VelBCOp>>(
                 geom, refRatio(), m_bcs,
                 VelBCOp(m_mesh_speed, m_bc_type, m_f[0].nGrowVect()), m_f);
-        }
-
+            
+            m_fillpatch_g_op = std::make_unique<FillPatchOps<VelBCOp>>(
+                geom, refRatio(), m_bcs,
+                VelBCOp(m_mesh_speed, m_bc_type, m_g[0].nGrowVect(),isAnEnergyLattice), m_g,isAnEnergyLattice);
+   
     } else if (m_velocity_bc_type == "channel") {
+
         using VelBCOp = bc::BCOpCreator<bc::Channel>;
+        
         m_fillpatch_op = std::make_unique<FillPatchOps<VelBCOp>>(
             geom, refRatio(), m_bcs,
             VelBCOp(m_mesh_speed, m_bc_type, m_f[0].nGrowVect()), m_f);
+
+        m_fillpatch_g_op = std::make_unique<FillPatchOps<VelBCOp>>(
+            geom, refRatio(), m_bcs,
+            VelBCOp(m_mesh_speed, m_bc_type, m_g[0].nGrowVect(),isAnEnergyLattice), m_g,isAnEnergyLattice);
+
     } else if (m_velocity_bc_type == "parabolic") {
 
-        if {
             using VelBCOp = bc::BCOpCreator<bc::Parabolic>;
-            m_fillpatch_op = std::make_unique<FillPatchOps<VelBCOp>>(
-                geom, refRatio(), m_bcs,
-                VelBCOp(m_mesh_speed, m_bc_type, m_f[0].nGrowVect()), m_f, m_g);
-        } else {
-            using VelBCOp = bc::BCOpCreator<bc::Parabolic>;
+            
             m_fillpatch_op = std::make_unique<FillPatchOps<VelBCOp>>(
                 geom, refRatio(), m_bcs,
                 VelBCOp(m_mesh_speed, m_bc_type, m_f[0].nGrowVect()), m_f);
-        }
+    
+            m_fillpatch_g_op = std::make_unique<FillPatchOps<VelBCOp>>(
+                geom, refRatio(), m_bcs,
+                VelBCOp(m_mesh_speed, m_bc_type, m_g[0].nGrowVect(),isAnEnergyLattice), m_g,isAnEnergyLattice);
 
     } else {
         amrex::Abort("LBM::set_bcs(): Unknown velocity BC");
@@ -1636,12 +1672,27 @@ void LBM::set_ics()
 bool LBM::check_field_existence(const std::string& name)
 {
     BL_PROFILE("LBM::check_field_existence()");
+    
+    if (m_model_type=="energyD3Q27")
+    {
     const auto vnames = {
-        m_macrodata_varnames, m_microdata_varnames, m_deriveddata_varnames,
+        m_macrodata_varnames, m_microdata_varnames, m_microdata_g_varnames, m_deriveddata_varnames,
         m_idata_varnames};
+
     return std::any_of(vnames.begin(), vnames.end(), [=](const auto& vn) {
         return get_field_component(name, vn) != -1;
     });
+    }
+    else
+    {
+    const auto vnames = {
+        m_macrodata_varnames, m_microdata_varnames, m_deriveddata_varnames,
+        m_idata_varnames};
+
+    return std::any_of(vnames.begin(), vnames.end(), [=](const auto& vn) {
+        return get_field_component(name, vn) != -1;
+    });
+    }
 }
 
 // Get field component
@@ -1677,6 +1728,10 @@ LBM::get_field(const std::string& name, const int lev, const int ngrow)
     const int srccomp_mid = get_field_component(name, m_microdata_varnames);
     if (srccomp_mid != -1) {
         amrex::MultiFab::Copy(*mf, m_f[lev], srccomp_mid, 0, nc, ngrow);
+    }
+    const int srccomp_g_mid = get_field_component(name, m_microdata_g_varnames);
+    if (srccomp_g_mid != -1) {
+        amrex::MultiFab::Copy(*mf, m_g[lev], srccomp_g_mid, 0, nc, ngrow);
     }
     const int srccomp_mdd = get_field_component(name, m_deriveddata_varnames);
     if (srccomp_mdd != -1) {
@@ -1715,6 +1770,13 @@ void LBM::average_down_to(int crse_lev, amrex::IntVect crse_ng)
     average_down_with_ghosts(
         m_f[crse_lev + 1], m_f[crse_lev], Geom(crse_lev), crse_ng,
         refRatio(crse_lev));
+
+    if (m_model_type=="energyD3Q27")
+    {
+    average_down_with_ghosts(
+        m_g[crse_lev + 1], m_g[crse_lev], Geom(crse_lev), crse_ng,
+        refRatio(crse_lev));
+    }    
 
     amrex::Gpu::synchronize();
 }
@@ -1780,6 +1842,16 @@ amrex::Vector<const amrex::MultiFab*> LBM::plot_file_mf()
                 m_plt_mf[lev], m_f[lev], 0, cnt, m_f[lev].nComp(), 0);
             cnt += m_f[lev].nComp();
         }
+
+        if (m_model_type=="energyD3Q27")
+        {
+        if (m_save_streaming) {
+            amrex::MultiFab::Copy(
+                m_plt_mf[lev], m_g[lev], 0, cnt, m_g[lev].nComp(), 0);
+            cnt += m_g[lev].nComp();
+        }
+        }
+
         if (m_save_derived) {
             amrex::MultiFab::Copy(
                 m_plt_mf[lev], m_derived[lev], 0, cnt, m_derived[lev].nComp(),
@@ -1820,6 +1892,7 @@ void LBM::write_checkpoint_file() const
 {
     BL_PROFILE("LBM::write_checkpoint_file()");
     const auto& varnames = m_microdata_varnames;
+    const auto& varnames_g = m_microdata_g_varnames;
 
     // chk00010            write a checkpoint file with this root directory
     // chk00010/Header     this contains information you need to save (e.g.,
@@ -1900,12 +1973,23 @@ void LBM::write_checkpoint_file() const
             m_f[lev], amrex::MultiFabFileFullPrefix(
                           lev, checkpointname, "Level_", varnames[0]));
     }
+
+    if (m_model_type=="energyD3Q27")
+    {
+    for (int lev = 0; lev <= finest_level; ++lev) {
+        amrex::VisMF::Write(
+            m_g[lev], amrex::MultiFabFileFullPrefix(
+                          lev, checkpointname, "Level_", varnames_g[0]));
+    }
+    }
+
 }
 
 void LBM::read_checkpoint_file()
 {
     BL_PROFILE("LBM::read_checkpoint_file()");
     const auto& varnames = m_microdata_varnames;
+    const auto& varnames_g = m_microdata_g_varnames;
 
     amrex::Print() << "Restarting from checkpoint file " << m_restart_chkfile
                    << std::endl;
@@ -2006,10 +2090,13 @@ void LBM::read_checkpoint_file()
                           lev, m_restart_chkfile, "Level_", varnames[0]));
     }
 
+    if (m_model_type=="energyD3Q27")
+    {
     for (int lev = 0; lev <= finest_level; ++lev) {
         amrex::VisMF::Read(
             m_g[lev], amrex::MultiFabFileFullPrefix(
-                          lev, m_restart_chkfile, "Level_", varnames[0]));
+                          lev, m_restart_chkfile, "Level_", varnames_g[0]));
+    }
     }
 
     // Populate the other data
