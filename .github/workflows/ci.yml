@@ -107,7 +107,7 @@ jobs:
     runs-on: ${{matrix.os}}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-22.04, macos-latest]
         build_type: [Release, Debug]
         dimension: [2D, 3D]
         include:
