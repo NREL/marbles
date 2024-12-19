@@ -1662,6 +1662,10 @@ void LBM::set_ics()
         m_ic_op = std::make_unique<ic::Initializer<ic::thermalDiffusivityTest>>(
             m_mesh_speed,
             ic::thermalDiffusivityTest(ic::thermalDiffusivityTest()), m_f, m_g);
+    } else if (m_ic_type == "sodTest") {
+        m_ic_op = std::make_unique<ic::Initializer<ic::sodTest>>(
+            m_mesh_speed,
+            ic::sodTest(ic::sodTest()), m_f, m_g);
     } else {
         amrex::Abort(
             "LBM::set_ics(): User must specify a valid initial condition");

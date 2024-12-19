@@ -1,0 +1,63 @@
+# How to use this sod test tube case?
+# set ic_sodTest.initialTemperature=lbm.initialTemperature to a value <= 0.3333
+# set lbm.nu to a value <= 0.0100
+# Further instructions in sodTester.ipynb
+# Note. Always: geometry.prob_hi[0]=amr.n_cell[0]=amr.max_grid_size=2.0*ic_sodTest.xDiscontinuity
+# Note: Effect of changing other inputs not tested as of 19 Dec 2024.
+# Emergency feedback: nsawant@nrel.gov
+
+max_step = 1500
+
+# geometry parameters
+geometry.prob_lo = 0.0 -1.0 -1.0
+geometry.prob_hi = 3000.0 1.0 1.0
+geometry.is_periodic = 0 1 1
+
+# timestepping
+amr.n_cell  = 3000 2 2
+amr.max_level = 0
+amr.max_grid_size = 3000
+amr.blocking_factor = 1
+amr.plot_int = 100
+amr.chk_int = 100
+amr.file_name_digits = 5
+
+# select model type. "energyD3Q27" activates product equilibrium, energy equation etc.
+lbm.model_type = "energyD3Q27"
+ic_sodTest.model_type = "energyD3Q27"
+# velocity_bc_parabolic.model_type = "energyD3Q27"
+
+lbm.bc_lo = 5 0 0
+lbm.bc_hi = 5 0 0
+lbm.dx_outer = 1.0
+lbm.dt_outer = 1.0
+lbm.nu = 0.010
+lbm.alpha = 0.010
+lbm.save_streaming = 0
+lbm.compute_forces = 0
+
+lbm.ic_type = "sodTest"
+ic_sodTest.density = 0.50
+ic_sodTest.velocity = 0.0 0.0 0.0
+ic_sodTest.MachComponents = 0.0 0.0 0.0
+
+# Set ic_sodTest.xDiscontinuity equal to half length to place 
+# discontinuity in the middle 
+ic_sodTest.xDiscontinuity = 1500.0
+
+ic_sodTest.initialTemperature = 0.20
+ic_sodTest.adiabaticExponent = 2.0
+ic_sodTest.meanMolecularMass = 28.96
+ic_sodTest.densityRatio = 4.00
+ic_sodTest.temperatureRatio = 0.1250 
+lbm.initialTemperature = 0.20
+lbm.adiabaticExponent = 2.0
+lbm.meanMolecularMass = 28.96
+
+eb2.geom_type = "all_regular"
+
+amrex.fpe_trap_invalid = 1
+amrex.fpe_trap_zero = 1
+amrex.fpe_trap_overflow = 1
+amrex.the_arena_is_managed = 0
+amrex.abort_on_out_of_gpu_memory = 1
