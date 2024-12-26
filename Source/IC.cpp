@@ -149,9 +149,9 @@ sodTest::sodTest()
         m_op.velocity[n] = velocity[n];
     }
 
-    pp.query("densityRatio", m_op.densityRatio); //ns: R to L
-    pp.query("temperatureRatio", m_op.temperatureRatio); //ns: R to L
-    pp.query("xDiscontinuity", m_op.xDiscontinuity); //ns: R to L 
+    pp.query("densityRatio", m_op.densityRatio);         // ns: R to L
+    pp.query("temperatureRatio", m_op.temperatureRatio); // ns: R to L
+    pp.query("xDiscontinuity", m_op.xDiscontinuity);     // ns: R to L
 
     pp.query(
         "model_type", m_op.m_model_type); // ns: default is "isothermal".

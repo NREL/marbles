@@ -355,7 +355,7 @@ struct thermalDiffusivityTest
             vel[0] = velocity[0];
             vel[1] = velocity[1];
             vel[2] = velocity[2];
-            
+
             gamma = adiabaticExponent; // ns: not implemented yet
 
             temperature = pressure / (rho * R);
@@ -377,9 +377,9 @@ struct sodTest
 {
     struct DeviceOp
     {
-        amrex::Real densityRatio{1.0}; //ns: 
+        amrex::Real densityRatio{1.0}; // ns:
         amrex::Real temperatureRatio{1.0};
-        amrex::Real xDiscontinuity{10.0}; //ns: discontinuity location
+        amrex::Real xDiscontinuity{10.0}; // ns: discontinuity location
         amrex::Real density{1.0};
         amrex::RealVect velocity = {AMREX_D_DECL(0.0, 0.0, 0.0)};
         amrex::RealVect MachComponents = {AMREX_D_DECL(0.0, 0.0, 0.0)};
@@ -401,7 +401,7 @@ struct sodTest
         // ns: LBM Scheme selector. "energyD3Q27" activates product equilibrium,
         // energy equation etc.
         std::string m_model_type = "isothermal";
-        
+
         AMREX_GPU_DEVICE
         void operator()(
             const amrex::IntVect& iv,
@@ -417,11 +417,13 @@ struct sodTest
             const amrex::Real z =
                 AMREX_D_PICK(, 0.0, prob_lo[2] + (iv[2] + 0.5 * 0.0) * dx[2]);
 
-            vel[0] = velocity[0]; 
+            vel[0] = velocity[0];
             vel[1] = velocity[1];
             vel[2] = velocity[2];
 
-            rho = density + 0.5*(1.0+std::tanh((x-xDiscontinuity)*3.0))*(densityRatio*density-density);
+            rho = density + 0.5 *
+                                (1.0 + std::tanh((x - xDiscontinuity) * 3.0)) *
+                                (densityRatio * density - density);
         }
 
         AMREX_GPU_DEVICE
@@ -444,15 +446,20 @@ struct sodTest
                 AMREX_D_PICK(, 0.0, prob_lo[2] + (iv[2] + 0.5 * 0.0) * dx[2]);
 
             R = R_u / m_bar; // ns: Specific gas constant. Implemented.
-     
+
             vel[0] = velocity[0];
             vel[1] = velocity[1];
             vel[2] = velocity[2];
-            
+
             gamma = adiabaticExponent; // ns: not implemented yet
 
-            rho = density + 0.5*(1.0+std::tanh((x-xDiscontinuity)*3.0))*(densityRatio*density-density);
-            temperature = initialTemperature + 0.5*(1.0+std::tanh((x-xDiscontinuity)*3.0))*(temperatureRatio*initialTemperature-initialTemperature);
+            rho = density + 0.5 *
+                                (1.0 + std::tanh((x - xDiscontinuity) * 3.0)) *
+                                (densityRatio * density - density);
+            temperature = initialTemperature +
+                          0.5 * (1.0 + std::tanh((x - xDiscontinuity) * 3.0)) *
+                              (temperatureRatio * initialTemperature -
+                               initialTemperature);
         }
     };
 

@@ -159,8 +159,7 @@ AMREX_GPU_DEVICE AMREX_INLINE void set_extended_gradExpansion_generic(
     f *= wt;
 }
 
-AMREX_GPU_DEVICE AMREX_INLINE void set_population_zero(
-        amrex::Real& eq)
+AMREX_GPU_DEVICE AMREX_INLINE void set_population_zero(amrex::Real& eq)
 {
     eq = 0.0;
 }

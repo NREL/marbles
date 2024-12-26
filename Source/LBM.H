@@ -225,7 +225,8 @@ private:
     amrex::Vector<std::string> m_lbm_varnames;
     amrex::Vector<std::string> m_macrodata_varnames;
     amrex::Vector<std::string> m_microdata_varnames;
-    amrex::Vector<std::string> m_microdata_g_varnames; //ns: Save names of energy populations
+    amrex::Vector<std::string>
+        m_microdata_g_varnames; // ns: Save names of energy populations
     amrex::Vector<std::string> m_deriveddata_varnames;
     amrex::Vector<std::string> m_idata_varnames;
 
