@@ -907,7 +907,7 @@ void LBM::relax_f_to_equilibrium_D3Q27(const int lev)
     auto const& g_arrs = m_g[lev].arrays();
     auto const& md_arrs = m_macrodata[lev].arrays();
 
-    const amrex::Real tau = m_nu / (m_dts[lev] * m_cs_2) + 0.5;
+    // const amrex::Real tau = m_nu / (m_dts[lev] * m_cs_2) + 0.5;
 
     amrex::ParallelFor(
         m_f[lev], m_eq[lev].nGrowVect(), constants::N_MICRO_STATES,

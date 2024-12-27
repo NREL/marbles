@@ -215,10 +215,11 @@ struct viscosityTest
             const amrex::Real* prob_lo = geom.ProbLo();
             const amrex::Real* dx = geom.CellSize();
 
-            const amrex::Real x = prob_lo[0] + (iv[0] + 0.5 * 0.0) * dx[0];
+            // const amrex::Real x = prob_lo[0] + (iv[0] + 0.5 * 0.0) * dx[0];
             const amrex::Real y = prob_lo[1] + (iv[1] + 0.5 * 0.0) * dx[1];
-            const amrex::Real z =
-                AMREX_D_PICK(, 0.0, prob_lo[2] + (iv[2] + 0.5 * 0.0) * dx[2]);
+            // const amrex::Real z =
+            //     AMREX_D_PICK(, 0.0, prob_lo[2] + (iv[2] + 0.5 * 0.0) *
+            //     dx[2]);
 
             rho = density;
 
@@ -244,10 +245,11 @@ struct viscosityTest
             const amrex::Real* prob_lo = geom.ProbLo();
             const amrex::Real* dx = geom.CellSize();
 
-            const amrex::Real x = prob_lo[0] + (iv[0] + 0.5 * 0.0) * dx[0];
+            // const amrex::Real x = prob_lo[0] + (iv[0] + 0.5 * 0.0) * dx[0];
             const amrex::Real y = prob_lo[1] + (iv[1] + 0.5 * 0.0) * dx[1];
-            const amrex::Real z =
-                AMREX_D_PICK(, 0.0, prob_lo[2] + (iv[2] + 0.5 * 0.0) * dx[2]);
+            // const amrex::Real z =
+            //     AMREX_D_PICK(, 0.0, prob_lo[2] + (iv[2] + 0.5 * 0.0) *
+            //     dx[2]);
 
             rho = density;
 
@@ -311,10 +313,11 @@ struct thermalDiffusivityTest
             const amrex::Real* prob_lo = geom.ProbLo();
             const amrex::Real* dx = geom.CellSize();
 
-            const amrex::Real x = prob_lo[0] + (iv[0] + 0.5 * 0.0) * dx[0];
+            // const amrex::Real x = prob_lo[0] + (iv[0] + 0.5 * 0.0) * dx[0];
             const amrex::Real y = prob_lo[1] + (iv[1] + 0.5 * 0.0) * dx[1];
-            const amrex::Real z =
-                AMREX_D_PICK(, 0.0, prob_lo[2] + (iv[2] + 0.5 * 0.0) * dx[2]);
+            // const amrex::Real z =
+            //     AMREX_D_PICK(, 0.0, prob_lo[2] + (iv[2] + 0.5 * 0.0) *
+            //     dx[2]);
 
             const amrex::Real a0 =
                 0.0010 * initialTemperature; // ns:the perturbation amplitude
@@ -340,10 +343,11 @@ struct thermalDiffusivityTest
             const amrex::Real* prob_lo = geom.ProbLo();
             const amrex::Real* dx = geom.CellSize();
 
-            const amrex::Real x = prob_lo[0] + (iv[0] + 0.5 * 0.0) * dx[0];
+            // const amrex::Real x = prob_lo[0] + (iv[0] + 0.5 * 0.0) * dx[0];
             const amrex::Real y = prob_lo[1] + (iv[1] + 0.5 * 0.0) * dx[1];
-            const amrex::Real z =
-                AMREX_D_PICK(, 0.0, prob_lo[2] + (iv[2] + 0.5 * 0.0) * dx[2]);
+            // const amrex::Real z =
+            //     AMREX_D_PICK(, 0.0, prob_lo[2] + (iv[2] + 0.5 * 0.0) *
+            //     dx[2]);
 
             const amrex::Real a0 =
                 0.0010 * initialTemperature; // ns:the perturbation amplitude
@@ -413,9 +417,10 @@ struct sodTest
             const amrex::Real* dx = geom.CellSize();
 
             const amrex::Real x = prob_lo[0] + (iv[0] + 0.5 * 0.0) * dx[0];
-            const amrex::Real y = prob_lo[1] + (iv[1] + 0.5 * 0.0) * dx[1];
-            const amrex::Real z =
-                AMREX_D_PICK(, 0.0, prob_lo[2] + (iv[2] + 0.5 * 0.0) * dx[2]);
+            // const amrex::Real y = prob_lo[1] + (iv[1] + 0.5 * 0.0) * dx[1];
+            // const amrex::Real z =
+            //     AMREX_D_PICK(, 0.0, prob_lo[2] + (iv[2] + 0.5 * 0.0) *
+            //     dx[2]);
 
             vel[0] = velocity[0];
             vel[1] = velocity[1];
@@ -441,9 +446,10 @@ struct sodTest
             const amrex::Real* dx = geom.CellSize();
 
             const amrex::Real x = prob_lo[0] + (iv[0] + 0.5 * 0.0) * dx[0];
-            const amrex::Real y = prob_lo[1] + (iv[1] + 0.5 * 0.0) * dx[1];
-            const amrex::Real z =
-                AMREX_D_PICK(, 0.0, prob_lo[2] + (iv[2] + 0.5 * 0.0) * dx[2]);
+            // const amrex::Real y = prob_lo[1] + (iv[1] + 0.5 * 0.0) * dx[1];
+            // const amrex::Real z =
+            //     AMREX_D_PICK(, 0.0, prob_lo[2] + (iv[2] + 0.5 * 0.0) *
+            //     dx[2]);
 
             R = R_u / m_bar; // ns: Specific gas constant. Implemented.
 

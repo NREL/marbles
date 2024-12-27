@@ -44,8 +44,8 @@ AMREX_GPU_DEVICE AMREX_INLINE void set_equilibrium_value_D3Q27(
     const amrex::Real& rho,
     const amrex::RealVect& vel,
     const amrex::Real& Rtemperature,
-    const amrex::Real& mesh_speed,
-    const amrex::Real& wt,
+    const amrex::Real& /*mesh_speed*/,
+    const amrex::Real& /*wt*/,
     const amrex::IntVect& ev,
     amrex::Real& eq)
 {
@@ -76,8 +76,8 @@ AMREX_GPU_DEVICE AMREX_INLINE void set_extended_equilibrium_value_D3Q27(
     const amrex::Real& Pxx,
     const amrex::Real& Pyy,
     const amrex::Real& Pzz,
-    const amrex::Real& mesh_speed,
-    const amrex::Real& wt,
+    const amrex::Real& /*mesh_speed*/,
+    const amrex::Real& /*wt*/,
     const amrex::IntVect& ev,
     amrex::Real& eq)
 {
@@ -101,7 +101,7 @@ AMREX_GPU_DEVICE AMREX_INLINE void set_extended_gradExpansion_generic(
     const amrex::Real& Pxy,
     const amrex::Real& Pxz,
     const amrex::Real& Pyz,
-    const amrex::Real& mesh_speed,
+    const amrex::Real& /*mesh_speed*/,
     const amrex::Real& wt,
     const amrex::IntVect& ev,
     const amrex::Real& theta0,
