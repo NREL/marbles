@@ -40,7 +40,7 @@ struct BCFill
         stencil::Stencil().weights;
 
     const amrex::Real theta0 = stencil::Stencil().theta0;
-    const amrex::RealVect zeroVec = {0.0, 0.0, 0.0};
+    amrex::RealVect zeroVec = {AMREX_D_DECL(0.0, 0.0, 0.0)};
 
     const amrex::Real m_mesh_speed;
     const amrex::GpuArray<int, AMREX_SPACEDIM * 2> m_bc_type = {0};
@@ -232,7 +232,7 @@ struct BCFill
             rho_bc, vel_bc[0], vel_bc[1], vel_bc[2], twoRhoE, Cv, R, qxEq, qyEq,
             qzEq, RxxEq, RyyEq, RzzEq, RxyEq, RxzEq, RyzEq);
 
-        const amrex::RealVect heatFluxes(qxEq, qyEq, qzEq);
+        amrex::RealVect heatFluxes = {AMREX_D_DECL(qxEq, qyEq, qzEq)};
 
         set_extended_gradExpansion_generic(
             twoRhoE, heatFluxes, RxxEq, RyyEq, RzzEq, RxyEq, RxzEq, RyzEq,

@@ -517,7 +517,7 @@ public:
         const amrex::Real l_mesh_speed = m_mesh_speed;
         ICDeviceOp ic(m_op.device_instance());
 
-        const amrex::RealVect zeroVec(0.0, 0.0, 0.0);
+        amrex::RealVect zeroVec = {AMREX_D_DECL(0.0, 0.0, 0.0)};
 
         amrex::ParallelFor(
             m_f[lev], m_f[lev].nGrowVect(), constants::N_MICRO_STATES,
@@ -555,7 +555,8 @@ public:
                         rho, vel[0], vel[1], vel[2], twoRhoE, Cv, R, qxEq, qyEq,
                         qzEq, RxxEq, RyyEq, RzzEq, RxyEq, RxzEq, RyzEq);
 
-                    const amrex::RealVect heatFluxes(qxEq, qyEq, qzEq);
+                    amrex::RealVect heatFluxes = {
+                        AMREX_D_DECL(qxEq, qyEq, qzEq)};
                     set_extended_gradExpansion_generic(
                         twoRhoE, heatFluxes, RxxEq, RyyEq, RzzEq, RxyEq, RxzEq,
                         RyzEq, l_mesh_speed, wt, ev, stencil.theta0, zeroVec,

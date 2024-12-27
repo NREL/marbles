@@ -766,7 +766,7 @@ void LBM::macrodata_to_equilibrium_D3Q27(const int lev)
     const auto& evs = stencil.evs;
     const auto& weight = stencil.weights;
 
-    const amrex::RealVect zeroVec = {0.0, 0.0, 0.0};
+    amrex::RealVect zeroVec = {AMREX_D_DECL(0.0, 0.0, 0.0)};
 
     amrex::ParallelFor(
         m_eq[lev], m_eq[lev].nGrowVect(), constants::N_MICRO_STATES,
@@ -862,7 +862,7 @@ void LBM::macrodata_to_equilibrium_D3Q27(const int lev)
                      2.0 * vel[2] * Pzz -
                      vel[2] * m_dts[lev] * d_arr(iv, constants::dQCorrZ_IDX));
 
-                const amrex::RealVect heatFluxes(qxEq, qyEq, qzEq);
+                amrex::RealVect heatFluxes = {AMREX_D_DECL(qxEq, qyEq, qzEq)};
                 set_extended_gradExpansion_generic(
                     twoRhoE, heatFluxes, RxxEq, RyyEq, RzzEq, RxyEq, RxzEq,
                     RyzEq, l_mesh_speed, wt, ev, stencil.theta0, zeroVec, 1.0,
@@ -1008,7 +1008,8 @@ void LBM::f_to_macrodata_D3Q27(const int lev)
                 const auto g_arr = g_arrs[nbx];
                 const auto md_arr = md_arrs[nbx];
 
-                amrex::Real rho = 0.0, AMREX_D_DECL(u = 0.0, v = 0.0, w = 0.0);
+                amrex::Real rho = 0.0, u = 0.0, v = 0.0, w = 0.0;
+                // AMREX_D_DECL(u = 0.0, v = 0.0, w = 0.0);
                 amrex::Real Pxx(0.0), Pyy(0.0), Pzz(0.0), Pxy(0.0), Pxz(0.0),
                     Pyz(0.0);
                 amrex::Real twoRhoE = 0.0,
@@ -1490,7 +1491,7 @@ void LBM::fill_f_inside_eb(const int lev)
     const auto& evs = stencil.evs;
     const auto& weight = stencil.weights;
 
-    const amrex::RealVect zeroVec = {0.0, 0.0, 0.0};
+    amrex::RealVect zeroVec = {AMREX_D_DECL(0.0, 0.0, 0.0)};
 
     amrex::ParallelFor(
         m_f[lev], m_f[lev].nGrowVect(), constants::N_MICRO_STATES,
