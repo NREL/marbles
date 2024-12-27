@@ -63,7 +63,7 @@ struct Constant
         amrex::Real adiabaticExponent =
             5.0 / 3.0; // ns: Safe default, always true for monoatomic gas, i.e.
                        // single lattice. Non-dimensional. Safety constant
-                       // decalaration.
+                       // declaration.
         const amrex::Real R_u =
             28.96; // ns: Universal Gas constant, LB unit. Never change.
         amrex::Real m_bar =
@@ -191,7 +191,7 @@ struct Parabolic
         amrex::Real adiabaticExponent =
             5.0 / 3.0; // ns: Safe default, always true for monoatomic gas, i.e.
                        // single lattice. Non-dimensional. Safety constant
-                       // decalaration.
+                       // declaration.
         const amrex::Real R_u =
             28.96; // ns: Universal Gas constant, LB unit. Never change.
         amrex::Real m_bar =

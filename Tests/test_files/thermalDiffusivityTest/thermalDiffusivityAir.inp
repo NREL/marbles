@@ -4,7 +4,7 @@
 # Further instructions in thermalDiffusivityTester.ipynb
 # Note. Always: geometry.prob_hi[1]=amr.n_cell[1]=amr.max_grid_size=ic_thermalDiffusivityTest.waveLength
 # Note: Effect of changing other inputs not tested as of 22 Nov 2024.
-# Ref (4.45) of http://dx.doi.org/10.3929/ethz-b-000607045 . Isothermal with chosen temeprature.
+# Ref (4.45) of http://dx.doi.org/10.3929/ethz-b-000607045 . Isothermal with chosen temperature.
 # Emergency feedback: nsawant@nrel.gov
 
 

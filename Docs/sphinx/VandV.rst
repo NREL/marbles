@@ -29,10 +29,10 @@ This demonstrates MARBLES ability to simulate flow through complex, porous media
 Viscosity verification
 ----------------------
 
-This test case demonstrates MARBLES ability to maintain the correct viscosity over a wide range of temepratures. 
+This test case demonstrates MARBLES ability to maintain the correct viscosity over a wide range of temperatures. 
 Viscosity is computed from the simulation by tracking the maximum of velocity over time arising from an initial 
 condition consisting of a sinusoidal velocity perturbation.
-The temeprature is not restricted to 1/3, but it can be set to any value less than or equal to 1/3. 
+The temperature is not restricted to 1/3, but it can be set to any value less than or equal to 1/3. 
 This feature has been enabled by incorporating product-form of the equilibrium distribition which 
 improves stability due to maximisation of the entropy and the incorporation of an extended lattice 
 Boltzmann approach which adds a non-local correction term to the pressure tensor to correct the insufficient 
@@ -47,7 +47,7 @@ Input and post processing files: `Tests/test_files/viscosityTest/`
 Thermal diffusivity verification
 ---------------------------------
 
-This test case demonstrates MARBLES ability to maintain the correct thermal diffusivity over a wide range of temepratures, 
+This test case demonstrates MARBLES ability to maintain the correct thermal diffusivity over a wide range of temperatures, 
 as well as at different Prandtl numbers, adiabatic exponents and mean molecular masses.
 Themal diffusivity is computed from the simulation by tracking the maximum of temperature over time arising from an initial 
 condition consisting of a sinusoidal temperature perturbation.
@@ -67,7 +67,7 @@ Sod test tube
 ----------------------
 
 This test case demonstrates MARBLES ability to solve compressible flows with realistic parameters of practical interest. 
-The correct position of the wave strutures confirm that the speed of sound is correct in the thermal version of the solver. The model 
+The correct position of the wave structures confirm that the speed of sound is correct in the thermal version of the solver. The model 
 is the same as that built for the thermal diffusivity test. The sod shock test marks the completion of the MARBLES solver to the 
 extent of a contunuum limit, single-component, single-phase, transient computational fluid dynamics solver with mass, momentum and energy equations.    
 

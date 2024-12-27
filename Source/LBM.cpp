@@ -862,13 +862,11 @@ void LBM::macrodata_to_equilibrium_D3Q27(const int lev)
                      2.0 * vel[2] * Pzz -
                      vel[2] * m_dts[lev] * d_arr(iv, constants::dQCorrZ_IDX));
 
-                const amrex::RealVect heatFluxes = {qxEq, qyEq, qzEq};
+                const amrex::RealVect heatFluxes(qxEq, qyEq, qzEq);
                 set_extended_gradExpansion_generic(
                     twoRhoE, heatFluxes, RxxEq, RyyEq, RzzEq, RxyEq, RxzEq,
                     RyzEq, l_mesh_speed, wt, ev, stencil.theta0, zeroVec, 1.0,
                     eq_arr_g(iv, q));
-
-                // flaghere
             }
         });
     amrex::Gpu::synchronize();
@@ -927,7 +925,7 @@ void LBM::relax_f_to_equilibrium_D3Q27(const int lev)
 
                 amrex::Real R = (m_R_u / m_m_bar); // ns: Specific gas constant
                 amrex::Real temperature = md_arr(
-                    iv, constants::temperature_IDX); // ns: Temeprature is live!
+                    iv, constants::temperature_IDX); // ns: Temperature is live!
                 amrex::Real Omega =
                     1.0 / (m_nu / (R * temperature * m_dts[lev]) + 0.5);
 
@@ -1153,8 +1151,8 @@ void LBM::compute_QCorrections(const int lev)
             const amrex::IntVect iv(AMREX_D_DECL(i, j, k));
 
             if (if_arr(iv, 0) == 1) {
-                // ns : Calculating derivatives, ∂α ρuα(1−3RT)−ρu3 . Ref (4.45)
-                // of http://dx.doi.org/10.3929/ethz-b-000607045
+                // ns : Calculating derivatives, ∂α ρuα(1−3 R T)−ρu3 . Ref
+                // (4.45) of http://dx.doi.org/10.3929/ethz-b-000607045
                 const amrex::Real dQxxx = gradient(
                     0, constants::QCorrX_IDX, iv, idx, dbox, if_arr, md_arr);
                 const amrex::Real dQyyy = gradient(

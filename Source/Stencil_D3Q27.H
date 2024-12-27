@@ -15,9 +15,13 @@ struct Stencil
     // Warning! Achtung! New features are currently being written for the D3Q27
     // lattice only. This 2D stencil can be used only for isotermal simulations
     // and with temperature 1/3 only For a strictly 2D lattice, please use the
-    // Stencil.H header instead For 2D simualtions with new model, please make Z
+    // Stencil.H header instead For 2D simulations with new model, please make Z
     // direction periodic and keep the number of points 3 in Z direction Thank
     // you for your understanding. LB Emergency? nsawant@nrel.gov
+
+    const amrex::Real theta0 = 1.0 / 3.0;
+    const amrex::Real theta0_sqrt = sqrt(theta0);
+    const amrex::Real oneByTheta0 = (1.0 / theta0);
 
     const amrex::GpuArray<amrex::IntVect, constants::N_MICRO_STATES> evs = {
         amrex::IntVect(0, 0),   amrex::IntVect(1, 0),  amrex::IntVect(-1, 0),
@@ -30,6 +34,15 @@ struct Stencil
     const amrex::GpuArray<amrex::Real, constants::N_MICRO_STATES> weights = {
         4.0 / 9.0,  1.0 / 9.0,  1.0 / 9.0,  1.0 / 9.0, 1.0 / 9.0,
         1.0 / 36.0, 1.0 / 36.0, 1.0 / 36.0, 1.0 / 36.0};
+
+    const amrex::GpuArray<int, constants::N_MICRO_STATES> bounce_Xdir = {
+        0, 2, 1, 3, 4, 8, 7, 6, 5};
+
+    const amrex::GpuArray<int, constants::N_MICRO_STATES> bounce_Ydir = {
+        0, 1, 2, 4, 3, 7, 8, 5, 6};
+
+    const amrex::GpuArray<int, constants::N_MICRO_STATES> bounce_Zdir = {
+        0, 1, 2, 3, 4, 5, 6, 7, 8};
 
 #else
 

@@ -110,7 +110,7 @@ AMREX_GPU_DEVICE AMREX_INLINE void set_extended_gradExpansion_generic(
     amrex::Real& f)
 {
     // Note: This is lattice independent, as long as the correct lattice
-    // temeprature theta0 is passed. theta0 = \sum_i w_i cx_i * cx_i
+    // temperature theta0 is passed. theta0 = \sum_i w_i cx_i * cx_i
 
     const amrex::Real jx = momentum[0];
     const amrex::Real jy = momentum[1];
@@ -120,7 +120,7 @@ AMREX_GPU_DEVICE AMREX_INLINE void set_extended_gradExpansion_generic(
     // s is a special scaling factor not related to flow temperature
     // Unless absolutely confident about what they do, please use
     // ux=uy=uz=0 and s=1, always. Thank you for your understanding.
-    // This is a special grad exapnsion with some future proofing.
+    // This is a special grad expansion with some future proofing.
     // Reference (A.93) of https://doi.org/10.3929/ethz-b-000607045
     const amrex::Real ux = frameVelocity[0];
     const amrex::Real uy = frameVelocity[1];

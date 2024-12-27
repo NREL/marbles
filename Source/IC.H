@@ -89,7 +89,7 @@ struct TaylorGreen
             1.0 / 3.0; // ns: Safe default, lattice temperature, LB unit
         const amrex::Real adiabaticExponent =
             5.0 / 3.0; // ns: Safe default, monoatomic gas. 1.4 for air,
-                       // non-dimensional. Safety constant decalaration.
+                       // non-dimensional. Safety constant declaration.
         const amrex::Real R_u =
             28.96; // ns: Universal Gas constant, LB unit. Never change.
         amrex::Real m_bar =
@@ -192,7 +192,7 @@ struct viscosityTest
             1.0 / 3.0; // ns: Safe default, lattice temperature, LB unit
         amrex::Real adiabaticExponent =
             5.0 / 3.0; // ns: Safe default, monoatomic gas. 1.4 for air,
-                       // non-dimensional. Safety constant decalaration.
+                       // non-dimensional. Safety constant declaration.
         const amrex::Real R_u =
             28.96; // ns: Universal Gas constant, LB unit. Never change.
         amrex::Real m_bar =
@@ -288,7 +288,7 @@ struct thermalDiffusivityTest
             1.0 / 3.0; // ns: Safe default, lattice temperature, LB unit
         amrex::Real adiabaticExponent =
             5.0 / 3.0; // ns: Safe default, monoatomic gas. 1.4 for air,
-                       // non-dimensional. Safety constant decalaration.
+                       // non-dimensional. Safety constant declaration.
         const amrex::Real R_u =
             28.96; // ns: Universal Gas constant, LB unit. Never change.
         amrex::Real m_bar =
@@ -389,7 +389,7 @@ struct sodTest
 
         amrex::Real adiabaticExponent =
             5.0 / 3.0; // ns: Safe default, monoatomic gas. 1.4 for air,
-                       // non-dimensional. Safety constant decalaration.
+                       // non-dimensional. Safety constant declaration.
         const amrex::Real R_u =
             28.96; // ns: Universal Gas constant, LB unit. Never change.
         amrex::Real m_bar =
@@ -517,7 +517,7 @@ public:
         const amrex::Real l_mesh_speed = m_mesh_speed;
         ICDeviceOp ic(m_op.device_instance());
 
-        const amrex::RealVect zeroVec = {0.0, 0.0, 0.0};
+        const amrex::RealVect zeroVec(0.0, 0.0, 0.0);
 
         amrex::ParallelFor(
             m_f[lev], m_f[lev].nGrowVect(), constants::N_MICRO_STATES,
@@ -555,7 +555,7 @@ public:
                         rho, vel[0], vel[1], vel[2], twoRhoE, Cv, R, qxEq, qyEq,
                         qzEq, RxxEq, RyyEq, RzzEq, RxyEq, RxzEq, RyzEq);
 
-                    const amrex::RealVect heatFluxes = {qxEq, qyEq, qzEq};
+                    const amrex::RealVect heatFluxes(qxEq, qyEq, qzEq);
                     set_extended_gradExpansion_generic(
                         twoRhoE, heatFluxes, RxxEq, RyyEq, RzzEq, RxyEq, RxzEq,
                         RyzEq, l_mesh_speed, wt, ev, stencil.theta0, zeroVec,

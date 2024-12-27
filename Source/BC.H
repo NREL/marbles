@@ -232,7 +232,7 @@ struct BCFill
             rho_bc, vel_bc[0], vel_bc[1], vel_bc[2], twoRhoE, Cv, R, qxEq, qyEq,
             qzEq, RxxEq, RyyEq, RzzEq, RxyEq, RxzEq, RyzEq);
 
-        const amrex::RealVect heatFluxes = {qxEq, qyEq, qzEq};
+        const amrex::RealVect heatFluxes(qxEq, qyEq, qzEq);
 
         set_extended_gradExpansion_generic(
             twoRhoE, heatFluxes, RxxEq, RyyEq, RzzEq, RxyEq, RxzEq, RyzEq,
@@ -480,8 +480,7 @@ struct BCFill
                                 // ns: The product form is always called. This
                                 // is safe since RT remains 1/3
                                 //  in velocityBC
-                                //  ns: Actual call for geenrating populations
-                                //  for velocity bc hard to find :(
+                                //  ns: Actual call for generating populations
 
                                 m_vel_bc_op(
                                     iv, idir, normal_dir, time, geom, vel_bc, R,
