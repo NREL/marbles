@@ -45,8 +45,8 @@ struct BCFill
     const amrex::Real m_mesh_speed;
     const amrex::GpuArray<int, AMREX_SPACEDIM * 2> m_bc_type = {0};
     const amrex::IntVect m_ng = {AMREX_D_DECL(0, 0, 0)};
-    bool isAnEnergyLattice;
     const VelBCOpType m_vel_bc_op;
+    bool isAnEnergyLattice;
 
     AMREX_GPU_HOST
     constexpr explicit BCFill(
@@ -55,7 +55,7 @@ struct BCFill
         const amrex::GpuArray<int, AMREX_SPACEDIM * 2>& bc_type,
         const amrex::IntVect& ng,
         const VelBCOpType& vel_bc_op,
-        const bool& isAnEnergyLattice_)
+        const bool& isAnEnergyLattice_ = false)
         : m_mesh_speed(mesh_speed)
         , m_bc_type(bc_type)
         , m_ng(ng)
@@ -551,8 +551,8 @@ struct BCOpCreator
     const amrex::Real m_mesh_speed;
     const amrex::GpuArray<int, AMREX_SPACEDIM * 2> m_bc_type = {0};
     const amrex::IntVect m_ng = {AMREX_D_DECL(0, 0, 0)};
-    bool isAnEnergyLattice;
     VelBCOp m_vel_bc_op;
+    bool isAnEnergyLattice;
 };
 
 } // namespace lbm::bc
