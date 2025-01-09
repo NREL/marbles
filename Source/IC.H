@@ -228,7 +228,7 @@ struct viscosityTest
 
             vel[0] = velocity[0] + a0 * std::sin(2.0 * M_PI * y / waveLength);
             vel[1] = velocity[1];
-            vel[2] = velocity[2];
+            if (AMREX_SPACEDIM == 3) vel[2] = velocity[2];
         }
 
         AMREX_GPU_DEVICE
@@ -258,7 +258,7 @@ struct viscosityTest
 
             vel[0] = velocity[0] + a0 * std::sin(2.0 * M_PI * y / waveLength);
             vel[1] = velocity[1];
-            vel[2] = velocity[2];
+            if (AMREX_SPACEDIM == 3) vel[2] = velocity[2];
 
             temperature = initialTemperature;
             R = R_u / m_bar; // ns: Specific gas constant. Implemented.
@@ -326,7 +326,7 @@ struct thermalDiffusivityTest
 
             vel[0] = velocity[0]; //+a0*std::sin(2.0*M_PI*y/waveLength);
             vel[1] = velocity[1];
-            vel[2] = velocity[2];
+            if (AMREX_SPACEDIM == 3) vel[2] = velocity[2];
         }
 
         AMREX_GPU_DEVICE
@@ -358,7 +358,7 @@ struct thermalDiffusivityTest
 
             vel[0] = velocity[0];
             vel[1] = velocity[1];
-            vel[2] = velocity[2];
+            if (AMREX_SPACEDIM == 3) vel[2] = velocity[2];
 
             gamma = adiabaticExponent; // ns: not implemented yet
 
@@ -424,7 +424,7 @@ struct sodTest
 
             vel[0] = velocity[0];
             vel[1] = velocity[1];
-            vel[2] = velocity[2];
+            if (AMREX_SPACEDIM == 3) vel[2] = velocity[2];
 
             rho = density + 0.5 *
                                 (1.0 + std::tanh((x - xDiscontinuity) * 3.0)) *
@@ -455,7 +455,7 @@ struct sodTest
 
             vel[0] = velocity[0];
             vel[1] = velocity[1];
-            vel[2] = velocity[2];
+            if (AMREX_SPACEDIM == 3) vel[2] = velocity[2];
 
             gamma = adiabaticExponent; // ns: not implemented yet
 

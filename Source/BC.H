@@ -223,16 +223,23 @@ struct BCFill
 
         amrex::Real Cv = R / (adiabaticExponent - 1.0);
 
-        amrex::Real twoRhoE =
-            getEnergy(temperature, rho_bc, vel_bc[0], vel_bc[1], vel_bc[2], Cv);
+        // amrex::Real twoRhoE =
+        //     getEnergy(temperature, rho_bc, vel_bc[0], vel_bc[1], vel_bc[2],
+        //     Cv);
+
+        amrex::Real twoRhoE = getEnergy(temperature, rho_bc, vel_bc, Cv);
 
         amrex::Real qxEq, qyEq, qzEq, RxxEq, RyyEq, RzzEq, RxyEq, RxzEq, RyzEq;
 
-        getEquilibriumMoments(
-            rho_bc, vel_bc[0], vel_bc[1], vel_bc[2], twoRhoE, Cv, R, qxEq, qyEq,
-            qzEq, RxxEq, RyyEq, RzzEq, RxyEq, RxzEq, RyzEq);
+        // getEquilibriumMoments(
+        //     rho_bc, vel_bc[0], vel_bc[1], vel_bc[2], twoRhoE, Cv, R, qxEq,
+        //     qyEq, qzEq, RxxEq, RyyEq, RzzEq, RxyEq, RxzEq, RyzEq);
 
         amrex::RealVect heatFluxes = {AMREX_D_DECL(qxEq, qyEq, qzEq)};
+
+        getEquilibriumMoments(
+            rho_bc, vel_bc, twoRhoE, Cv, R, heatFluxes, RxxEq, RyyEq, RzzEq,
+            RxyEq, RxzEq, RyzEq);
 
         set_extended_gradExpansion_generic(
             twoRhoE, heatFluxes, RxxEq, RyyEq, RzzEq, RxyEq, RxzEq, RyzEq,

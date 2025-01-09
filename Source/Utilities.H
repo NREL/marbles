@@ -58,14 +58,17 @@ AMREX_GPU_DEVICE AMREX_INLINE void set_equilibrium_value_D3Q27(
 
     const amrex::Real Pxx = vel[0] * vel[0] + Rtemperature;
     const amrex::Real Pyy = vel[1] * vel[1] + Rtemperature;
-    const amrex::Real Pzz = vel[2] * vel[2] + Rtemperature;
+    amrex::Real Pzz = 0.0;
+    if (AMREX_SPACEDIM == 3) Pzz = vel[2] * vel[2] + Rtemperature;
 
     const amrex::Real Phix =
         ev[0] * 0.5 * vel[0] + std::abs(ev[0]) * (1.50 * Pxx - 1.0) - Pxx + 1.0;
     const amrex::Real Phiy =
         ev[1] * 0.5 * vel[1] + std::abs(ev[1]) * (1.50 * Pyy - 1.0) - Pyy + 1.0;
-    const amrex::Real Phiz =
-        ev[2] * 0.5 * vel[2] + std::abs(ev[2]) * (1.50 * Pzz - 1.0) - Pzz + 1.0;
+    amrex::Real Phiz = 1.0;
+    if (AMREX_SPACEDIM == 3)
+        Phiz = ev[2] * 0.5 * vel[2] + std::abs(ev[2]) * (1.50 * Pzz - 1.0) -
+               Pzz + 1.0;
 
     eq = rho * Phix * Phiy * Phiz;
 }
@@ -86,8 +89,10 @@ AMREX_GPU_DEVICE AMREX_INLINE void set_extended_equilibrium_value_D3Q27(
         ev[0] * 0.5 * vel[0] + std::abs(ev[0]) * (1.50 * Pxx - 1.0) - Pxx + 1.0;
     const amrex::Real Phiy =
         ev[1] * 0.5 * vel[1] + std::abs(ev[1]) * (1.50 * Pyy - 1.0) - Pyy + 1.0;
-    const amrex::Real Phiz =
-        ev[2] * 0.5 * vel[2] + std::abs(ev[2]) * (1.50 * Pzz - 1.0) - Pzz + 1.0;
+    amrex::Real Phiz = 1.0;
+    if (AMREX_SPACEDIM == 3)
+        Phiz = ev[2] * 0.5 * vel[2] + std::abs(ev[2]) * (1.50 * Pzz - 1.0) -
+               Pzz + 1.0;
 
     eq = rho * Phix * Phiy * Phiz;
 }
@@ -114,7 +119,8 @@ AMREX_GPU_DEVICE AMREX_INLINE void set_extended_gradExpansion_generic(
 
     const amrex::Real jx = momentum[0];
     const amrex::Real jy = momentum[1];
-    const amrex::Real jz = momentum[2];
+    amrex::Real jz = 0.0;
+    if (AMREX_SPACEDIM == 3) jz = momentum[2];
 
     // Note: ux, uy, uz are not flow velocities.
     // s is a special scaling factor not related to flow temperature
@@ -124,7 +130,8 @@ AMREX_GPU_DEVICE AMREX_INLINE void set_extended_gradExpansion_generic(
     // Reference (A.93) of https://doi.org/10.3929/ethz-b-000607045
     const amrex::Real ux = frameVelocity[0];
     const amrex::Real uy = frameVelocity[1];
-    const amrex::Real uz = frameVelocity[2];
+    amrex::Real uz = 0.0;
+    if (AMREX_SPACEDIM == 3) uz = frameVelocity[2];
 
     const amrex::Real stheta0 = s * theta0;
     const amrex::Real oneBystheta0 = 1.0 / stheta0;
@@ -151,11 +158,19 @@ AMREX_GPU_DEVICE AMREX_INLINE void set_extended_gradExpansion_generic(
                               uz * ((jy)-rho * uy)) *
                              oneBystheta0 * oneBystheta0;
 
-    f = rho + (a1x * ev[0] + a1y * ev[1] + a1z * ev[2]);
-    f += 0.5 *
-         ((ev[0] * ev[0] - theta0) * a2xx + (ev[1] * ev[1] - theta0) * a2yy +
-          (ev[2] * ev[2] - theta0) * a2zz + 2.0 * (ev[0] * ev[1] - 0) * a2xy +
-          2.0 * (ev[0] * ev[2] - 0) * a2xz + 2.0 * (ev[1] * ev[2] - 0) * a2yz);
+    f = rho + AMREX_D_TERM(a1x * ev[0], +a1y * ev[1], +a1z * ev[2]);
+
+    f +=
+        0.5 *
+        (AMREX_D_TERM(
+            (ev[0] * ev[0] - theta0) * a2xx,
+
+            +(ev[1] * ev[1] - theta0) * a2yy + 2.0 * (ev[0] * ev[1] - 0) * a2xy,
+
+            +(ev[2] * ev[2] - theta0) * a2zz +
+                2.0 * (ev[0] * ev[2] - 0) * a2xz +
+                2.0 * (ev[1] * ev[2] - 0) * a2yz));
+
     f *= wt;
 }
 
@@ -177,6 +192,18 @@ dType getEnergy(
 }
 
 template <class dType>
+dType getEnergy(
+    const dType T_,
+    const dType rho_,
+    const amrex::RealVect& vel_,
+    const dType Cv_)
+{
+    return rho_ * (2.0 * Cv_ * T_ + AMREX_D_TERM(
+                                        vel_[0] * vel_[0], +vel_[1] * vel_[1],
+                                        +vel_[2] * vel_[2]));
+}
+
+template <class dType>
 dType getTemperature(
     const dType twoRhoE_,
     const dType rho_,
@@ -187,6 +214,19 @@ dType getTemperature(
 {
     return (0.50 / Cv_) *
            ((twoRhoE_ / rho_) - (ux_ * ux_ + uy_ * uy_ + uz_ * uz_));
+}
+
+template <class dType>
+dType getTemperature(
+    const dType twoRhoE_,
+    const dType rho_,
+    const amrex::RealVect& vel_,
+    const dType Cv_)
+{
+    return (0.50 / Cv_) *
+           ((twoRhoE_ / rho_) -
+            AMREX_D_TERM(
+                vel_[0] * vel_[0], +vel_[1] * vel_[1], +vel_[2] * vel_[2]));
 }
 
 template <class dType>
@@ -223,6 +263,42 @@ void getEquilibriumMoments(
     RxyEq = 2.0 * rho * ux * uy * (H + (P / rho)) + 0;
     RxzEq = 2.0 * rho * ux * uz * (H + (P / rho)) + 0;
     RyzEq = 2.0 * rho * uy * uz * (H + (P / rho)) + 0;
+}
+
+template <class dType>
+void getEquilibriumMoments(
+    const dType rho,
+    const amrex::RealVect& vel_,
+    const dType totalEnergy,
+    const dType Cv,
+    const dType R,
+    amrex::RealVect& qEq_,
+    dType& RxxEq,
+    dType& RyyEq,
+    dType& RzzEq,
+    dType& RxyEq,
+    dType& RxzEq,
+    dType& RyzEq)
+{
+
+    dType energy = totalEnergy / (2.0 * rho);
+    dType temperature = getTemperature(totalEnergy, rho, vel_, Cv);
+    dType P = rho * R * temperature;
+    dType H = energy + (P / rho);
+
+    qEq_[0] = 2.0 * rho * vel_[0] * H;
+    qEq_[1] = 2.0 * rho * vel_[1] * H;
+    if (AMREX_SPACEDIM == 3) qEq_[2] = 2.0 * rho * vel_[2] * H;
+
+    RxxEq = 2.0 * rho * vel_[0] * vel_[0] * (H + (P / rho)) + 2.0 * P * H;
+    RyyEq = 2.0 * rho * vel_[1] * vel_[1] * (H + (P / rho)) + 2.0 * P * H;
+    if (AMREX_SPACEDIM == 3)
+        RzzEq = 2.0 * rho * vel_[2] * vel_[2] * (H + (P / rho)) + 2.0 * P * H;
+    RxyEq = 2.0 * rho * vel_[0] * vel_[1] * (H + (P / rho)) + 0;
+    if (AMREX_SPACEDIM == 3)
+        RxzEq = 2.0 * rho * vel_[0] * vel_[2] * (H + (P / rho)) + 0;
+    if (AMREX_SPACEDIM == 3)
+        RyzEq = 2.0 * rho * vel_[1] * vel_[2] * (H + (P / rho)) + 0;
 }
 
 AMREX_GPU_DEVICE AMREX_INLINE amrex::Real gradient(

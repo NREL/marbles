@@ -818,9 +818,11 @@ void LBM::macrodata_to_equilibrium_D3Q27(const int lev)
                 amrex::Real PyyExt =
                     vel[1] * vel[1] + R * temperature +
                     m_dts[lev] * (omegaCorr)*d_arr(iv, constants::dQCorrY_IDX);
-                amrex::Real PzzExt =
-                    vel[2] * vel[2] + R * temperature +
-                    m_dts[lev] * (omegaCorr)*d_arr(iv, constants::dQCorrZ_IDX);
+                amrex::Real PzzExt;
+                if (AMREX_SPACEDIM == 3)
+                    PzzExt = vel[2] * vel[2] + R * temperature +
+                             m_dts[lev] *
+                                 (omegaCorr)*d_arr(iv, constants::dQCorrZ_IDX);
 
                 set_extended_equilibrium_value_D3Q27(
                     rho, vel, PxxExt, PyyExt, PzzExt, l_mesh_speed, wt, ev,
@@ -1491,7 +1493,7 @@ void LBM::fill_f_inside_eb(const int lev)
     const auto& evs = stencil.evs;
     const auto& weight = stencil.weights;
 
-    amrex::RealVect zeroVec = {AMREX_D_DECL(0.0, 0.0, 0.0)};
+    // amrex::RealVect zeroVec = {AMREX_D_DECL(0.0, 0.0, 0.0)};
 
     amrex::ParallelFor(
         m_f[lev], m_f[lev].nGrowVect(), constants::N_MICRO_STATES,
