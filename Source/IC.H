@@ -553,14 +553,14 @@ public:
 
                     amrex::Real twoRhoE = getEnergy(temperature, rho, vel, Cv);
 
-                    amrex::Real qxEq, qyEq, qzEq, RxxEq, RyyEq, RzzEq, RxyEq,
-                        RxzEq, RyzEq;
+                    amrex::Real /*qxEq, qyEq, qzEq,*/ RxxEq(0.0), RyyEq(0.0),
+                        RzzEq(0.0), RxyEq(0.0), RxzEq(0.0), RyzEq(0.0);
+
+                    amrex::RealVect heatFlux = {AMREX_D_DECL(0.0, 0.0, 0.0)};
 
                     getEquilibriumMoments(
-                        rho, vel[0], vel[1], vel[2], twoRhoE, Cv, R, qxEq, qyEq,
-                        qzEq, RxxEq, RyyEq, RzzEq, RxyEq, RxzEq, RyzEq);
-
-                    amrex::RealVect heatFlux = {AMREX_D_DECL(qxEq, qyEq, qzEq)};
+                        rho, vel, twoRhoE, Cv, R, heatFlux, RxxEq, RyyEq, RzzEq,
+                        RxyEq, RxzEq, RyzEq);
 
                     amrex::Vector<amrex::Real> fluxOfHeatFlux = {
                         RxxEq, RyyEq, RzzEq, RxyEq, RxzEq, RyzEq};
