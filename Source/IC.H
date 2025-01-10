@@ -551,8 +551,7 @@ public:
 
                     amrex::Real Cv = R / (gamma - 1.0);
 
-                    amrex::Real twoRhoE =
-                        getEnergy(temperature, rho, vel[0], vel[1], vel[2], Cv);
+                    amrex::Real twoRhoE = getEnergy(temperature, rho, vel, Cv);
 
                     amrex::Real qxEq, qyEq, qzEq, RxxEq, RyyEq, RzzEq, RxyEq,
                         RxzEq, RyzEq;

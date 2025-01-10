@@ -229,8 +229,8 @@ struct BCFill
 
         amrex::Real twoRhoE = getEnergy(temperature, rho_bc, vel_bc, Cv);
 
-        amrex::Real /*qxEq, qyEq, qzEq,*/ RxxEq, RyyEq, RzzEq, RxyEq, RxzEq,
-            RyzEq;
+        amrex::Real /*qxEq, qyEq, qzEq,*/ RxxEq(0.0), RyyEq(0.0), RzzEq(0.0),
+            RxyEq(0.0), RxzEq(0.0), RyzEq(0.0);
 
         // getEquilibriumMoments(
         //     rho_bc, vel_bc[0], vel_bc[1], vel_bc[2], twoRhoE, Cv, R, qxEq,

@@ -120,8 +120,8 @@ AMREX_GPU_DEVICE AMREX_INLINE void set_extended_gradExpansion_generic(
 
     const amrex::Real jx = momentum[0];
     const amrex::Real jy = momentum[1];
-    amrex::Real jz = 0.0;
-    if (AMREX_SPACEDIM == 3) jz = momentum[2];
+    // amrex::Real jz = 0.0;
+    AMREX_3D_ONLY(const amrex::Real jz = momentum[2]);
 
     // Note: ux, uy, uz are not flow velocities.
     // s is a special scaling factor not related to flow temperature
@@ -131,8 +131,7 @@ AMREX_GPU_DEVICE AMREX_INLINE void set_extended_gradExpansion_generic(
     // Reference (A.93) of https://doi.org/10.3929/ethz-b-000607045
     const amrex::Real ux = frameVelocity[0];
     const amrex::Real uy = frameVelocity[1];
-    amrex::Real uz = 0.0;
-    if (AMREX_SPACEDIM == 3) uz = frameVelocity[2];
+    AMREX_3D_ONLY(const amrex::Real uz = frameVelocity[2]);
 
     const amrex::Real AMREX_D_DECL(
         Pxx = fluxOfMomentum[0], Pyy = fluxOfMomentum[1],

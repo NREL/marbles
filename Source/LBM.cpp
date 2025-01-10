@@ -830,9 +830,14 @@ void LBM::macrodata_to_equilibrium_D3Q27(const int lev)
 
                 amrex::Real qxEq, qyEq, qzEq, RxxEq, RyyEq, RzzEq, RxyEq, RxzEq,
                     RyzEq;
+                amrex::RealVect heatFlux = {AMREX_D_DECL(0.0, 0.0, 0.0)};
                 getEquilibriumMoments(
-                    rho, vel[0], vel[1], vel[2], twoRhoE, Cv, R, qxEq, qyEq,
-                    qzEq, RxxEq, RyyEq, RzzEq, RxyEq, RxzEq, RyzEq);
+                    rho, vel, twoRhoE, Cv, R, heatFlux, RxxEq, RyyEq, RzzEq,
+                    RxyEq, RxzEq, RyzEq);
+
+                qxEq = heatFlux[0];
+                qyEq = heatFlux[1];
+                if (AMREX_SPACEDIM == 3) qzEq = heatFlux[2];
 
                 const amrex::Real Pxx = md_arr(iv, constants::Pxx_IDX);
                 const amrex::Real Pyy = md_arr(iv, constants::Pyy_IDX);
@@ -864,13 +869,13 @@ void LBM::macrodata_to_equilibrium_D3Q27(const int lev)
                      2.0 * vel[2] * Pzz -
                      vel[2] * m_dts[lev] * d_arr(iv, constants::dQCorrZ_IDX));
 
-                amrex::RealVect heatFlux = {AMREX_D_DECL(qxEq, qyEq, qzEq)};
+                amrex::RealVect heatFluxMRT = {AMREX_D_DECL(qxEq, qyEq, qzEq)};
 
                 amrex::Vector<amrex::Real> fluxOfHeatFlux = {
                     RxxEq, RyyEq, RzzEq, RxyEq, RxzEq, RyzEq};
 
                 set_extended_gradExpansion_generic(
-                    twoRhoE, heatFlux, fluxOfHeatFlux, l_mesh_speed, wt, ev,
+                    twoRhoE, heatFluxMRT, fluxOfHeatFlux, l_mesh_speed, wt, ev,
                     stencil.theta0, zeroVec, 1.0, eq_arr_g(iv, q));
             }
         });
