@@ -843,14 +843,18 @@ void LBM::macrodata_to_equilibrium_D3Q27(const int lev)
 
                 const amrex::Real Pxx = md_arr(iv, constants::Pxx_IDX);
                 const amrex::Real Pyy = md_arr(iv, constants::Pyy_IDX);
-                const amrex::Real Pzz = md_arr(iv, constants::Pzz_IDX);
+                AMREX_3D_ONLY(
+                    const amrex::Real Pzz = md_arr(iv, constants::Pzz_IDX));
                 const amrex::Real Pxy = md_arr(iv, constants::Pxy_IDX);
-                const amrex::Real Pxz = md_arr(iv, constants::Pxz_IDX);
-                const amrex::Real Pyz = md_arr(iv, constants::Pyz_IDX);
+                AMREX_3D_ONLY(
+                    const amrex::Real Pxz = md_arr(iv, constants::Pxz_IDX));
+                AMREX_3D_ONLY(
+                    const amrex::Real Pyz = md_arr(iv, constants::Pyz_IDX));
 
                 const amrex::Real qx = md_arr(iv, constants::qx_IDX);
                 const amrex::Real qy = md_arr(iv, constants::qy_IDX);
-                const amrex::Real qz = md_arr(iv, constants::qz_IDX);
+                AMREX_3D_ONLY(
+                    const amrex::Real qz = md_arr(iv, constants::qz_IDX));
 
                 qxEq *= omegaOneByOmega;
                 qyEq *= omegaOneByOmega;
