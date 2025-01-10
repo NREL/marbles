@@ -561,12 +561,14 @@ public:
                         rho, vel[0], vel[1], vel[2], twoRhoE, Cv, R, qxEq, qyEq,
                         qzEq, RxxEq, RyyEq, RzzEq, RxyEq, RxzEq, RyzEq);
 
-                    amrex::RealVect heatFluxes = {
-                        AMREX_D_DECL(qxEq, qyEq, qzEq)};
+                    amrex::RealVect heatFlux = {AMREX_D_DECL(qxEq, qyEq, qzEq)};
+
+                    amrex::Vector<amrex::Real> fluxOfHeatFlux = {
+                        RxxEq, RyyEq, RzzEq, RxyEq, RxzEq, RyzEq};
+
                     set_extended_gradExpansion_generic(
-                        twoRhoE, heatFluxes, RxxEq, RyyEq, RzzEq, RxyEq, RxzEq,
-                        RyzEq, l_mesh_speed, wt, ev, stencil.theta0, zeroVec,
-                        1.0, g_arrs[nbx](i, j, k, q));
+                        twoRhoE, heatFlux, fluxOfHeatFlux, l_mesh_speed, wt, ev,
+                        stencil.theta0, zeroVec, 1.0, g_arrs[nbx](i, j, k, q));
 
                 } else
                     set_equilibrium_value(

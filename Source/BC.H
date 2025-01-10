@@ -237,15 +237,18 @@ struct BCFill
         //     qyEq, qzEq, RxxEq, RyyEq, RzzEq, RxyEq, RxzEq, RyzEq);
 
         // amrex::RealVect heatFluxes = {AMREX_D_DECL(qxEq, qyEq, qzEq)};
-        amrex::RealVect heatFluxes = {AMREX_D_DECL(0.0, 0.0, 0.0)};
+        amrex::RealVect heatFlux = {AMREX_D_DECL(0.0, 0.0, 0.0)};
 
         getEquilibriumMoments(
-            rho_bc, vel_bc, twoRhoE, Cv, R, heatFluxes, RxxEq, RyyEq, RzzEq,
+            rho_bc, vel_bc, twoRhoE, Cv, R, heatFlux, RxxEq, RyyEq, RzzEq,
             RxyEq, RxzEq, RyzEq);
 
+        amrex::Vector<amrex::Real> fluxOfHeatFlux = {RxxEq, RyyEq, RzzEq,
+                                                     RxyEq, RxzEq, RyzEq};
+
         set_extended_gradExpansion_generic(
-            twoRhoE, heatFluxes, RxxEq, RyyEq, RzzEq, RxyEq, RxzEq, RyzEq,
-            m_mesh_speed, m_weights[q], ev, theta0, zeroVec, 1.0, data(iv, q));
+            twoRhoE, heatFlux, fluxOfHeatFlux, m_mesh_speed, m_weights[q], ev,
+            theta0, zeroVec, 1.0, data(iv, q));
     }
 
     AMREX_GPU_DEVICE

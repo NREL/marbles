@@ -864,11 +864,14 @@ void LBM::macrodata_to_equilibrium_D3Q27(const int lev)
                      2.0 * vel[2] * Pzz -
                      vel[2] * m_dts[lev] * d_arr(iv, constants::dQCorrZ_IDX));
 
-                amrex::RealVect heatFluxes = {AMREX_D_DECL(qxEq, qyEq, qzEq)};
+                amrex::RealVect heatFlux = {AMREX_D_DECL(qxEq, qyEq, qzEq)};
+
+                amrex::Vector<amrex::Real> fluxOfHeatFlux = {
+                    RxxEq, RyyEq, RzzEq, RxyEq, RxzEq, RyzEq};
+
                 set_extended_gradExpansion_generic(
-                    twoRhoE, heatFluxes, RxxEq, RyyEq, RzzEq, RxyEq, RxzEq,
-                    RyzEq, l_mesh_speed, wt, ev, stencil.theta0, zeroVec, 1.0,
-                    eq_arr_g(iv, q));
+                    twoRhoE, heatFlux, fluxOfHeatFlux, l_mesh_speed, wt, ev,
+                    stencil.theta0, zeroVec, 1.0, eq_arr_g(iv, q));
             }
         });
     amrex::Gpu::synchronize();

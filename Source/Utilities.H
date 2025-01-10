@@ -100,12 +100,13 @@ AMREX_GPU_DEVICE AMREX_INLINE void set_extended_equilibrium_value_D3Q27(
 AMREX_GPU_DEVICE AMREX_INLINE void set_extended_gradExpansion_generic(
     const amrex::Real& rho,
     const amrex::RealVect& momentum,
-    const amrex::Real& Pxx,
+    const amrex::Vector<amrex::Real>& fluxOfMomentum,
+    /*const amrex::Real& Pxx,
     const amrex::Real& Pyy,
     const amrex::Real& Pzz,
     const amrex::Real& Pxy,
     const amrex::Real& Pxz,
-    const amrex::Real& Pyz,
+    const amrex::Real& Pyz,*/
     const amrex::Real& /*mesh_speed*/,
     const amrex::Real& wt,
     const amrex::IntVect& ev,
@@ -132,6 +133,16 @@ AMREX_GPU_DEVICE AMREX_INLINE void set_extended_gradExpansion_generic(
     const amrex::Real uy = frameVelocity[1];
     amrex::Real uz = 0.0;
     if (AMREX_SPACEDIM == 3) uz = frameVelocity[2];
+
+    const amrex::Real AMREX_D_DECL(
+        Pxx = fluxOfMomentum[0], Pyy = fluxOfMomentum[1],
+        Pzz = fluxOfMomentum[2]);
+
+    AMREX_2D_ONLY(const amrex::Real Pxy = fluxOfMomentum[3]);
+
+    AMREX_3D_ONLY(const amrex::Real Pxy = fluxOfMomentum[3]);
+    AMREX_3D_ONLY(const amrex::Real Pxz = fluxOfMomentum[4]);
+    AMREX_3D_ONLY(const amrex::Real Pyz = fluxOfMomentum[5]);
 
     const amrex::Real stheta0 = s * theta0;
     const amrex::Real oneBystheta0 = 1.0 / stheta0;
