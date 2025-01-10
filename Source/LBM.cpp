@@ -853,21 +853,27 @@ void LBM::macrodata_to_equilibrium_D3Q27(const int lev)
                 qxEq *= omegaOneByOmega;
                 qyEq *= omegaOneByOmega;
                 qzEq *= omegaOneByOmega;
+
                 qxEq +=
                     (1.0 - omegaOneByOmega) *
-                    (qx - 2.0 * vel[0] * Pxx - 2.0 * vel[1] * Pxy -
-                     2.0 * vel[2] * Pxz -
+                    (qx AMREX_D_TERM(
+                         -2.0 * vel[0] * Pxx, -2.0 * vel[1] * Pxy,
+                         -2.0 * vel[2] * Pxz) -
                      vel[0] * m_dts[lev] * d_arr(iv, constants::dQCorrX_IDX));
+
                 qyEq +=
                     (1.0 - omegaOneByOmega) *
-                    (qy - 2.0 * vel[0] * Pxy - 2.0 * vel[1] * Pyy -
-                     2.0 * vel[2] * Pyz -
+                    (qy AMREX_D_TERM(
+                         -2.0 * vel[0] * Pxy, -2.0 * vel[1] * Pyy,
+                         -2.0 * vel[2] * Pyz) -
                      vel[1] * m_dts[lev] * d_arr(iv, constants::dQCorrY_IDX));
-                qzEq +=
-                    (1.0 - omegaOneByOmega) *
-                    (qz - 2.0 * vel[0] * Pxz - 2.0 * vel[1] * Pyz -
-                     2.0 * vel[2] * Pzz -
-                     vel[2] * m_dts[lev] * d_arr(iv, constants::dQCorrZ_IDX));
+
+                if (AMREX_SPACEDIM == 3)
+                    qzEq += (1.0 - omegaOneByOmega) *
+                            (qz - 2.0 * vel[0] * Pxz - 2.0 * vel[1] * Pyz -
+                             2.0 * vel[2] * Pzz -
+                             vel[2] * m_dts[lev] *
+                                 d_arr(iv, constants::dQCorrZ_IDX));
 
                 amrex::RealVect heatFluxMRT = {AMREX_D_DECL(qxEq, qyEq, qzEq)};
 
