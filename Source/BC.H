@@ -219,7 +219,7 @@ struct BCFill
         // amrex::Real rho_out = 0.0;
         // amrex::Real rho_tan = 0.0;
 
-        const amrex::IntVect ivn(iv + ev);
+        // const amrex::IntVect ivn(iv + ev);
 
         amrex::Real Cv = R / (adiabaticExponent - 1.0);
 

@@ -818,7 +818,7 @@ void LBM::macrodata_to_equilibrium_D3Q27(const int lev)
                 amrex::Real PyyExt =
                     vel[1] * vel[1] + R * temperature +
                     m_dts[lev] * (omegaCorr)*d_arr(iv, constants::dQCorrY_IDX);
-                amrex::Real PzzExt;
+                amrex::Real PzzExt(0.0);
                 if (AMREX_SPACEDIM == 3)
                     PzzExt = vel[2] * vel[2] + R * temperature +
                              m_dts[lev] *
@@ -828,8 +828,10 @@ void LBM::macrodata_to_equilibrium_D3Q27(const int lev)
                     rho, vel, PxxExt, PyyExt, PzzExt, l_mesh_speed, wt, ev,
                     eq_arr(iv, q));
 
-                amrex::Real qxEq(0.0), qyEq(0.0), qzEq(0.0), RxxEq(0.0),
-                    RyyEq(0.0), RzzEq(0.0), RxyEq(0.0), RxzEq(0.0), RyzEq(0.0);
+                amrex::Real AMREX_D_DECL(qxEq = 0.0, qyEq = 0.0, qzEq = 0.0);
+                amrex::Real RxxEq(0.0), RyyEq(0.0), RzzEq(0.0), RxyEq(0.0),
+                    RxzEq(0.0), RyzEq(0.0);
+
                 amrex::RealVect heatFlux = {AMREX_D_DECL(0.0, 0.0, 0.0)};
                 getEquilibriumMoments(
                     rho, vel, twoRhoE, Cv, R, heatFlux, RxxEq, RyyEq, RzzEq,
@@ -837,7 +839,7 @@ void LBM::macrodata_to_equilibrium_D3Q27(const int lev)
 
                 qxEq = heatFlux[0];
                 qyEq = heatFlux[1];
-                if (AMREX_SPACEDIM == 3) qzEq = heatFlux[2];
+                AMREX_3D_ONLY(qzEq = heatFlux[2]);
 
                 const amrex::Real Pxx = md_arr(iv, constants::Pxx_IDX);
                 const amrex::Real Pyy = md_arr(iv, constants::Pyy_IDX);
@@ -852,7 +854,7 @@ void LBM::macrodata_to_equilibrium_D3Q27(const int lev)
 
                 qxEq *= omegaOneByOmega;
                 qyEq *= omegaOneByOmega;
-                qzEq *= omegaOneByOmega;
+                AMREX_3D_ONLY(qzEq *= omegaOneByOmega);
 
                 qxEq +=
                     (1.0 - omegaOneByOmega) *
@@ -868,12 +870,12 @@ void LBM::macrodata_to_equilibrium_D3Q27(const int lev)
                          -2.0 * vel[2] * Pyz) -
                      vel[1] * m_dts[lev] * d_arr(iv, constants::dQCorrY_IDX));
 
-                if (AMREX_SPACEDIM == 3)
-                    qzEq += (1.0 - omegaOneByOmega) *
-                            (qz - 2.0 * vel[0] * Pxz - 2.0 * vel[1] * Pyz -
-                             2.0 * vel[2] * Pzz -
-                             vel[2] * m_dts[lev] *
-                                 d_arr(iv, constants::dQCorrZ_IDX));
+                AMREX_3D_ONLY(
+                    qzEq +=
+                    (1.0 - omegaOneByOmega) *
+                    (qz - 2.0 * vel[0] * Pxz - 2.0 * vel[1] * Pyz -
+                     2.0 * vel[2] * Pzz -
+                     vel[2] * m_dts[lev] * d_arr(iv, constants::dQCorrZ_IDX)));
 
                 amrex::RealVect heatFluxMRT = {AMREX_D_DECL(qxEq, qyEq, qzEq)};
 
