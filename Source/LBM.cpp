@@ -828,8 +828,8 @@ void LBM::macrodata_to_equilibrium_D3Q27(const int lev)
                     rho, vel, PxxExt, PyyExt, PzzExt, l_mesh_speed, wt, ev,
                     eq_arr(iv, q));
 
-                amrex::Real qxEq, qyEq, qzEq, RxxEq, RyyEq, RzzEq, RxyEq, RxzEq,
-                    RyzEq;
+                amrex::Real qxEq(0.0), qyEq(0.0), qzEq(0.0), RxxEq(0.0),
+                    RyyEq(0.0), RzzEq(0.0), RxyEq(0.0), RxzEq(0.0), RyzEq(0.0);
                 amrex::RealVect heatFlux = {AMREX_D_DECL(0.0, 0.0, 0.0)};
                 getEquilibriumMoments(
                     rho, vel, twoRhoE, Cv, R, heatFlux, RxxEq, RyyEq, RzzEq,
