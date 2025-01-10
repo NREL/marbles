@@ -135,28 +135,41 @@ AMREX_GPU_DEVICE AMREX_INLINE void set_extended_gradExpansion_generic(
 
     const amrex::Real stheta0 = s * theta0;
     const amrex::Real oneBystheta0 = 1.0 / stheta0;
-    const amrex::Real a1x = ((jx)-rho * ux) * oneBystheta0;
-    const amrex::Real a1y = ((jy)-rho * uy) * oneBystheta0;
-    const amrex::Real a1z = ((jz)-rho * uz) * oneBystheta0;
+    const amrex::Real AMREX_D_DECL(
+        a1x = ((jx)-rho * ux) * oneBystheta0,
+        a1y = ((jy)-rho * uy) * oneBystheta0,
+        a1z = ((jz)-rho * uz) * oneBystheta0);
 
-    const amrex::Real a2xx = ((Pxx)-rho * s * stheta0 - rho * ux * ux -
-                              ux * ((jx)-rho * ux) - ux * ((jx)-rho * ux)) *
-                             oneBystheta0 * oneBystheta0;
-    const amrex::Real a2yy = ((Pyy)-rho * s * stheta0 - rho * uy * uy -
-                              uy * ((jy)-rho * uy) - uy * ((jy)-rho * uy)) *
-                             oneBystheta0 * oneBystheta0;
-    const amrex::Real a2zz = ((Pzz)-rho * s * stheta0 - rho * uz * uz -
-                              uz * ((jz)-rho * uz) - uz * ((jz)-rho * uz)) *
-                             oneBystheta0 * oneBystheta0;
-    const amrex::Real a2xy = ((Pxy)-0 - rho * ux * uy - ux * ((jy)-rho * uy) -
-                              uy * ((jx)-rho * ux)) *
-                             oneBystheta0 * oneBystheta0;
-    const amrex::Real a2xz = ((Pxz)-0 - rho * ux * uz - ux * ((jz)-rho * uz) -
-                              uz * ((jx)-rho * ux)) *
-                             oneBystheta0 * oneBystheta0;
-    const amrex::Real a2yz = ((Pyz)-0 - rho * uy * uz - uy * ((jz)-rho * uz) -
-                              uz * ((jy)-rho * uy)) *
-                             oneBystheta0 * oneBystheta0;
+    const amrex::Real AMREX_D_DECL(
+        a2xx = ((Pxx)-rho * s * stheta0 - rho * ux * ux - ux * ((jx)-rho * ux) -
+                ux * ((jx)-rho * ux)) *
+               oneBystheta0 * oneBystheta0,
+        a2yy = ((Pyy)-rho * s * stheta0 - rho * uy * uy - uy * ((jy)-rho * uy) -
+                uy * ((jy)-rho * uy)) *
+               oneBystheta0 * oneBystheta0,
+        a2zz = ((Pzz)-rho * s * stheta0 - rho * uz * uz - uz * ((jz)-rho * uz) -
+                uz * ((jz)-rho * uz)) *
+               oneBystheta0 * oneBystheta0);
+
+    AMREX_2D_ONLY(
+        const amrex::Real a2xy = ((Pxy)-0 - rho * ux * uy -
+                                  ux * ((jy)-rho * uy) - uy * ((jx)-rho * ux)) *
+                                 oneBystheta0 * oneBystheta0);
+
+    AMREX_3D_ONLY(
+        const amrex::Real a2xy = ((Pxy)-0 - rho * ux * uy -
+                                  ux * ((jy)-rho * uy) - uy * ((jx)-rho * ux)) *
+                                 oneBystheta0 * oneBystheta0);
+
+    AMREX_3D_ONLY(const amrex::Real a2xz =
+                      ((Pxz)-0 - rho * ux * uz - ux * ((jz)-rho * uz) -
+                       uz * ((jx)-rho * ux)) *
+                      oneBystheta0 * oneBystheta0;);
+
+    AMREX_3D_ONLY(const amrex::Real a2yz =
+                      ((Pyz)-0 - rho * uy * uz - uy * ((jz)-rho * uz) -
+                       uz * ((jy)-rho * uy)) *
+                      oneBystheta0 * oneBystheta0;);
 
     f = rho + AMREX_D_TERM(a1x * ev[0], +a1y * ev[1], +a1z * ev[2]);
 
