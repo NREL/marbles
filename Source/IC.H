@@ -228,7 +228,9 @@ struct viscosityTest
 
             vel[0] = velocity[0] + a0 * std::sin(2.0 * M_PI * y / waveLength);
             vel[1] = velocity[1];
-            if (AMREX_SPACEDIM == 3) vel[2] = velocity[2];
+            if (AMREX_SPACEDIM == 3) {
+                vel[2] = velocity[2];
+            }
         }
 
         AMREX_GPU_DEVICE
@@ -258,7 +260,9 @@ struct viscosityTest
 
             vel[0] = velocity[0] + a0 * std::sin(2.0 * M_PI * y / waveLength);
             vel[1] = velocity[1];
-            if (AMREX_SPACEDIM == 3) vel[2] = velocity[2];
+            if (AMREX_SPACEDIM == 3) {
+                vel[2] = velocity[2];
+            }
 
             temperature = initialTemperature;
             R = R_u / m_bar; // ns: Specific gas constant. Implemented.
@@ -326,7 +330,9 @@ struct thermalDiffusivityTest
 
             vel[0] = velocity[0]; //+a0*std::sin(2.0*M_PI*y/waveLength);
             vel[1] = velocity[1];
-            if (AMREX_SPACEDIM == 3) vel[2] = velocity[2];
+            if (AMREX_SPACEDIM == 3) {
+                vel[2] = velocity[2];
+            }
         }
 
         AMREX_GPU_DEVICE
@@ -358,7 +364,9 @@ struct thermalDiffusivityTest
 
             vel[0] = velocity[0];
             vel[1] = velocity[1];
-            if (AMREX_SPACEDIM == 3) vel[2] = velocity[2];
+            if (AMREX_SPACEDIM == 3) {
+                vel[2] = velocity[2];
+            }
 
             gamma = adiabaticExponent; // ns: not implemented yet
 
@@ -424,7 +432,9 @@ struct sodTest
 
             vel[0] = velocity[0];
             vel[1] = velocity[1];
-            if (AMREX_SPACEDIM == 3) vel[2] = velocity[2];
+            if (AMREX_SPACEDIM == 3) {
+                vel[2] = velocity[2];
+            }
 
             rho = density + 0.5 *
                                 (1.0 + std::tanh((x - xDiscontinuity) * 3.0)) *
@@ -455,7 +465,9 @@ struct sodTest
 
             vel[0] = velocity[0];
             vel[1] = velocity[1];
-            if (AMREX_SPACEDIM == 3) vel[2] = velocity[2];
+            if (AMREX_SPACEDIM == 3) {
+                vel[2] = velocity[2];
+            }
 
             gamma = adiabaticExponent; // ns: not implemented yet
 
@@ -538,11 +550,12 @@ public:
                 amrex::Real R = ic.R_u / 28.96;
                 amrex::Real gamma = 1.667;
 
-                if (ic.m_model_type == "energyD3Q27")
+                if (ic.m_model_type == "energyD3Q27") {
                     ic.thermalInitialise(
                         iv, geom, rho, vel, temperature, R, gamma);
-                else
+                } else {
                     ic(iv, geom, rho, vel);
+                }
 
                 if (ic.m_model_type == "energyD3Q27") {
                     set_equilibrium_value_D3Q27(
@@ -569,10 +582,11 @@ public:
                         twoRhoE, heatFlux, fluxOfHeatFlux, l_mesh_speed, wt, ev,
                         stencil.theta0, zeroVec, 1.0, g_arrs[nbx](i, j, k, q));
 
-                } else
+                } else {
                     set_equilibrium_value(
                         rho, vel, l_mesh_speed, wt, ev,
                         f_arrs[nbx](i, j, k, q));
+                }
             });
         amrex::Gpu::synchronize();
     }

@@ -35,8 +35,9 @@ Constant::Constant()
             m_op.adiabaticExponent * (m_op.R_u / m_op.m_bar) *
             m_op.initialTemperature); // set the actual speed of sound
 
-        for (int n = 0; n < MachComponents.size(); n++)
+        for (int n = 0; n < MachComponents.size(); n++) {
             m_op.velocity[n] = m_op.MachComponents[n] * m_op.speedOfSound_Ref;
+        }
     }
 }
 

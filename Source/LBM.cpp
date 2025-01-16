@@ -436,8 +436,9 @@ void LBM::evolve()
 
         m_fillpatch_op->fillpatch(0, cur_time, m_f[0]);
 
-        if (m_model_type == "energyD3Q27")
+        if (m_model_type == "energyD3Q27") {
             m_fillpatch_g_op->fillpatch(0, cur_time, m_g[0]);
+        }
 
         time_step(0, cur_time, 1);
 
@@ -520,9 +521,10 @@ void LBM::time_step(const int lev, const amrex::Real time, const int iteration)
     if (lev < finest_level) {
         m_fillpatch_op->fillpatch(lev + 1, m_ts_new[lev + 1], m_f[lev + 1]);
 
-        if (m_model_type == "energyD3Q27")
+        if (m_model_type == "energyD3Q27") {
             m_fillpatch_g_op->fillpatch(
                 lev + 1, m_ts_new[lev + 1], m_g[lev + 1]);
+        }
 
         for (int i = 1; i <= m_nsubsteps[lev + 1]; ++i) {
             time_step(lev + 1, time + (i - 1) * m_dts[lev + 1], i);
@@ -554,20 +556,24 @@ void LBM::advance(
 
     stream(lev);
 
-    if (m_model_type == "energyD3Q27") stream_g(lev);
+    if (m_model_type == "energyD3Q27") {
+        stream_g(lev);
+    }
 
     if (lev < finest_level) {
         average_down_to(lev, amrex::IntVect(1));
     }
 
-    if (m_model_type == "energyD3Q27")
+    if (m_model_type == "energyD3Q27") {
         collide_D3Q27(lev);
-    else
+    } else {
         collide(lev);
+    }
 
-    if (m_model_type != "energyD3Q27")
-        sanity_check_f(lev); // ns: not
-                             // applicable
+    if (m_model_type != "energyD3Q27") {
+        sanity_check_f(lev);
+    } // ns: not
+      // applicable
 }
 
 void LBM::post_time_step()
@@ -819,10 +825,11 @@ void LBM::macrodata_to_equilibrium_D3Q27(const int lev)
                     vel[1] * vel[1] + R * temperature +
                     m_dts[lev] * (omegaCorr)*d_arr(iv, constants::dQCorrY_IDX);
                 amrex::Real PzzExt(0.0);
-                if (AMREX_SPACEDIM == 3)
+                if (AMREX_SPACEDIM == 3) {
                     PzzExt = vel[2] * vel[2] + R * temperature +
                              m_dts[lev] *
                                  (omegaCorr)*d_arr(iv, constants::dQCorrZ_IDX);
+                }
 
                 set_extended_equilibrium_value_D3Q27(
                     rho, vel, PxxExt, PyyExt, PzzExt, l_mesh_speed, wt, ev,
@@ -1328,29 +1335,33 @@ void LBM::MakeNewLevelFromCoarse(
     initialize_is_fluid(lev);
     initialize_mask(lev);
     m_fillpatch_op->fillpatch_from_coarse(lev, time, m_f[lev]);
-    if (m_model_type == "energyD3Q27")
+    if (m_model_type == "energyD3Q27") {
         m_fillpatch_g_op->fillpatch_from_coarse(lev, time, m_g[lev]);
+    }
     m_macrodata[lev].setVal(0.0);
     m_eq[lev].setVal(0.0);
     m_eq_g[lev].setVal(0.0);
     m_derived[lev].setVal(0.0);
 
-    if (m_model_type == "energyD3Q27")
-        f_to_macrodata_D3Q27(lev); // ns: Caution! For D3Q27 with correction
-                                   // only. Macrodata has 9 variables
-    else
+    if (m_model_type == "energyD3Q27") {
+        f_to_macrodata_D3Q27(lev);
+    } // ns: Caution! For D3Q27 with correction
+      // only. Macrodata has 9 variables
+    else {
         f_to_macrodata(lev);
+    }
 
-    if (m_model_type == "energyD3Q27")
+    if (m_model_type == "energyD3Q27") {
         macrodata_to_equilibrium_D3Q27(lev);
-    else
+    } else {
         macrodata_to_equilibrium(lev);
+    }
 
     compute_derived(lev);
 
-    if (m_model_type == "energyD3Q27")
-        compute_QCorrections(
-            lev); // ns: Caution! For D3Q27 with correction only.
+    if (m_model_type == "energyD3Q27") {
+        compute_QCorrections(lev);
+    } // ns: Caution! For D3Q27 with correction only.
 }
 
 // Make a new level from scratch using provided BoxArray and
@@ -1400,22 +1411,24 @@ void LBM::MakeNewLevelFromScratch(
     m_eq_g[lev].setVal(0.0);
     m_derived[lev].setVal(0.0);
 
-    if (m_model_type == "energyD3Q27")
-        f_to_macrodata_D3Q27(lev); // ns: Caution! For D3Q27 with correction
-                                   // only. Macrodata has 9 variables
+    if (m_model_type == "energyD3Q27") {
+        f_to_macrodata_D3Q27(lev);
+    } // ns: Caution! For D3Q27 with correction
+      // only. Macrodata has 9 variables
     else
         f_to_macrodata(lev);
 
-    if (m_model_type == "energyD3Q27")
+    if (m_model_type == "energyD3Q27") {
         macrodata_to_equilibrium_D3Q27(lev);
-    else
+    } else {
         macrodata_to_equilibrium(lev);
+    }
 
     compute_derived(lev);
 
-    if (m_model_type == "energyD3Q27")
-        compute_QCorrections(
-            lev); // ns: Seems like MakeNewLevelFromScratch is never called
+    if (m_model_type == "energyD3Q27") {
+        compute_QCorrections(lev);
+    } // ns: Seems like MakeNewLevelFromScratch is never called
 }
 
 void LBM::initialize_f(const int lev)
@@ -1429,8 +1442,9 @@ void LBM::initialize_f(const int lev)
     m_f[lev].FillBoundary(Geom(lev).periodicity());
     m_g[lev].FillBoundary(Geom(lev).periodicity());
 
-    if (m_model_type != "energyD3Q27")
-        sanity_check_f(lev); // ns: not applicable for the corrected model
+    if (m_model_type != "energyD3Q27") {
+        sanity_check_f(lev);
+    } // ns: not applicable for the corrected model
 }
 
 void LBM::initialize_is_fluid(const int lev)
@@ -1714,7 +1728,10 @@ bool LBM::check_field_existence(const std::string& name)
         return std::any_of(vnames.begin(), vnames.end(), [=](const auto& vn) {
             return get_field_component(name, vn) != -1;
         });
-    } else {
+    }
+
+    // else
+    {
         const auto vnames = {
             m_macrodata_varnames, m_microdata_varnames, m_deriveddata_varnames,
             m_idata_varnames};
@@ -2136,19 +2153,23 @@ void LBM::read_checkpoint_file()
         m_eq_g[lev].setVal(0.0);
         m_derived[lev].setVal(0.0);
 
-        if (m_model_type == "energyD3Q27")
+        if (m_model_type == "energyD3Q27") {
             f_to_macrodata_D3Q27(lev);
-        else
+        } else {
             f_to_macrodata(lev);
+        }
 
-        if (m_model_type == "energyD3Q27")
+        if (m_model_type == "energyD3Q27") {
             macrodata_to_equilibrium_D3Q27(lev);
-        else
+        } else {
             macrodata_to_equilibrium(lev);
+        }
 
         compute_derived(lev);
 
-        if (m_model_type == "energyD3Q27") compute_QCorrections(lev); // ns
+        if (m_model_type == "energyD3Q27") {
+            compute_QCorrections(lev);
+        } // ns
     }
 }
 

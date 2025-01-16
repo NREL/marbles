@@ -59,16 +59,19 @@ AMREX_GPU_DEVICE AMREX_INLINE void set_equilibrium_value_D3Q27(
     const amrex::Real Pxx = vel[0] * vel[0] + Rtemperature;
     const amrex::Real Pyy = vel[1] * vel[1] + Rtemperature;
     amrex::Real Pzz = 0.0;
-    if (AMREX_SPACEDIM == 3) Pzz = vel[2] * vel[2] + Rtemperature;
+    if (AMREX_SPACEDIM == 3) {
+        Pzz = vel[2] * vel[2] + Rtemperature;
+    }
 
     const amrex::Real Phix =
         ev[0] * 0.5 * vel[0] + std::abs(ev[0]) * (1.50 * Pxx - 1.0) - Pxx + 1.0;
     const amrex::Real Phiy =
         ev[1] * 0.5 * vel[1] + std::abs(ev[1]) * (1.50 * Pyy - 1.0) - Pyy + 1.0;
     amrex::Real Phiz = 1.0;
-    if (AMREX_SPACEDIM == 3)
+    if (AMREX_SPACEDIM == 3) {
         Phiz = ev[2] * 0.5 * vel[2] + std::abs(ev[2]) * (1.50 * Pzz - 1.0) -
                Pzz + 1.0;
+    }
 
     eq = rho * Phix * Phiy * Phiz;
 }
@@ -90,9 +93,10 @@ AMREX_GPU_DEVICE AMREX_INLINE void set_extended_equilibrium_value_D3Q27(
     const amrex::Real Phiy =
         ev[1] * 0.5 * vel[1] + std::abs(ev[1]) * (1.50 * Pyy - 1.0) - Pyy + 1.0;
     amrex::Real Phiz = 1.0;
-    if (AMREX_SPACEDIM == 3)
+    if (AMREX_SPACEDIM == 3) {
         Phiz = ev[2] * 0.5 * vel[2] + std::abs(ev[2]) * (1.50 * Pzz - 1.0) -
                Pzz + 1.0;
+    }
 
     eq = rho * Phix * Phiy * Phiz;
 }
@@ -311,17 +315,22 @@ void getEquilibriumMoments(
 
     qEq_[0] = 2.0 * rho * vel_[0] * H;
     qEq_[1] = 2.0 * rho * vel_[1] * H;
-    if (AMREX_SPACEDIM == 3) qEq_[2] = 2.0 * rho * vel_[2] * H;
+    if (AMREX_SPACEDIM == 3) {
+        qEq_[2] = 2.0 * rho * vel_[2] * H;
+    }
 
     RxxEq = 2.0 * rho * vel_[0] * vel_[0] * (H + (P / rho)) + 2.0 * P * H;
     RyyEq = 2.0 * rho * vel_[1] * vel_[1] * (H + (P / rho)) + 2.0 * P * H;
-    if (AMREX_SPACEDIM == 3)
+    if (AMREX_SPACEDIM == 3) {
         RzzEq = 2.0 * rho * vel_[2] * vel_[2] * (H + (P / rho)) + 2.0 * P * H;
+    }
     RxyEq = 2.0 * rho * vel_[0] * vel_[1] * (H + (P / rho)) + 0;
-    if (AMREX_SPACEDIM == 3)
+    if (AMREX_SPACEDIM == 3) {
         RxzEq = 2.0 * rho * vel_[0] * vel_[2] * (H + (P / rho)) + 0;
-    if (AMREX_SPACEDIM == 3)
+    }
+    if (AMREX_SPACEDIM == 3) {
         RyzEq = 2.0 * rho * vel_[1] * vel_[2] * (H + (P / rho)) + 0;
+    }
 }
 
 AMREX_GPU_DEVICE AMREX_INLINE amrex::Real gradient(
