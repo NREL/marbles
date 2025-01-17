@@ -3,11 +3,11 @@ AMREX_HOME ?= $(MARBLES_HOME)/Submodules/AMReX
 
 EBASE = marbles
 
-DEBUG	= FALSE
+DEBUG	= TRUE
 
 DIM	= 3
 
-COMP    = gnu
+COMP    = llvm
 
 USE_MPI   = TRUE 
 USE_OMP   = FALSE

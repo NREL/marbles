@@ -17,7 +17,8 @@ LBM::LBM()
     m_macrodata_varnames.push_back("vel_z");
     m_macrodata_varnames.push_back("vel_mag");
 
-    if (m_model_type == "energyD3Q27") {
+    // if (m_model_type == "energyD3Q27")
+    {
         m_macrodata_varnames.push_back("twoRhoE");
         m_macrodata_varnames.push_back("QCorrX");
         m_macrodata_varnames.push_back("QCorrY");
@@ -58,7 +59,8 @@ LBM::LBM()
     m_deriveddata_varnames.push_back("vort_z");
     m_deriveddata_varnames.push_back("vort_mag");
 
-    if (m_model_type == "energyD3Q27") {
+    // if (m_model_type == "energyD3Q27")
+    {
         m_deriveddata_varnames.push_back("dQCorrX");
         m_deriveddata_varnames.push_back("dQCorrY");
         m_deriveddata_varnames.push_back("dQCorrZ");
@@ -1879,10 +1881,12 @@ amrex::Vector<const amrex::MultiFab*> LBM::plot_file_mf()
             boxArray(lev), DistributionMap(lev),
             static_cast<int>(plot_file_var_names().size()), 0);
         int cnt = 0;
+
         amrex::MultiFab::Copy(
             m_plt_mf[lev], m_macrodata[lev], 0, cnt, m_macrodata[lev].nComp(),
             0);
         cnt += m_macrodata[lev].nComp();
+
         if (m_save_streaming) {
             amrex::MultiFab::Copy(
                 m_plt_mf[lev], m_f[lev], 0, cnt, m_f[lev].nComp(), 0);
