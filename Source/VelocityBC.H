@@ -109,7 +109,6 @@ struct Constant
             T = initialTemperature;
             gamma = adiabaticExponent;
         };
-        
     };
 
     using DeviceType = DeviceOp;

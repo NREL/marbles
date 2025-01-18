@@ -104,7 +104,7 @@ AMREX_GPU_DEVICE AMREX_INLINE void set_extended_equilibrium_value_D3Q27(
 AMREX_GPU_DEVICE AMREX_INLINE void set_extended_gradExpansion_generic(
     const amrex::Real& rho,
     const amrex::RealVect& momentum,
-    const amrex::GpuArray<amrex::Real,6>& fluxOfMomentum,
+    const amrex::GpuArray<amrex::Real, 6>& fluxOfMomentum,
     /*const amrex::Real& Pxx,
     const amrex::Real& Pyy,
     const amrex::Real& Pzz,

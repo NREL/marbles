@@ -35,7 +35,6 @@ struct Constant
         // energy equation etc.
         std::string m_model_type = "isothermal";
 
-
         AMREX_GPU_DEVICE
         void operator()(
             const amrex::IntVect& /*iv*/,
@@ -537,25 +536,23 @@ public:
 
         amrex::RealVect zeroVec = {AMREX_D_DECL(0.0, 0.0, 0.0)};
 
-        if (ic.m_model_type == "energyD3Q27")
-        {
-        amrex::ParallelFor(
-            m_f[lev], m_f[lev].nGrowVect(), constants::N_MICRO_STATES,
-            [=] AMREX_GPU_DEVICE(int nbx, int i, int j, int k, int q) noexcept {
-                const amrex::Real wt = weight[q];
-                const auto& ev = evs[q];
+        if (ic.m_model_type == "energyD3Q27") {
+            amrex::ParallelFor(
+                m_f[lev], m_f[lev].nGrowVect(), constants::N_MICRO_STATES,
+                [=] AMREX_GPU_DEVICE(
+                    int nbx, int i, int j, int k, int q) noexcept {
+                    const amrex::Real wt = weight[q];
+                    const auto& ev = evs[q];
 
-                const amrex::IntVect iv(AMREX_D_DECL(i, j, k));
-                amrex::Real rho = 1.0;
-                amrex::RealVect vel(AMREX_D_DECL(0.0, 0.0, 0.0));
-                amrex::Real temperature = 1.0 / 3.0;
-                amrex::Real R = ic.R_u / 28.96;
-                amrex::Real gamma = 1.667;
+                    const amrex::IntVect iv(AMREX_D_DECL(i, j, k));
+                    amrex::Real rho = 1.0;
+                    amrex::RealVect vel(AMREX_D_DECL(0.0, 0.0, 0.0));
+                    amrex::Real temperature = 1.0 / 3.0;
+                    amrex::Real R = ic.R_u / 28.96;
+                    amrex::Real gamma = 1.667;
 
-                
                     ic.thermalInitialise(
                         iv, geom, rho, vel, temperature, R, gamma);
-                 
 
                     set_equilibrium_value_D3Q27(
                         rho, vel, R * temperature, l_mesh_speed, wt, ev,
@@ -574,41 +571,35 @@ public:
                         rho, vel, twoRhoE, Cv, R, heatFlux, RxxEq, RyyEq, RzzEq,
                         RxyEq, RxzEq, RyzEq);
 
-                    amrex::GpuArray <amrex::Real,6> fluxOfHeatFlux = {
+                    amrex::GpuArray<amrex::Real, 6> fluxOfHeatFlux = {
                         RxxEq, RyyEq, RzzEq, RxyEq, RxzEq, RyzEq};
 
                     set_extended_gradExpansion_generic(
                         twoRhoE, heatFlux, fluxOfHeatFlux, l_mesh_speed, wt, ev,
                         stencil.theta0, zeroVec, 1.0, g_arrs[nbx](i, j, k, q));
-
-                 
-            });
-        }
-        else
-        {
+                });
+        } else {
             amrex::ParallelFor(
-            m_f[lev], m_f[lev].nGrowVect(), constants::N_MICRO_STATES,
-            [=] AMREX_GPU_DEVICE(int nbx, int i, int j, int k, int q) noexcept {
-                const amrex::Real wt = weight[q];
-                const auto& ev = evs[q];
+                m_f[lev], m_f[lev].nGrowVect(), constants::N_MICRO_STATES,
+                [=] AMREX_GPU_DEVICE(
+                    int nbx, int i, int j, int k, int q) noexcept {
+                    const amrex::Real wt = weight[q];
+                    const auto& ev = evs[q];
 
-                const amrex::IntVect iv(AMREX_D_DECL(i, j, k));
-                amrex::Real rho = 1.0;
-                amrex::RealVect vel(AMREX_D_DECL(0.0, 0.0, 0.0));
-                //amrex::Real temperature = 1.0 / 3.0;
-                amrex::Real R = ic.R_u / 28.96;
-                //amrex::Real gamma = 1.667;
+                    const amrex::IntVect iv(AMREX_D_DECL(i, j, k));
+                    amrex::Real rho = 1.0;
+                    amrex::RealVect vel(AMREX_D_DECL(0.0, 0.0, 0.0));
+                    // amrex::Real temperature = 1.0 / 3.0;
+                    amrex::Real R = ic.R_u / 28.96;
+                    // amrex::Real gamma = 1.667;
 
-           
                     ic(iv, geom, rho, vel);
-                
+
                     set_equilibrium_value(
                         rho, vel, l_mesh_speed, wt, ev,
                         f_arrs[nbx](i, j, k, q));
-                
-            });
+                });
         }
-
 
         amrex::Gpu::synchronize();
     }

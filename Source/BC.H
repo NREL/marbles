@@ -243,8 +243,8 @@ struct BCFill
             rho_bc, vel_bc, twoRhoE, Cv, R, heatFlux, RxxEq, RyyEq, RzzEq,
             RxyEq, RxzEq, RyzEq);
 
-        amrex::GpuArray <amrex::Real,6> fluxOfHeatFlux = {RxxEq, RyyEq, RzzEq,
-                                                     RxyEq, RxzEq, RyzEq};
+        amrex::GpuArray<amrex::Real, 6> fluxOfHeatFlux = {RxxEq, RyyEq, RzzEq,
+                                                          RxyEq, RxzEq, RyzEq};
 
         set_extended_gradExpansion_generic(
             twoRhoE, heatFlux, fluxOfHeatFlux, m_mesh_speed, m_weights[q], ev,
