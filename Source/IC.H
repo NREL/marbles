@@ -35,6 +35,7 @@ struct Constant
         // energy equation etc.
         std::string m_model_type = "isothermal";
 
+
         AMREX_GPU_DEVICE
         void operator()(
             const amrex::IntVect& /*iv*/,
@@ -44,10 +45,9 @@ struct Constant
         {
             rho = density;
             vel = velocity;
-        }
+        };
 
-        AMREX_GPU_DEVICE
-        void thermalInitialise(
+        AMREX_GPU_DEVICE void thermalInitialise(
             const amrex::IntVect& /*iv*/,
             amrex::GeometryData const& /*geom*/,
             amrex::Real& rho,
@@ -62,7 +62,7 @@ struct Constant
             temperature = initialTemperature;
             R = R_u / m_bar; // ns: Specific gas constant. Implemented.
             gamma = adiabaticExponent; // ns: not implemented yet
-        }
+        };
     };
 
     using DeviceType = DeviceOp;
@@ -129,7 +129,7 @@ struct TaylorGreen
                 vel[1] = -v0 * std::cos(omega0 * x / L) *
                          std::sin(omega1 * y / L) * std::cos(omega2 * z / L),
                 vel[2] = 0.0);
-        }
+        };
 
         AMREX_GPU_DEVICE
         void thermalInitialise(
@@ -439,7 +439,7 @@ struct sodTest
             rho = density + 0.5 *
                                 (1.0 + std::tanh((x - xDiscontinuity) * 3.0)) *
                                 (densityRatio * density - density);
-        }
+        };
 
         AMREX_GPU_DEVICE
         void thermalInitialise(
@@ -478,7 +478,7 @@ struct sodTest
                           0.5 * (1.0 + std::tanh((x - xDiscontinuity) * 3.0)) *
                               (temperatureRatio * initialTemperature -
                                initialTemperature);
-        }
+        };
     };
 
     using DeviceType = DeviceOp;
@@ -537,6 +537,8 @@ public:
 
         amrex::RealVect zeroVec = {AMREX_D_DECL(0.0, 0.0, 0.0)};
 
+        if (ic.m_model_type == "energyD3Q27")
+        {
         amrex::ParallelFor(
             m_f[lev], m_f[lev].nGrowVect(), constants::N_MICRO_STATES,
             [=] AMREX_GPU_DEVICE(int nbx, int i, int j, int k, int q) noexcept {
@@ -550,14 +552,11 @@ public:
                 amrex::Real R = ic.R_u / 28.96;
                 amrex::Real gamma = 1.667;
 
-                if (ic.m_model_type == "energyD3Q27") {
+                
                     ic.thermalInitialise(
                         iv, geom, rho, vel, temperature, R, gamma);
-                } else {
-                    ic(iv, geom, rho, vel);
-                }
+                 
 
-                if (ic.m_model_type == "energyD3Q27") {
                     set_equilibrium_value_D3Q27(
                         rho, vel, R * temperature, l_mesh_speed, wt, ev,
                         f_arrs[nbx](i, j, k, q));
@@ -575,19 +574,42 @@ public:
                         rho, vel, twoRhoE, Cv, R, heatFlux, RxxEq, RyyEq, RzzEq,
                         RxyEq, RxzEq, RyzEq);
 
-                    amrex::Vector<amrex::Real> fluxOfHeatFlux = {
+                    amrex::GpuArray <amrex::Real,6> fluxOfHeatFlux = {
                         RxxEq, RyyEq, RzzEq, RxyEq, RxzEq, RyzEq};
 
                     set_extended_gradExpansion_generic(
                         twoRhoE, heatFlux, fluxOfHeatFlux, l_mesh_speed, wt, ev,
                         stencil.theta0, zeroVec, 1.0, g_arrs[nbx](i, j, k, q));
 
-                } else {
+                 
+            });
+        }
+        else
+        {
+            amrex::ParallelFor(
+            m_f[lev], m_f[lev].nGrowVect(), constants::N_MICRO_STATES,
+            [=] AMREX_GPU_DEVICE(int nbx, int i, int j, int k, int q) noexcept {
+                const amrex::Real wt = weight[q];
+                const auto& ev = evs[q];
+
+                const amrex::IntVect iv(AMREX_D_DECL(i, j, k));
+                amrex::Real rho = 1.0;
+                amrex::RealVect vel(AMREX_D_DECL(0.0, 0.0, 0.0));
+                //amrex::Real temperature = 1.0 / 3.0;
+                amrex::Real R = ic.R_u / 28.96;
+                //amrex::Real gamma = 1.667;
+
+           
+                    ic(iv, geom, rho, vel);
+                
                     set_equilibrium_value(
                         rho, vel, l_mesh_speed, wt, ev,
                         f_arrs[nbx](i, j, k, q));
-                }
+                
             });
+        }
+
+
         amrex::Gpu::synchronize();
     }
 

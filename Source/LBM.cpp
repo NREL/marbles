@@ -776,6 +776,18 @@ void LBM::macrodata_to_equilibrium_D3Q27(const int lev)
 
     amrex::RealVect zeroVec = {AMREX_D_DECL(0.0, 0.0, 0.0)};
 
+    amrex::Real R = m_R_u / m_m_bar; // ns: debug. Temporary placeholder constant value
+
+    amrex::Real Cv = R / (m_adiabaticExponent - 1.0);
+
+    amrex::Real nu = m_nu;
+
+    amrex::Real dt=m_dts[lev];
+
+    amrex::Real alpha = m_alpha;
+
+    //amrex::Vector<amrex::Real> fluxOfHeatFlux = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+
     amrex::ParallelFor(
         m_eq[lev], m_eq[lev].nGrowVect(), constants::N_MICRO_STATES,
         [=] AMREX_GPU_DEVICE(
@@ -801,11 +813,12 @@ void LBM::macrodata_to_equilibrium_D3Q27(const int lev)
 
                 const auto& ev = evs[q];
 
-                amrex::Real R =
-                    m_R_u /
-                    m_m_bar; // ns: debug. Temporary placeholder constant value
+                // amrex::Real R =
+                //     m_R_u /
+                //     m_m_bar; // ns: debug. Temporary placeholder constant value
 
-                amrex::Real Cv = R / (m_adiabaticExponent - 1.0);
+                // amrex::Real Cv = R / (m_adiabaticExponent - 1.0);
+                
                 amrex::Real temperature = md_arr(
                     iv,
                     constants::
@@ -814,22 +827,22 @@ void LBM::macrodata_to_equilibrium_D3Q27(const int lev)
                 // Temporary placeholder constant value
 
                 amrex::Real omega =
-                    1.0 / (m_nu / (R * temperature * m_dts[lev]) + 0.5);
+                    1.0 / (nu / (R * temperature * dt) + 0.5);
                 amrex::Real omegaOne =
-                    1.0 / (m_alpha / (R * temperature * m_dts[lev]) + 0.5);
+                    1.0 / (alpha / (R * temperature * dt) + 0.5);
                 amrex::Real omegaOneByOmega = omegaOne / omega;
                 amrex::Real omegaCorr = (2.0 - omega) / (2.0 * omega * rho);
 
                 amrex::Real PxxExt =
                     vel[0] * vel[0] + R * temperature +
-                    m_dts[lev] * (omegaCorr)*d_arr(iv, constants::dQCorrX_IDX);
+                    dt * (omegaCorr)*d_arr(iv, constants::dQCorrX_IDX);
                 amrex::Real PyyExt =
                     vel[1] * vel[1] + R * temperature +
-                    m_dts[lev] * (omegaCorr)*d_arr(iv, constants::dQCorrY_IDX);
+                    dt * (omegaCorr)*d_arr(iv, constants::dQCorrY_IDX);
                 amrex::Real PzzExt(0.0);
                 if (AMREX_SPACEDIM == 3) {
                     PzzExt = vel[2] * vel[2] + R * temperature +
-                             m_dts[lev] *
+                             dt *
                                  (omegaCorr)*d_arr(iv, constants::dQCorrZ_IDX);
                 }
 
@@ -874,26 +887,28 @@ void LBM::macrodata_to_equilibrium_D3Q27(const int lev)
                     (qx AMREX_D_TERM(
                          -2.0 * vel[0] * Pxx, -2.0 * vel[1] * Pxy,
                          -2.0 * vel[2] * Pxz) -
-                     vel[0] * m_dts[lev] * d_arr(iv, constants::dQCorrX_IDX));
+                     vel[0] * dt * d_arr(iv, constants::dQCorrX_IDX));
 
                 qyEq +=
                     (1.0 - omegaOneByOmega) *
                     (qy AMREX_D_TERM(
                          -2.0 * vel[0] * Pxy, -2.0 * vel[1] * Pyy,
                          -2.0 * vel[2] * Pyz) -
-                     vel[1] * m_dts[lev] * d_arr(iv, constants::dQCorrY_IDX));
+                     vel[1] * dt * d_arr(iv, constants::dQCorrY_IDX));
 
                 AMREX_3D_ONLY(
                     qzEq +=
                     (1.0 - omegaOneByOmega) *
                     (qz - 2.0 * vel[0] * Pxz - 2.0 * vel[1] * Pyz -
                      2.0 * vel[2] * Pzz -
-                     vel[2] * m_dts[lev] * d_arr(iv, constants::dQCorrZ_IDX)));
+                     vel[2] * dt * d_arr(iv, constants::dQCorrZ_IDX)));
 
                 amrex::RealVect heatFluxMRT = {AMREX_D_DECL(qxEq, qyEq, qzEq)};
 
-                amrex::Vector<amrex::Real> fluxOfHeatFlux = {
-                    RxxEq, RyyEq, RzzEq, RxyEq, RxzEq, RyzEq};
+                //amrex::Vector<amrex::Real> 
+                //fluxOfHeatFlux[0] = RxxEq; fluxOfHeatFlux[1] = RyyEq; fluxOfHeatFlux[2] = RzzEq;
+                //fluxOfHeatFlux[3] = RxyEq; fluxOfHeatFlux[4] = RxzEq; fluxOfHeatFlux[5] = RyzEq;
+                amrex::GpuArray <amrex::Real,6> fluxOfHeatFlux = {RxxEq, RyyEq, RzzEq, RxyEq, RxzEq, RyzEq};
 
                 set_extended_gradExpansion_generic(
                     twoRhoE, heatFluxMRT, fluxOfHeatFlux, l_mesh_speed, wt, ev,
@@ -939,6 +954,9 @@ void LBM::relax_f_to_equilibrium_D3Q27(const int lev)
     auto const& md_arrs = m_macrodata[lev].arrays();
 
     // const amrex::Real tau = m_nu / (m_dts[lev] * m_cs_2) + 0.5;
+    amrex::Real R = (m_R_u / m_m_bar); // ns: Specific gas constant
+    amrex::Real nu = m_nu;
+    amrex::Real dt = m_dts[lev];
 
     amrex::ParallelFor(
         m_f[lev], m_eq[lev].nGrowVect(), constants::N_MICRO_STATES,
@@ -954,11 +972,11 @@ void LBM::relax_f_to_equilibrium_D3Q27(const int lev)
                 const auto g_arr = g_arrs[nbx];
                 const auto eq_arr_g = eq_arrs_g[nbx];
 
-                amrex::Real R = (m_R_u / m_m_bar); // ns: Specific gas constant
+                //amrex::Real R = (m_R_u / m_m_bar); // ns: Specific gas constant
                 amrex::Real temperature = md_arr(
                     iv, constants::temperature_IDX); // ns: Temperature is live!
                 amrex::Real Omega =
-                    1.0 / (m_nu / (R * temperature * m_dts[lev]) + 0.5);
+                    1.0 / (nu / (R * temperature * dt) + 0.5);
 
                 f_arr(iv, q) += Omega * (eq_arr(iv, q) - f_arr(iv, q));
 
@@ -1025,6 +1043,8 @@ void LBM::f_to_macrodata_D3Q27(const int lev)
     auto const& f_arrs = m_f[lev].const_arrays();
     auto const& g_arrs = m_g[lev].const_arrays();
     const amrex::Real l_mesh_speed = m_mesh_speed;
+    amrex::Real R = m_R_u / m_m_bar; // ns: specific gas constant
+    amrex::Real Cv = R / (m_adiabaticExponent - 1.0);
 
     const stencil::Stencil stencil;
     const auto& evs = stencil.evs;
@@ -1092,9 +1112,9 @@ void LBM::f_to_macrodata_D3Q27(const int lev)
                     md_arr(iv, constants::qy_IDX) = qy,
                     md_arr(iv, constants::qz_IDX) = qz);
 
-                amrex::Real R = m_R_u / m_m_bar; // ns: specific gas constant
+                //amrex::Real R = m_R_u / m_m_bar; // ns: specific gas constant
 
-                amrex::Real Cv = R / (m_adiabaticExponent - 1.0);
+                //amrex::Real Cv = R / (m_adiabaticExponent - 1.0);
                 amrex::Real temperature = getTemperature(
                     twoRhoE, rho, u, v, w, Cv); // ns: temperature is live
 
@@ -1528,9 +1548,12 @@ void LBM::fill_f_inside_eb(const int lev)
     const stencil::Stencil stencil;
     const auto& evs = stencil.evs;
     const auto& weight = stencil.weights;
+    const auto model_type=m_model_type;
 
     // amrex::RealVect zeroVec = {AMREX_D_DECL(0.0, 0.0, 0.0)};
 
+    if (model_type == "energyD3Q27")
+    {
     amrex::ParallelFor(
         m_f[lev], m_f[lev].nGrowVect(), constants::N_MICRO_STATES,
         [=] AMREX_GPU_DEVICE(int nbx, int i, int j, int k, int q) noexcept {
@@ -1538,52 +1561,29 @@ void LBM::fill_f_inside_eb(const int lev)
                 const amrex::Real wt = weight[q];
                 const auto& ev = evs[q];
 
-                if (m_model_type == "energyD3Q27") {
-
-                    // set_equilibrium_value_D3Q27(
-                    //     rho_inside, vel_inside, 1.0 / 3.0, l_mesh_speed, wt,
-                    //     ev, f_arrs[nbx](i, j, k, q));
-
-                    // amrex::Real R = m_R_u / m_m_bar;
-
-                    // amrex::Real Cv = R / (m_adiabaticExponent - 1.0);
-                    // amrex::Real temperature = m_initialTemperature;
-
-                    // amrex::Real twoRhoE = getEnergy(
-                    //     temperature, rho_inside, vel_inside[0],
-                    //     vel_inside[1], vel_inside[2], Cv);
-
-                    // amrex::Real qxEq, qyEq, qzEq, RxxEq, RyyEq, RzzEq, RxyEq,
-                    //     RxzEq, RyzEq;
-                    // getEquilibriumMoments(
-                    //     rho_inside, vel_inside[0], vel_inside[1],
-                    //     vel_inside[2], twoRhoE, Cv, R, qxEq, qyEq, qzEq,
-                    //     RxxEq, RyyEq, RzzEq, RxyEq, RxzEq, RyzEq);
-
-                    // const amrex::RealVect heatFluxes = {qxEq, qyEq, qzEq};
-                    // set_extended_gradExpansion_generic(
-                    //     twoRhoE, heatFluxes, RxxEq, RyyEq, RzzEq, RxyEq,
-                    //     RxzEq, RyzEq, l_mesh_speed, wt, ev, stencil.theta0,
-                    //     zeroVec, 1.0, g_arrs[nbx](i, j, k, q));
-
-                    // ns: Most of the above calculation is redundant. When the
-                    // zeroth moment is
-                    //  0.0, the only non-negative solution is all populations
-                    //  being 0.0. We simply set all populations to 0.0 if
-                    //  density is zero. This is also applicable to isothermal
-                    //  version, leaving that unchanged for now.
-
                     set_population_zero(f_arrs[nbx](i, j, k, q));
                     set_population_zero(g_arrs[nbx](i, j, k, q));
+                                 
+            }
+        });
+    }
+    else
+    {
+        amrex::ParallelFor(
+        m_f[lev], m_f[lev].nGrowVect(), constants::N_MICRO_STATES,
+        [=] AMREX_GPU_DEVICE(int nbx, int i, int j, int k, int q) noexcept {
+            if (is_fluid_arrs[nbx](i, j, k, 0) == 0) {
+                const amrex::Real wt = weight[q];
+                const auto& ev = evs[q];
 
-                    // flaghere
-                } else {
                     set_equilibrium_value(
                         rho_inside, vel_inside, l_mesh_speed, wt, ev,
                         f_arrs[nbx](i, j, k, q));
-                }
+                
             }
         });
+    }
+
     amrex::Gpu::synchronize();
 }
 

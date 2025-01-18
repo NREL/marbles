@@ -104,7 +104,7 @@ AMREX_GPU_DEVICE AMREX_INLINE void set_extended_equilibrium_value_D3Q27(
 AMREX_GPU_DEVICE AMREX_INLINE void set_extended_gradExpansion_generic(
     const amrex::Real& rho,
     const amrex::RealVect& momentum,
-    const amrex::Vector<amrex::Real>& fluxOfMomentum,
+    const amrex::GpuArray<amrex::Real,6>& fluxOfMomentum,
     /*const amrex::Real& Pxx,
     const amrex::Real& Pyy,
     const amrex::Real& Pzz,
@@ -207,7 +207,7 @@ AMREX_GPU_DEVICE AMREX_INLINE void set_population_zero(amrex::Real& eq)
 }
 
 template <class dType>
-dType getEnergy(
+AMREX_GPU_DEVICE AMREX_INLINE dType getEnergy(
     const dType T_,
     const dType rho_,
     const dType ux_,
@@ -219,7 +219,7 @@ dType getEnergy(
 }
 
 template <class dType>
-dType getEnergy(
+AMREX_GPU_DEVICE AMREX_INLINE dType getEnergy(
     const dType T_,
     const dType rho_,
     const amrex::RealVect& vel_,
@@ -231,7 +231,7 @@ dType getEnergy(
 }
 
 template <class dType>
-dType getTemperature(
+AMREX_GPU_DEVICE AMREX_INLINE dType getTemperature(
     const dType twoRhoE_,
     const dType rho_,
     const dType ux_,
@@ -244,7 +244,7 @@ dType getTemperature(
 }
 
 template <class dType>
-dType getTemperature(
+AMREX_GPU_DEVICE AMREX_INLINE dType getTemperature(
     const dType twoRhoE_,
     const dType rho_,
     const amrex::RealVect& vel_,
@@ -257,7 +257,7 @@ dType getTemperature(
 }
 
 template <class dType>
-void getEquilibriumMoments(
+AMREX_GPU_DEVICE AMREX_INLINE void getEquilibriumMoments(
     const dType rho,
     const dType ux,
     const dType uy,
@@ -293,7 +293,7 @@ void getEquilibriumMoments(
 }
 
 template <class dType>
-void getEquilibriumMoments(
+AMREX_GPU_DEVICE AMREX_INLINE void getEquilibriumMoments(
     const dType rho,
     const amrex::RealVect& vel_,
     const dType totalEnergy,
