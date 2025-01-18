@@ -1557,8 +1557,8 @@ void LBM::fill_f_inside_eb(const int lev)
             m_f[lev], m_f[lev].nGrowVect(), constants::N_MICRO_STATES,
             [=] AMREX_GPU_DEVICE(int nbx, int i, int j, int k, int q) noexcept {
                 if (is_fluid_arrs[nbx](i, j, k, 0) == 0) {
-                    const amrex::Real wt = weight[q];
-                    const auto& ev = evs[q];
+                    // const amrex::Real wt = weight[q];
+                    // const auto& ev = evs[q];
 
                     set_population_zero(f_arrs[nbx](i, j, k, q));
                     set_population_zero(g_arrs[nbx](i, j, k, q));

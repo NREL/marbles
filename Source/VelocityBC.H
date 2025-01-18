@@ -108,7 +108,7 @@ struct Constant
             R = (R_u / m_bar);
             T = initialTemperature;
             gamma = adiabaticExponent;
-        };
+        }
     };
 
     using DeviceType = DeviceOp;

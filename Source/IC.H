@@ -44,7 +44,7 @@ struct Constant
         {
             rho = density;
             vel = velocity;
-        };
+        }
 
         AMREX_GPU_DEVICE void thermalInitialise(
             const amrex::IntVect& /*iv*/,
@@ -61,7 +61,7 @@ struct Constant
             temperature = initialTemperature;
             R = R_u / m_bar; // ns: Specific gas constant. Implemented.
             gamma = adiabaticExponent; // ns: not implemented yet
-        };
+        }
     };
 
     using DeviceType = DeviceOp;
@@ -128,7 +128,7 @@ struct TaylorGreen
                 vel[1] = -v0 * std::cos(omega0 * x / L) *
                          std::sin(omega1 * y / L) * std::cos(omega2 * z / L),
                 vel[2] = 0.0);
-        };
+        }
 
         AMREX_GPU_DEVICE
         void thermalInitialise(
@@ -438,7 +438,7 @@ struct sodTest
             rho = density + 0.5 *
                                 (1.0 + std::tanh((x - xDiscontinuity) * 3.0)) *
                                 (densityRatio * density - density);
-        };
+        }
 
         AMREX_GPU_DEVICE
         void thermalInitialise(
@@ -477,7 +477,7 @@ struct sodTest
                           0.5 * (1.0 + std::tanh((x - xDiscontinuity) * 3.0)) *
                               (temperatureRatio * initialTemperature -
                                initialTemperature);
-        };
+        }
     };
 
     using DeviceType = DeviceOp;
@@ -590,7 +590,7 @@ public:
                     amrex::Real rho = 1.0;
                     amrex::RealVect vel(AMREX_D_DECL(0.0, 0.0, 0.0));
                     // amrex::Real temperature = 1.0 / 3.0;
-                    amrex::Real R = ic.R_u / 28.96;
+                    // amrex::Real R = ic.R_u / 28.96;
                     // amrex::Real gamma = 1.667;
 
                     ic(iv, geom, rho, vel);
