@@ -3,15 +3,15 @@ AMREX_HOME ?= $(MARBLES_HOME)/Submodules/AMReX
 
 EBASE = marbles
 
-DEBUG	= TRUE
+DEBUG	= FALSE
 
 DIM	= 3
 
-COMP    = llvm
+COMP    = gnu
 
-USE_MPI   = TRUE 
+USE_MPI   = FALSE
 USE_OMP   = FALSE
-USE_CUDA  = FALSE
+USE_CUDA  = TRUE
 USE_EB    = TRUE
 
 TINY_PROFILE = TRUE

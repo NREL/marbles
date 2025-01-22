@@ -9,12 +9,14 @@ Constant::Constant()
     pp.query("dir", m_op.dir);
     pp.query("u0", m_op.u0);
 
+    std::string m_model_type;
     pp.query(
-        "model_type", m_op.m_model_type); // ns: default is "isothermal".
+        "model_type", m_model_type); // ns: default is "isothermal".
                                           // "energyD3Q27" activates product
                                           // equilibrium, energy equation etc.
 
-    if (m_op.m_model_type == "energyD3Q27") {
+    if (m_model_type == "energyD3Q27") {
+        m_op.m_model_type = 1;
         pp.query("Mach_0", m_op.Mach_0); // ns:
         pp.query(
             "initialTemperature",
@@ -44,12 +46,14 @@ Parabolic::Parabolic()
     pp.query("tangential_dir", m_op.tangential_dir);
     pp.query("um", m_op.um);
 
+    std::string m_model_type;
     pp.query(
-        "model_type", m_op.m_model_type); // ns: default is "isothermal".
+        "model_type", m_model_type); // ns: default is "isothermal".
                                           // "energyD3Q27" activates product
                                           // equilibrium, energy equation etc.
 
-    if (m_op.m_model_type == "energyD3Q27") {
+    if (m_model_type == "energyD3Q27") {
+        m_op.m_model_type = 1;
         pp.query("Mach_m", m_op.Mach_m); // ns:
         pp.query(
             "initialTemperature",

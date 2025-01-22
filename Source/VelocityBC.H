@@ -72,7 +72,8 @@ struct Constant
             adiabaticExponent * (R_u / m_bar) *
             initialTemperature); // the actual speed of sound
 
-        std::string m_model_type = "isothermal";
+        //std::string m_model_type = "isothermal";
+        int m_model_type = 0; //0 is isothermal, 1 is energyD3Q27
         amrex::Real Mach_0{0.05}; // ns: mean Mach number
 
         // ns: The initialisation below is no longer necessary. The product form
@@ -200,7 +201,8 @@ struct Parabolic
             adiabaticExponent * (R_u / m_bar) *
             initialTemperature); // the actual speed of sound
 
-        std::string m_model_type = "isothermal";
+        //std::string m_model_type = "isothermal";
+        int m_model_type = 0; //0 is isothermal, 1 is energyD3Q27
         amrex::Real Mach_m{0.05}; // ns: mean Mach number
 
         // ns: The initialisation below is no longer necessary. The product form

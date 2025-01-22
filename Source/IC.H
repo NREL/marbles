@@ -33,7 +33,8 @@ struct Constant
 
         // ns: LBM Scheme selector. "energyD3Q27" activates product equilibrium,
         // energy equation etc.
-        std::string m_model_type = "isothermal";
+        //std::string m_model_type = "isothermal";
+        int m_model_type = 0; //0 is isothermal, 1 is energyD3Q27
 
         AMREX_GPU_DEVICE
         void operator()(
@@ -99,7 +100,8 @@ struct TaylorGreen
 
         // ns: LBM Scheme selector. "energyD3Q27" activates product equilibrium,
         // energy equation etc.
-        std::string m_model_type = "isothermal";
+        //std::string m_model_type = "isothermal";
+        int m_model_type = 0; //0 is isothermal, 1 is energyD3Q27
 
         AMREX_GPU_DEVICE
         void operator()(
@@ -202,7 +204,8 @@ struct viscosityTest
 
         // ns: LBM Scheme selector. "energyD3Q27" activates product equilibrium,
         // energy equation etc.
-        std::string m_model_type = "isothermal";
+        //std::string m_model_type = "isothermal";
+        int m_model_type = 0; //0 is isothermal, 1 is energyD3Q27
 
         AMREX_GPU_DEVICE
         void operator()(
@@ -304,7 +307,8 @@ struct thermalDiffusivityTest
 
         // ns: LBM Scheme selector. "energyD3Q27" activates product equilibrium,
         // energy equation etc.
-        std::string m_model_type = "isothermal";
+        //std::string m_model_type = "isothermal";
+        int m_model_type = 0; //0 is isothermal, 1 is energyD3Q27
 
         AMREX_GPU_DEVICE
         void operator()(
@@ -411,7 +415,8 @@ struct sodTest
 
         // ns: LBM Scheme selector. "energyD3Q27" activates product equilibrium,
         // energy equation etc.
-        std::string m_model_type = "isothermal";
+        //std::string m_model_type = "isothermal";
+        int m_model_type = 0; //0 is isothermal, 1 is energyD3Q27
 
         AMREX_GPU_DEVICE
         void operator()(
@@ -536,7 +541,8 @@ public:
 
         amrex::RealVect zeroVec = {AMREX_D_DECL(0.0, 0.0, 0.0)};
 
-        if (ic.m_model_type == "energyD3Q27") {
+        //if (ic.m_model_type == "energyD3Q27") {
+        if (ic.m_model_type == 1) {    
             amrex::ParallelFor(
                 m_f[lev], m_f[lev].nGrowVect(), constants::N_MICRO_STATES,
                 [=] AMREX_GPU_DEVICE(
