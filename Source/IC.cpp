@@ -13,13 +13,12 @@ Constant::Constant()
     }
 
     std::string m_model_type;
-    pp.query(
-        "model_type", m_model_type); // ns: default is "isothermal".
+    pp.query("model_type", m_model_type); // ns: default is "isothermal".
                                           // "energyD3Q27" activates product
                                           // equilibrium, energy equation etc.
 
     if (m_model_type == "energyD3Q27") {
-        m_op.m_model_type=1;
+        m_op.m_model_type = 1;
         amrex::Vector<amrex::Real> MachComponents{AMREX_D_DECL(0, 0, 0)};
         pp.queryarr("MachComponents", MachComponents, 0, AMREX_SPACEDIM);
         for (int n = 0; n < MachComponents.size(); n++) {
@@ -70,13 +69,12 @@ viscosityTest::viscosityTest()
     pp.query("waveLength", m_op.waveLength); // ns:wavelength of the
                                              // perturbation
     std::string m_model_type;
-    pp.query(
-        "model_type", m_model_type); // ns: default is "isothermal".
+    pp.query("model_type", m_model_type); // ns: default is "isothermal".
                                           // "energyD3Q27" activates product
                                           // equilibrium, energy equation etc.
 
     if (m_model_type == "energyD3Q27") {
-        m_op.m_model_type=1;
+        m_op.m_model_type = 1;
         amrex::Vector<amrex::Real> MachComponents{AMREX_D_DECL(0, 0, 0)};
         pp.queryarr("MachComponents", MachComponents, 0, AMREX_SPACEDIM);
         for (int n = 0; n < MachComponents.size(); n++) {
@@ -115,13 +113,12 @@ thermalDiffusivityTest::thermalDiffusivityTest()
     pp.query("waveLength", m_op.waveLength); // ns:wavelength of the
                                              // perturbation
     std::string m_model_type;
-    pp.query(
-        "model_type", m_model_type); // ns: default is "isothermal".
+    pp.query("model_type", m_model_type); // ns: default is "isothermal".
                                           // "energyD3Q27" activates product
                                           // equilibrium, energy equation etc.
 
     if (m_model_type == "energyD3Q27") {
-        m_op.m_model_type=1;
+        m_op.m_model_type = 1;
         amrex::Vector<amrex::Real> MachComponents{AMREX_D_DECL(0, 0, 0)};
         pp.queryarr("MachComponents", MachComponents, 0, AMREX_SPACEDIM);
         for (int n = 0; n < MachComponents.size(); n++) {
@@ -161,13 +158,12 @@ sodTest::sodTest()
     pp.query("xDiscontinuity", m_op.xDiscontinuity);     // ns: R to L
 
     std::string m_model_type;
-    pp.query(
-        "model_type", m_model_type); // ns: default is "isothermal".
+    pp.query("model_type", m_model_type); // ns: default is "isothermal".
                                           // "energyD3Q27" activates product
                                           // equilibrium, energy equation etc.
 
     if (m_model_type == "energyD3Q27") {
-        m_op.m_model_type=1;
+        m_op.m_model_type = 1;
         amrex::Vector<amrex::Real> MachComponents{AMREX_D_DECL(0, 0, 0)};
         pp.queryarr("MachComponents", MachComponents, 0, AMREX_SPACEDIM);
         for (int n = 0; n < MachComponents.size(); n++) {

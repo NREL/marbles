@@ -10,8 +10,7 @@ Constant::Constant()
     pp.query("u0", m_op.u0);
 
     std::string m_model_type;
-    pp.query(
-        "model_type", m_model_type); // ns: default is "isothermal".
+    pp.query("model_type", m_model_type); // ns: default is "isothermal".
                                           // "energyD3Q27" activates product
                                           // equilibrium, energy equation etc.
 
@@ -47,8 +46,7 @@ Parabolic::Parabolic()
     pp.query("um", m_op.um);
 
     std::string m_model_type;
-    pp.query(
-        "model_type", m_model_type); // ns: default is "isothermal".
+    pp.query("model_type", m_model_type); // ns: default is "isothermal".
                                           // "energyD3Q27" activates product
                                           // equilibrium, energy equation etc.
 
