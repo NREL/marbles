@@ -76,7 +76,7 @@ AMREX_GPU_DEVICE AMREX_INLINE void set_equilibrium_value_d3_q27(
     eq = rho * phix * phiy * phiz;
 }
 
-AMREX_GPU_DEVICE AMREX_INLINE void set_extended_equilibrium_value_D3Q27(
+AMREX_GPU_DEVICE AMREX_INLINE void set_extended_equilibrium_value_d3_q27(
     const amrex::Real& rho,
     const amrex::RealVect& vel,
     const amrex::Real& pxx,

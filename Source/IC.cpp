@@ -99,7 +99,7 @@ ViscosityTest::ViscosityTest()
     }
 }
 
-thermalDiffusivityTest::thermalDiffusivityTest()
+ThermalDiffusivityTest::ThermalDiffusivityTest()
 {
     amrex::ParmParse pp(identifier());
     pp.query("density", m_op.density);

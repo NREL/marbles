@@ -44,7 +44,7 @@ public:
         , m_bcs(bcs)
         , m_op(std::move(bc_op))
         , m_f(f_)
-        , isAnEnergyLattice(isAnEnergyLattice_)
+        , m_isAnEnergyLattice(isAnEnergyLattice_)
     {}
 
     // compute a new multifab by coping in phi from valid region and filling
@@ -136,7 +136,7 @@ protected:
     amrex::Vector<amrex::MultiFab>& m_f;
     // amrex::Vector<amrex::MultiFab>& m_g;
     amrex::Interpolater* m_mapper = &amrex::cell_cons_interp;
-    bool isAnEnergyLattice;
+    bool m_isAnEnergyLattice;
 };
 } // namespace lbm
 #endif

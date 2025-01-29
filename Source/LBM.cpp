@@ -836,7 +836,7 @@ void LBM::macrodata_to_equilibrium_d3_q27(const int lev)
                 amrex::Real omega_one =
                     1.0 /
                     (alpha / (specific_gas_constant * temperature * dt) + 0.5);
-                amrex::Real omega_oneByOmega = omega_one / omega;
+                amrex::Real omega_one_by_omega = omega_one / omega;
                 amrex::Real omega_corr = (2.0 - omega) / (2.0 * omega * rho);
 
                 amrex::Real pxx_ext =
@@ -852,7 +852,7 @@ void LBM::macrodata_to_equilibrium_d3_q27(const int lev)
                         dt * (omega_corr)*d_arr(iv, constants::D_Q_CORR_Z_IDX);
                 }
 
-                set_extended_equilibrium_value_D3Q27(
+                set_extended_equilibrium_value_d3_q27(
                     rho, vel, pxx_ext, pyy_ext, pzz_ext, l_mesh_speed, wt, ev,
                     eq_arr(iv, q));
 
@@ -884,17 +884,17 @@ void LBM::macrodata_to_equilibrium_d3_q27(const int lev)
                 AMREX_3D_ONLY(
                     const amrex::Real qz = md_arr(iv, constants::QZ_IDX));
 
-                qxEq *= omega_oneByOmega;
-                qyEq *= omega_oneByOmega;
-                AMREX_3D_ONLY(qzEq *= omega_oneByOmega);
+                qxEq *= omega_one_by_omega;
+                qyEq *= omega_one_by_omega;
+                AMREX_3D_ONLY(qzEq *= omega_one_by_omega);
 
-                qxEq += (1.0 - omega_oneByOmega) *
+                qxEq += (1.0 - omega_one_by_omega) *
                         (qx AMREX_D_TERM(
                              -2.0 * vel[0] * pxx, -2.0 * vel[1] * pxy,
                              -2.0 * vel[2] * pxz) -
                          vel[0] * dt * d_arr(iv, constants::D_Q_CORR_X_IDX));
 
-                qyEq += (1.0 - omega_oneByOmega) *
+                qyEq += (1.0 - omega_one_by_omega) *
                         (qy AMREX_D_TERM(
                              -2.0 * vel[0] * pxy, -2.0 * vel[1] * pyy,
                              -2.0 * vel[2] * pyz) -
@@ -902,7 +902,7 @@ void LBM::macrodata_to_equilibrium_d3_q27(const int lev)
 
                 AMREX_3D_ONLY(
                     qzEq +=
-                    (1.0 - omega_oneByOmega) *
+                    (1.0 - omega_one_by_omega) *
                     (qz - 2.0 * vel[0] * pxz - 2.0 * vel[1] * pyz -
                      2.0 * vel[2] * pzz -
                      vel[2] * dt * d_arr(iv, constants::D_Q_CORR_Z_IDX)));
@@ -1716,10 +1716,10 @@ void LBM::set_ics()
     } else if (m_ic_type == "viscosityTest") {
         m_ic_op = std::make_unique<ic::Initializer<ic::ViscosityTest>>(
             m_mesh_speed, ic::ViscosityTest(ic::ViscosityTest()), m_f, m_g);
-    } else if (m_ic_type == "thermalDiffusivityTest") {
-        m_ic_op = std::make_unique<ic::Initializer<ic::thermalDiffusivityTest>>(
+    } else if (m_ic_type == "ThermalDiffusivityTest") {
+        m_ic_op = std::make_unique<ic::Initializer<ic::ThermalDiffusivityTest>>(
             m_mesh_speed,
-            ic::thermalDiffusivityTest(ic::thermalDiffusivityTest()), m_f, m_g);
+            ic::ThermalDiffusivityTest(ic::ThermalDiffusivityTest()), m_f, m_g);
     } else if (m_ic_type == "sodTest") {
         m_ic_op = std::make_unique<ic::Initializer<ic::SodTest>>(
             m_mesh_speed, ic::SodTest(ic::SodTest()), m_f, m_g);

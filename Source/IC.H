@@ -283,7 +283,7 @@ struct ViscosityTest
     DeviceOp m_op;
 };
 
-struct thermalDiffusivityTest
+struct ThermalDiffusivityTest
 {
     struct DeviceOp
     {
@@ -379,7 +379,7 @@ struct thermalDiffusivityTest
 
     using DeviceType = DeviceOp;
 
-    explicit thermalDiffusivityTest();
+    explicit ThermalDiffusivityTest();
 
     static std::string identifier() { return "ic_thermalDiffusivityTest"; }
 
