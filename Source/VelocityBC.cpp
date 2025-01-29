@@ -8,6 +8,28 @@ Constant::Constant()
     amrex::ParmParse pp("velocity_bc_constant");
     pp.query("dir", m_op.dir);
     pp.query("u0", m_op.u0);
+
+    std::string m_model_type;
+    pp.query("model_type", m_model_type); // ns: default is "isothermal".
+                                          // "energyD3Q27" activates product
+                                          // equilibrium, energy equation etc.
+
+    if (m_model_type == "energyD3Q27") {
+        m_op.m_model_type = 1;
+        pp.query("Mach_0", m_op.Mach_0); // ns:
+        pp.query(
+            "initialTemperature",
+            m_op.initialTemperature); // ns:initial condition temperature
+        pp.query(
+            "adiabaticExponent", m_op.adiabaticExponent); // ns: reference gamma
+        pp.query("meanMolecularMass", m_op.m_bar);        // ns: reference m_bar
+        m_op.speedOfSound_Ref = std::sqrt(
+            m_op.adiabaticExponent * (m_op.R_u / m_op.m_bar) *
+            m_op.initialTemperature); // set the actual speed of sound
+        m_op.u0 = m_op.Mach_0 * m_op.speedOfSound_Ref;
+    } else {
+        // ns: The defaults are used. No action required.
+    }
 }
 
 Channel::Channel()
@@ -22,6 +44,30 @@ Parabolic::Parabolic()
     pp.query("normal_dir", m_op.normal_dir);
     pp.query("tangential_dir", m_op.tangential_dir);
     pp.query("um", m_op.um);
+
+    std::string m_model_type;
+    pp.query("model_type", m_model_type); // ns: default is "isothermal".
+                                          // "energyD3Q27" activates product
+                                          // equilibrium, energy equation etc.
+
+    if (m_model_type == "energyD3Q27") {
+        m_op.m_model_type = 1;
+        pp.query("Mach_m", m_op.Mach_m); // ns:
+        pp.query(
+            "initialTemperature",
+            m_op.initialTemperature); // ns:initial condition temperature
+        pp.query(
+            "adiabaticExponent",
+            m_op.adiabaticExponent); // ns: reference gamma. safety block. do
+                                     // not enable. not implemented.
+        pp.query("meanMolecularMass", m_op.m_bar); // ns: reference m_bar
+        m_op.speedOfSound_Ref = std::sqrt(
+            m_op.adiabaticExponent * (m_op.R_u / m_op.m_bar) *
+            m_op.initialTemperature); // set the actual speed of sound
+        m_op.um = m_op.Mach_m * m_op.speedOfSound_Ref;
+    } else {
+        // ns: The defaults are used. No action required.
+    }
 }
 
 } // namespace lbm::bc
