@@ -77,14 +77,14 @@ public:
     void macrodata_to_equilibrium(const int lev);
 
     // convert macrodata to equilibrium
-    void macrodata_to_equilibrium_D3Q27(const int lev); // ns
+    void macrodata_to_equilibrium_d3_q27(const int lev); // ns
 
     // calculate the macro fluid properties from the distributions
     void f_to_macrodata(const int lev);
 
     // calculate the macro fluid properties from the distributions and store
     // part of (4.45) of http://dx.doi.org/10.3929/ethz-b-000607045
-    void f_to_macrodata_D3Q27(const int lev); // ns
+    void f_to_macrodata_d3_q27(const int lev); // ns
 
     // Stream the information to the neighbor particles
     void stream(const int lev);
@@ -96,19 +96,19 @@ public:
     void collide(const int lev);
 
     // Collide the particles
-    void collide_D3Q27(const int lev); // ns
+    void collide_d3_q27(const int lev); // ns
 
     // Relax the particles toward the equilibrium state
     void relax_f_to_equilibrium(const int lev);
 
     // Relax the particles toward the equilibrium state
-    void relax_f_to_equilibrium_D3Q27(const int lev);
+    void relax_f_to_equilibrium_d3_q27(const int lev);
 
     // Compute derived quantities
     void compute_derived(const int lev);
 
     // Compute derived quantities
-    void compute_QCorrections(const int lev);
+    void compute_q_corrections(const int lev);
 
     // Compute forces on EB
     void compute_eb_forces();

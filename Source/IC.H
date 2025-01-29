@@ -47,7 +47,7 @@ struct Constant
             vel = velocity;
         }
 
-        AMREX_GPU_DEVICE void thermalInitialise(
+        AMREX_GPU_DEVICE void thermal_initialise(
             const amrex::IntVect& /*iv*/,
             amrex::GeometryData const& /*geom*/,
             amrex::Real& rho,
@@ -133,7 +133,7 @@ struct TaylorGreen
         }
 
         AMREX_GPU_DEVICE
-        void thermalInitialise(
+        void thermal_initialise(
             const amrex::IntVect& iv,
             amrex::GeometryData const& geom,
             amrex::Real& rho,
@@ -180,7 +180,7 @@ struct TaylorGreen
     DeviceOp m_op;
 };
 
-struct viscosityTest
+struct ViscosityTest
 {
     struct DeviceOp
     {
@@ -236,7 +236,7 @@ struct viscosityTest
         }
 
         AMREX_GPU_DEVICE
-        void thermalInitialise(
+        void thermal_initialise(
             const amrex::IntVect& iv,
             amrex::GeometryData const& geom,
             amrex::Real& rho,
@@ -274,7 +274,7 @@ struct viscosityTest
 
     using DeviceType = DeviceOp;
 
-    explicit viscosityTest();
+    explicit ViscosityTest();
 
     static std::string identifier() { return "ic_viscosityTest"; }
 
@@ -339,7 +339,7 @@ struct thermalDiffusivityTest
         }
 
         AMREX_GPU_DEVICE
-        void thermalInitialise(
+        void thermal_initialise(
             const amrex::IntVect& iv,
             amrex::GeometryData const& geom,
             amrex::Real& rho,
@@ -388,7 +388,7 @@ struct thermalDiffusivityTest
     DeviceOp m_op;
 };
 
-struct sodTest
+struct SodTest
 {
     struct DeviceOp
     {
@@ -446,7 +446,7 @@ struct sodTest
         }
 
         AMREX_GPU_DEVICE
-        void thermalInitialise(
+        void thermal_initialise(
             const amrex::IntVect& iv,
             amrex::GeometryData const& geom,
             amrex::Real& rho,
@@ -487,7 +487,7 @@ struct sodTest
 
     using DeviceType = DeviceOp;
 
-    explicit sodTest();
+    explicit SodTest();
 
     static std::string identifier() { return "ic_sodTest"; }
 
@@ -539,7 +539,7 @@ public:
         const amrex::Real l_mesh_speed = m_mesh_speed;
         ICDeviceOp ic(m_op.device_instance());
 
-        amrex::RealVect zeroVec = {AMREX_D_DECL(0.0, 0.0, 0.0)};
+        amrex::RealVect zero_vec = {AMREX_D_DECL(0.0, 0.0, 0.0)};
 
         // if (ic.m_model_type == "energyD3Q27") {
         if (ic.m_model_type == 1) {
@@ -554,35 +554,39 @@ public:
                     amrex::Real rho = 1.0;
                     amrex::RealVect vel(AMREX_D_DECL(0.0, 0.0, 0.0));
                     amrex::Real temperature = 1.0 / 3.0;
-                    amrex::Real R = ic.R_u / 28.96;
+                    amrex::Real specific_gas_constant = ic.R_u / 28.96;
                     amrex::Real gamma = 1.667;
 
-                    ic.thermalInitialise(
-                        iv, geom, rho, vel, temperature, R, gamma);
+                    ic.thermal_initialise(
+                        iv, geom, rho, vel, temperature, specific_gas_constant,
+                        gamma);
 
-                    set_equilibrium_value_D3Q27(
-                        rho, vel, R * temperature, l_mesh_speed, wt, ev,
-                        f_arrs[nbx](i, j, k, q));
+                    set_equilibrium_value_d3_q27(
+                        rho, vel, specific_gas_constant * temperature,
+                        l_mesh_speed, wt, ev, f_arrs[nbx](i, j, k, q));
 
-                    amrex::Real Cv = R / (gamma - 1.0);
+                    amrex::Real cv = specific_gas_constant / (gamma - 1.0);
 
-                    amrex::Real twoRhoE = getEnergy(temperature, rho, vel, Cv);
+                    amrex::Real two_rho_e =
+                        get_energy(temperature, rho, vel, cv);
 
-                    amrex::Real /*qxEq, qyEq, qzEq,*/ RxxEq(0.0), RyyEq(0.0),
-                        RzzEq(0.0), RxyEq(0.0), RxzEq(0.0), RyzEq(0.0);
+                    amrex::Real /*qxEq, qyEq, qzEq,*/ rxx_eq(0.0), ryy_eq(0.0),
+                        rzz_eq(0.0), rxy_eq(0.0), rxz_eq(0.0), ryz_eq(0.0);
 
-                    amrex::RealVect heatFlux = {AMREX_D_DECL(0.0, 0.0, 0.0)};
+                    amrex::RealVect heat_flux = {AMREX_D_DECL(0.0, 0.0, 0.0)};
 
-                    getEquilibriumMoments(
-                        rho, vel, twoRhoE, Cv, R, heatFlux, RxxEq, RyyEq, RzzEq,
-                        RxyEq, RxzEq, RyzEq);
+                    get_equilibrium_moments(
+                        rho, vel, two_rho_e, cv, specific_gas_constant,
+                        heat_flux, rxx_eq, ryy_eq, rzz_eq, rxy_eq, rxz_eq,
+                        ryz_eq);
 
-                    amrex::GpuArray<amrex::Real, 6> fluxOfHeatFlux = {
-                        RxxEq, RyyEq, RzzEq, RxyEq, RxzEq, RyzEq};
+                    amrex::GpuArray<amrex::Real, 6> flux_of_heat_flux = {
+                        rxx_eq, ryy_eq, rzz_eq, rxy_eq, rxz_eq, ryz_eq};
 
-                    set_extended_gradExpansion_generic(
-                        twoRhoE, heatFlux, fluxOfHeatFlux, l_mesh_speed, wt, ev,
-                        stencil.theta0, zeroVec, 1.0, g_arrs[nbx](i, j, k, q));
+                    set_extended_grad_expansion_generic(
+                        two_rho_e, heat_flux, flux_of_heat_flux, l_mesh_speed,
+                        wt, ev, stencil.theta0, zero_vec, 1.0,
+                        g_arrs[nbx](i, j, k, q));
                 });
         } else {
             amrex::ParallelFor(

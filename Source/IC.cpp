@@ -19,10 +19,10 @@ Constant::Constant()
 
     if (m_model_type == "energyD3Q27") {
         m_op.m_model_type = 1;
-        amrex::Vector<amrex::Real> MachComponents{AMREX_D_DECL(0, 0, 0)};
-        pp.queryarr("MachComponents", MachComponents, 0, AMREX_SPACEDIM);
-        for (int n = 0; n < MachComponents.size(); n++) {
-            m_op.MachComponents[n] = MachComponents[n];
+        amrex::Vector<amrex::Real> mach_components{AMREX_D_DECL(0, 0, 0)};
+        pp.queryarr("MachComponents", mach_components, 0, AMREX_SPACEDIM);
+        for (int n = 0; n < mach_components.size(); n++) {
+            m_op.MachComponents[n] = mach_components[n];
         }
 
         pp.query(
@@ -36,7 +36,7 @@ Constant::Constant()
             m_op.adiabaticExponent * (m_op.R_u / m_op.m_bar) *
             m_op.initialTemperature); // set the actual speed of sound
 
-        for (int n = 0; n < MachComponents.size(); n++) {
+        for (int n = 0; n < mach_components.size(); n++) {
             m_op.velocity[n] = m_op.MachComponents[n] * m_op.speedOfSound_Ref;
         }
     }
@@ -55,7 +55,7 @@ TaylorGreen::TaylorGreen()
     }
 }
 
-viscosityTest::viscosityTest()
+ViscosityTest::ViscosityTest()
 {
     amrex::ParmParse pp(identifier());
     pp.query("density", m_op.density);
@@ -75,10 +75,10 @@ viscosityTest::viscosityTest()
 
     if (m_model_type == "energyD3Q27") {
         m_op.m_model_type = 1;
-        amrex::Vector<amrex::Real> MachComponents{AMREX_D_DECL(0, 0, 0)};
-        pp.queryarr("MachComponents", MachComponents, 0, AMREX_SPACEDIM);
-        for (int n = 0; n < MachComponents.size(); n++) {
-            m_op.MachComponents[n] = MachComponents[n];
+        amrex::Vector<amrex::Real> mach_components{AMREX_D_DECL(0, 0, 0)};
+        pp.queryarr("MachComponents", mach_components, 0, AMREX_SPACEDIM);
+        for (int n = 0; n < mach_components.size(); n++) {
+            m_op.MachComponents[n] = mach_components[n];
         }
 
         pp.query(
@@ -93,7 +93,7 @@ viscosityTest::viscosityTest()
             m_op.adiabaticExponent * (m_op.R_u / m_op.m_bar) *
             m_op.initialTemperature); // set the actual speed of sound
 
-        for (int n = 0; n < MachComponents.size(); n++) {
+        for (int n = 0; n < mach_components.size(); n++) {
             m_op.velocity[n] = m_op.MachComponents[n] * m_op.speedOfSound_Ref;
         }
     }
@@ -119,10 +119,10 @@ thermalDiffusivityTest::thermalDiffusivityTest()
 
     if (m_model_type == "energyD3Q27") {
         m_op.m_model_type = 1;
-        amrex::Vector<amrex::Real> MachComponents{AMREX_D_DECL(0, 0, 0)};
-        pp.queryarr("MachComponents", MachComponents, 0, AMREX_SPACEDIM);
-        for (int n = 0; n < MachComponents.size(); n++) {
-            m_op.MachComponents[n] = MachComponents[n];
+        amrex::Vector<amrex::Real> mach_components{AMREX_D_DECL(0, 0, 0)};
+        pp.queryarr("MachComponents", mach_components, 0, AMREX_SPACEDIM);
+        for (int n = 0; n < mach_components.size(); n++) {
+            m_op.MachComponents[n] = mach_components[n];
         }
 
         pp.query(
@@ -136,13 +136,13 @@ thermalDiffusivityTest::thermalDiffusivityTest()
             m_op.adiabaticExponent * (m_op.R_u / m_op.m_bar) *
             m_op.initialTemperature); // set the actual speed of sound
 
-        for (int n = 0; n < MachComponents.size(); n++) {
+        for (int n = 0; n < mach_components.size(); n++) {
             m_op.velocity[n] = m_op.MachComponents[n] * m_op.speedOfSound_Ref;
         }
     }
 }
 
-sodTest::sodTest()
+SodTest::SodTest()
 {
     amrex::ParmParse pp(identifier());
     pp.query("density", m_op.density);
@@ -164,10 +164,10 @@ sodTest::sodTest()
 
     if (m_model_type == "energyD3Q27") {
         m_op.m_model_type = 1;
-        amrex::Vector<amrex::Real> MachComponents{AMREX_D_DECL(0, 0, 0)};
-        pp.queryarr("MachComponents", MachComponents, 0, AMREX_SPACEDIM);
-        for (int n = 0; n < MachComponents.size(); n++) {
-            m_op.MachComponents[n] = MachComponents[n];
+        amrex::Vector<amrex::Real> mach_components{AMREX_D_DECL(0, 0, 0)};
+        pp.queryarr("MachComponents", mach_components, 0, AMREX_SPACEDIM);
+        for (int n = 0; n < mach_components.size(); n++) {
+            m_op.MachComponents[n] = mach_components[n];
         }
 
         pp.query(
@@ -181,7 +181,7 @@ sodTest::sodTest()
             m_op.adiabaticExponent * (m_op.R_u / m_op.m_bar) *
             m_op.initialTemperature); // set the actual speed of sound
 
-        for (int n = 0; n < MachComponents.size(); n++) {
+        for (int n = 0; n < mach_components.size(); n++) {
             m_op.velocity[n] = m_op.MachComponents[n] * m_op.speedOfSound_Ref;
         }
     }

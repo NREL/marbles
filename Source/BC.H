@@ -84,7 +84,7 @@ struct BCFill
 
     AMREX_GPU_DEVICE
     AMREX_FORCE_INLINE
-    void bounce_back_Xbc(
+    void bounce_back_xbc(
         const amrex::IntVect& iv,
         const int q,
         const amrex::IntVect& ev,
@@ -103,7 +103,7 @@ struct BCFill
 
     AMREX_GPU_DEVICE
     AMREX_FORCE_INLINE
-    void bounce_back_Ybc(
+    void bounce_back_ybc(
         const amrex::IntVect& iv,
         const int q,
         const amrex::IntVect& ev,
@@ -122,7 +122,7 @@ struct BCFill
 
     AMREX_GPU_DEVICE
     AMREX_FORCE_INLINE
-    void bounce_back_Zbc(
+    void bounce_back_zbc(
         const amrex::IntVect& iv,
         const int q,
         const amrex::IntVect& ev,
@@ -221,34 +221,34 @@ struct BCFill
 
         // const amrex::IntVect ivn(iv + ev);
 
-        amrex::Real Cv = R / (adiabaticExponent - 1.0);
+        amrex::Real cv = R / (adiabaticExponent - 1.0);
 
-        // amrex::Real twoRhoE =
+        // amrex::Real two_rho_e =
         //     getEnergy(temperature, rho_bc, vel_bc[0], vel_bc[1], vel_bc[2],
-        //     Cv);
+        //     cv);
 
-        amrex::Real twoRhoE = getEnergy(temperature, rho_bc, vel_bc, Cv);
+        amrex::Real two_rho_e = get_energy(temperature, rho_bc, vel_bc, cv);
 
-        amrex::Real /*qxEq, qyEq, qzEq,*/ RxxEq(0.0), RyyEq(0.0), RzzEq(0.0),
-            RxyEq(0.0), RxzEq(0.0), RyzEq(0.0);
+        amrex::Real /*qxEq, qyEq, qzEq,*/ rxx_eq(0.0), ryy_eq(0.0), rzz_eq(0.0),
+            rxy_eq(0.0), rxz_eq(0.0), ryz_eq(0.0);
 
         // getEquilibriumMoments(
-        //     rho_bc, vel_bc[0], vel_bc[1], vel_bc[2], twoRhoE, Cv, R, qxEq,
-        //     qyEq, qzEq, RxxEq, RyyEq, RzzEq, RxyEq, RxzEq, RyzEq);
+        //     rho_bc, vel_bc[0], vel_bc[1], vel_bc[2], two_rho_e, cv, R, qxEq,
+        //     qyEq, qzEq, rxx_eq, ryy_eq, rzz_eq, rxy_eq, rxz_eq, ryz_eq);
 
-        // amrex::RealVect heatFluxes = {AMREX_D_DECL(qxEq, qyEq, qzEq)};
-        amrex::RealVect heatFlux = {AMREX_D_DECL(0.0, 0.0, 0.0)};
+        // amrex::RealVect heat_fluxes = {AMREX_D_DECL(qxEq, qyEq, qzEq)};
+        amrex::RealVect heat_flux = {AMREX_D_DECL(0.0, 0.0, 0.0)};
 
-        getEquilibriumMoments(
-            rho_bc, vel_bc, twoRhoE, Cv, R, heatFlux, RxxEq, RyyEq, RzzEq,
-            RxyEq, RxzEq, RyzEq);
+        get_equilibrium_moments(
+            rho_bc, vel_bc, two_rho_e, cv, R, heat_flux, rxx_eq, ryy_eq, rzz_eq,
+            rxy_eq, rxz_eq, ryz_eq);
 
-        amrex::GpuArray<amrex::Real, 6> fluxOfHeatFlux = {RxxEq, RyyEq, RzzEq,
-                                                          RxyEq, RxzEq, RyzEq};
+        amrex::GpuArray<amrex::Real, 6> flux_of_heat_flux = {
+            rxx_eq, ryy_eq, rzz_eq, rxy_eq, rxz_eq, ryz_eq};
 
-        set_extended_gradExpansion_generic(
-            twoRhoE, heatFlux, fluxOfHeatFlux, m_mesh_speed, m_weights[q], ev,
-            theta0, zeroVec, 1.0, data(iv, q));
+        set_extended_grad_expansion_generic(
+            two_rho_e, heat_flux, flux_of_heat_flux, m_mesh_speed, m_weights[q],
+            ev, theta0, zeroVec, 1.0, data(iv, q));
     }
 
     AMREX_GPU_DEVICE
@@ -299,7 +299,7 @@ struct BCFill
         const amrex::Real rho_bc =
             (rho_out + rho_tan) / (1.0 - ndir * vel_bc[idir]);
 
-        set_equilibrium_value_D3Q27(
+        set_equilibrium_value_d3_q27(
             rho_bc, vel_bc, RT, m_mesh_speed, m_weights[q], ev, data(iv, q));
 
         rho_bcOut = rho_bc;
@@ -483,32 +483,36 @@ struct BCFill
                             } else if (m_bc_type[bc_idx] == 2) {
                                 amrex::RealVect vel_bc(
                                     AMREX_D_DECL(0.0, 0.0, 0.0));
-                                amrex::Real R(1.0),
-                                    T(1.0 / 3.0); // ns:default for isothermal.
+                                amrex::Real specific_gas_constant(1.0),
+                                    temperature(
+                                        1.0 /
+                                        3.0); // ns:default for isothermal.
                                 amrex::Real gamma(
                                     5.0 / 3.0); // ns:default for monoatomic
 
-                                amrex::Real rhoBC(1.0);
+                                amrex::Real rho_bc(1.0);
                                 // ns: The product form is always called. This
                                 // is safe since RT remains 1/3
                                 //  in velocityBC
                                 //  ns: Actual call for generating populations
 
                                 m_vel_bc_op(
-                                    iv, idir, normal_dir, time, geom, vel_bc, R,
-                                    T, gamma);
+                                    iv, idir, normal_dir, time, geom, vel_bc,
+                                    specific_gas_constant, temperature, gamma);
 
                                 if (isAnEnergyLattice) {
-                                    rhoBC =
+                                    rho_bc =
                                         1.0; // debug. Temporary placeholder. Do
                                              // not use this bc until fixed
                                     velocity_bc_g(
-                                        iv, q, ev, idir, normal_dir, rhoBC,
-                                        vel_bc, R, T, gamma, data);
+                                        iv, q, ev, idir, normal_dir, rho_bc,
+                                        vel_bc, specific_gas_constant,
+                                        temperature, gamma, data);
                                 } else {
                                     velocity_bc_f(
                                         iv, q, ev, idir, normal_dir, vel_bc,
-                                        R * T, data, rhoBC);
+                                        specific_gas_constant * temperature,
+                                        data, rho_bc);
                                 }
 
                             } else if (m_bc_type[bc_idx] == 3) {
@@ -521,11 +525,11 @@ struct BCFill
                                 simple_outflow_bc(
                                     iv, q, ev, idir, normal_dir, data);
                             } else if (m_bc_type[bc_idx] == 11) {
-                                bounce_back_Xbc(iv, q, ev, data);
+                                bounce_back_xbc(iv, q, ev, data);
                             } else if (m_bc_type[bc_idx] == 12) {
-                                bounce_back_Ybc(iv, q, ev, data);
+                                bounce_back_ybc(iv, q, ev, data);
                             } else if (m_bc_type[bc_idx] == 13) {
-                                bounce_back_Zbc(iv, q, ev, data);
+                                bounce_back_zbc(iv, q, ev, data);
                             }
                         }
                     }
