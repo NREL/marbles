@@ -503,11 +503,11 @@ struct BCFill
                             } else if (m_bc_type[bc_idx] == 5) {
                                 simple_outflow_bc(
                                     iv, q, ev, idir, normal_dir, data);
-                            } else if (m_bc_type[bc_idx] == 11) {
+                            } else if (m_bc_type[bc_idx] == 6) {
                                 bounce_back_xbc(iv, q, ev, data);
-                            } else if (m_bc_type[bc_idx] == 12) {
+                            } else if (m_bc_type[bc_idx] == 7) {
                                 bounce_back_ybc(iv, q, ev, data);
-                            } else if (m_bc_type[bc_idx] == 13) {
+                            } else if (m_bc_type[bc_idx] == 8) {
                                 bounce_back_zbc(iv, q, ev, data);
                             }
                         }
