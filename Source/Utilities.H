@@ -124,7 +124,6 @@ AMREX_GPU_DEVICE AMREX_INLINE void set_extended_grad_expansion_generic(
 
     const amrex::Real jx = momentum[0];
     const amrex::Real jy = momentum[1];
-    // amrex::Real jz = 0.0;
     AMREX_3D_ONLY(const amrex::Real jz = momentum[2]);
 
     // Note: ux, uy, uz are not flow velocities.
