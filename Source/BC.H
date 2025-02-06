@@ -5,7 +5,7 @@
 #include <AMReX_PhysBCFunct.H>
 #include "Constants.H"
 #include "Utilities.H"
-#include "Stencil_D3Q27.H"
+#include "Stencil.H"
 #include "VelocityBC.H"
 
 namespace lbm::bc {
@@ -16,9 +16,9 @@ static constexpr int VELOCITY = 2;
 static constexpr int PRESSURE = 3;
 static constexpr int OUTFLOW = 4;
 static constexpr int OUTFLOW_ZEROTH_ORDER = 5;
-static constexpr int SLIPWALLXNORMAL = 11;
-static constexpr int SLIPWALLYNORMAL = 12;
-static constexpr int SLIPWALLZNORMAL = 13;
+static constexpr int SLIPWALLXNORMAL = 6;
+static constexpr int SLIPWALLYNORMAL = 7;
+static constexpr int SLIPWALLZNORMAL = 8;
 
 template <typename VelBCOp>
 struct BCFill
@@ -223,20 +223,11 @@ struct BCFill
 
         amrex::Real cv = R / (adiabaticExponent - 1.0);
 
-        // amrex::Real two_rho_e =
-        //     getEnergy(temperature, rho_bc, vel_bc[0], vel_bc[1], vel_bc[2],
-        //     cv);
-
         amrex::Real two_rho_e = get_energy(temperature, rho_bc, vel_bc, cv);
 
-        amrex::Real /*qxEq, qyEq, qzEq,*/ rxx_eq(0.0), ryy_eq(0.0), rzz_eq(0.0),
+        amrex::Real rxx_eq(0.0), ryy_eq(0.0), rzz_eq(0.0),
             rxy_eq(0.0), rxz_eq(0.0), ryz_eq(0.0);
 
-        // getEquilibriumMoments(
-        //     rho_bc, vel_bc[0], vel_bc[1], vel_bc[2], two_rho_e, cv, R, qxEq,
-        //     qyEq, qzEq, rxx_eq, ryy_eq, rzz_eq, rxy_eq, rxz_eq, ryz_eq);
-
-        // amrex::RealVect heat_fluxes = {AMREX_D_DECL(qxEq, qyEq, qzEq)};
         amrex::RealVect heat_flux = {AMREX_D_DECL(0.0, 0.0, 0.0)};
 
         get_equilibrium_moments(
@@ -486,24 +477,20 @@ struct BCFill
                                 amrex::Real specific_gas_constant(1.0),
                                     temperature(
                                         1.0 /
-                                        3.0); // ns:default for isothermal.
+                                        3.0); 
                                 amrex::Real gamma(
-                                    5.0 / 3.0); // ns:default for monoatomic
+                                    5.0 / 3.0); 
 
                                 amrex::Real rho_bc(1.0);
-                                // ns: The product form is always called. This
-                                // is safe since RT remains 1/3
-                                //  in velocityBC
-                                //  ns: Actual call for generating populations
-
+                                
                                 m_vel_bc_op(
                                     iv, idir, normal_dir, time, geom, vel_bc,
                                     specific_gas_constant, temperature, gamma);
 
                                 if (isAnEnergyLattice) {
                                     rho_bc =
-                                        1.0; // debug. Temporary placeholder. Do
-                                             // not use this bc until fixed
+                                        1.0; 
+                                        
                                     velocity_bc_g(
                                         iv, q, ev, idir, normal_dir, rho_bc,
                                         vel_bc, specific_gas_constant,

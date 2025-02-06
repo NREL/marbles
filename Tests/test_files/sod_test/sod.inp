@@ -1,10 +1,8 @@
 # How to use this sod test tube case?
-# set ic_sodTest.initialTemperature=lbm.initialTemperature to a value <= 0.3333
+# set ic_sod_test.initial_temperature=lbm.initial_temperature to a value <= 0.3333
 # set lbm.nu to a value <= 0.0100
-# Further instructions in sodTester.ipynb
-# Note. Always: geometry.prob_hi[0]=amr.n_cell[0]=amr.max_grid_size=2.0*ic_sodTest.xDiscontinuity
-# Note: Effect of changing other inputs not tested as of 19 Dec 2024.
-# Emergency feedback: nsawant@nrel.gov
+# Further instructions in sod_tester.ipynb
+# Note. Always: geometry.prob_hi[0]=amr.n_cell[0]=amr.max_grid_size=2.0*ic_sod_test.xDiscontinuity
 
 max_step = 1500
 
@@ -24,7 +22,7 @@ amr.file_name_digits = 5
 
 # select model type. "energyD3Q27" activates product equilibrium, energy equation etc.
 lbm.model_type = "energyD3Q27"
-ic_sodTest.model_type = "energyD3Q27"
+ic_sod_test.model_type = "energyD3Q27"
 # velocity_bc_parabolic.model_type = "energyD3Q27"
 
 lbm.bc_lo = 5 0 0
@@ -36,23 +34,23 @@ lbm.alpha = 0.010
 lbm.save_streaming = 0
 lbm.compute_forces = 0
 
-lbm.ic_type = "sodTest"
-ic_sodTest.density = 0.50
-ic_sodTest.velocity = 0.0 0.0 0.0
-ic_sodTest.MachComponents = 0.0 0.0 0.0
+lbm.ic_type = "sod_test"
+ic_sod_test.density = 0.50
+ic_sod_test.velocity = 0.0 0.0 0.0
+ic_sod_test.mach_components = 0.0 0.0 0.0
 
-# Set ic_sodTest.xDiscontinuity equal to half length to place 
+# Set ic_sod_test.xDiscontinuity equal to half length to place 
 # discontinuity in the middle 
-ic_sodTest.xDiscontinuity = 1500.0
+ic_sod_test.x_discontinuity = 1500.0
 
-ic_sodTest.initialTemperature = 0.20
-ic_sodTest.adiabaticExponent = 2.0
-ic_sodTest.meanMolecularMass = 28.96
-ic_sodTest.densityRatio = 4.00
-ic_sodTest.temperatureRatio = 0.1250 
-lbm.initialTemperature = 0.20
-lbm.adiabaticExponent = 2.0
-lbm.meanMolecularMass = 28.96
+ic_sod_test.initial_temperature = 0.20
+ic_sod_test.adiabatic_exponent = 2.0
+ic_sod_test.mean_molecular_mass = 28.96
+ic_sod_test.density_ratio = 4.00
+ic_sod_test.temperature_ratio = 0.1250 
+lbm.initial_temperature = 0.20
+lbm.adiabatic_exponent = 2.0
+lbm.mean_molecular_mass = 28.96
 
 eb2.geom_type = "all_regular"
 

@@ -134,7 +134,6 @@ protected:
     const amrex::Vector<amrex::BCRec>& m_bcs;
     const BCOpCreator m_op;
     amrex::Vector<amrex::MultiFab>& m_f;
-    // amrex::Vector<amrex::MultiFab>& m_g;
     amrex::Interpolater* m_mapper = &amrex::cell_cons_interp;
     bool m_isAnEnergyLattice;
 };

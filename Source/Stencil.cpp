@@ -1,5 +1,4 @@
-#include "Stencil_D3Q27.H"
-// #include "Stencil.H"
+#include "Stencil.H"
 
 namespace lbm::stencil {
 

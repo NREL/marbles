@@ -5,7 +5,7 @@
 #include <AMReX_RealVect.H>
 #include <AMReX_ParmParse.H>
 #include <AMReX_MultiFab.H>
-#include "Stencil_D3Q27.H"
+#include "Stencil.H"
 #include "Utilities.H"
 
 namespace lbm::ic {
@@ -19,21 +19,18 @@ struct Constant
         amrex::RealVect MachComponents = {AMREX_D_DECL(0.0, 0.0, 0.0)};
 
         amrex::Real initialTemperature =
-            1.0 / 3.0; // ns: Safe default, lattice temperature, LB unit
+            1.0 / 3.0; 
         amrex::Real adiabaticExponent =
-            5.0 / 3.0; // ns: Safe default, monoatomic gas. 1.4 for air,
-                       // non-dimensional.
+            5.0 / 3.0; 
+                       
         const amrex::Real R_u =
-            28.96; // ns: Universal Gas constant, LB unit. Never change.
+            28.96; 
         amrex::Real m_bar =
-            28.96; // ns: mean molecular mass, Safe default air. Unit kg/kmol.
+            28.96; 
         amrex::Real speedOfSound_Ref = std::sqrt(
             adiabaticExponent * (R_u / m_bar) *
-            initialTemperature); // the actual speed of sound
+            initialTemperature); 
 
-        // ns: LBM Scheme selector. "energyD3Q27" activates product equilibrium,
-        // energy equation etc.
-        // std::string m_model_type = "isothermal";
         int m_model_type = 0; // 0 is isothermal, 1 is energyD3Q27
 
         AMREX_GPU_DEVICE
@@ -60,8 +57,8 @@ struct Constant
             vel = velocity;
 
             temperature = initialTemperature;
-            R = R_u / m_bar; // ns: Specific gas constant. Implemented.
-            gamma = adiabaticExponent; // ns: not implemented yet
+            R = R_u / m_bar; 
+            gamma = adiabaticExponent; 
         }
     };
 
@@ -86,21 +83,18 @@ struct TaylorGreen
         amrex::Real L{1.0 / M_PI};
 
         amrex::Real initialTemperature =
-            1.0 / 3.0; // ns: Safe default, lattice temperature, LB unit
+            1.0 / 3.0; 
         const amrex::Real adiabaticExponent =
-            5.0 / 3.0; // ns: Safe default, monoatomic gas. 1.4 for air,
-                       // non-dimensional. Safety constant declaration.
+            5.0 / 3.0; 
+                       
         const amrex::Real R_u =
-            28.96; // ns: Universal Gas constant, LB unit. Never change.
+            28.96; 
         amrex::Real m_bar =
-            28.96; // ns: mean molecular mass, Safe default air. Unit kg/kmol.
+            28.96; 
         amrex::Real speedOfSound_Ref = std::sqrt(
             adiabaticExponent * (R_u / m_bar) *
-            initialTemperature); // the actual speed of sound
+            initialTemperature); 
 
-        // ns: LBM Scheme selector. "energyD3Q27" activates product equilibrium,
-        // energy equation etc.
-        // std::string m_model_type = "isothermal";
         int m_model_type = 0; // 0 is isothermal, 1 is energyD3Q27
 
         AMREX_GPU_DEVICE
@@ -164,8 +158,8 @@ struct TaylorGreen
                 vel[2] = 0.0);
 
             temperature = initialTemperature;
-            R = R_u / m_bar; // ns: Specific gas constant. Implemented.
-            gamma = adiabaticExponent; // ns: not implemented yet
+            R = R_u / m_bar; 
+            gamma = adiabaticExponent; 
         }
     };
 
@@ -184,27 +178,24 @@ struct ViscosityTest
 {
     struct DeviceOp
     {
-        amrex::Real waveLength{1.0}; // number of points in Y
+        amrex::Real waveLength{1.0}; 
         amrex::Real density{1.0};
         amrex::RealVect velocity = {AMREX_D_DECL(0.0, 0.0, 0.0)};
         amrex::RealVect MachComponents = {AMREX_D_DECL(0.0, 0.0, 0.0)};
 
         amrex::Real initialTemperature =
-            1.0 / 3.0; // ns: Safe default, lattice temperature, LB unit
+            1.0 / 3.0; 
         amrex::Real adiabaticExponent =
-            5.0 / 3.0; // ns: Safe default, monoatomic gas. 1.4 for air,
-                       // non-dimensional. Safety constant declaration.
+            5.0 / 3.0; 
+                       
         const amrex::Real R_u =
-            28.96; // ns: Universal Gas constant, LB unit. Never change.
+            28.96; 
         amrex::Real m_bar =
-            28.96; // ns: mean molecular mass, Safe default air. Unit kg/kmol.
+            28.96; 
         amrex::Real speedOfSound_Ref = std::sqrt(
             adiabaticExponent * (R_u / m_bar) *
-            initialTemperature); // the actual speed of sound
+            initialTemperature); 
 
-        // ns: LBM Scheme selector. "energyD3Q27" activates product equilibrium,
-        // energy equation etc.
-        // std::string m_model_type = "isothermal";
         int m_model_type = 0; // 0 is isothermal, 1 is energyD3Q27
 
         AMREX_GPU_DEVICE
@@ -216,17 +207,13 @@ struct ViscosityTest
         {
             const amrex::Real* prob_lo = geom.ProbLo();
             const amrex::Real* dx = geom.CellSize();
-
-            // const amrex::Real x = prob_lo[0] + (iv[0] + 0.5 * 0.0) * dx[0];
+            
             const amrex::Real y = prob_lo[1] + (iv[1] + 0.5 * 0.0) * dx[1];
-            // const amrex::Real z =
-            //     AMREX_D_PICK(, 0.0, prob_lo[2] + (iv[2] + 0.5 * 0.0) *
-            //     dx[2]);
 
             rho = density;
 
             const amrex::Real a0 =
-                0.010 * speedOfSound_Ref; // ns:the perturbation amplitude
+                0.010 * speedOfSound_Ref; 
 
             vel[0] = velocity[0] + a0 * std::sin(2.0 * M_PI * y / waveLength);
             vel[1] = velocity[1];
@@ -248,17 +235,13 @@ struct ViscosityTest
 
             const amrex::Real* prob_lo = geom.ProbLo();
             const amrex::Real* dx = geom.CellSize();
-
-            // const amrex::Real x = prob_lo[0] + (iv[0] + 0.5 * 0.0) * dx[0];
+            
             const amrex::Real y = prob_lo[1] + (iv[1] + 0.5 * 0.0) * dx[1];
-            // const amrex::Real z =
-            //     AMREX_D_PICK(, 0.0, prob_lo[2] + (iv[2] + 0.5 * 0.0) *
-            //     dx[2]);
 
             rho = density;
 
             const amrex::Real a0 =
-                0.010 * speedOfSound_Ref; // ns:the perturbation amplitude
+                0.010 * speedOfSound_Ref; 
 
             vel[0] = velocity[0] + a0 * std::sin(2.0 * M_PI * y / waveLength);
             vel[1] = velocity[1];
@@ -267,8 +250,8 @@ struct ViscosityTest
             }
 
             temperature = initialTemperature;
-            R = R_u / m_bar; // ns: Specific gas constant. Implemented.
-            gamma = adiabaticExponent; // ns: not implemented yet
+            R = R_u / m_bar; 
+            gamma = adiabaticExponent; 
         }
     };
 
@@ -276,7 +259,7 @@ struct ViscosityTest
 
     explicit ViscosityTest();
 
-    static std::string identifier() { return "ic_viscosityTest"; }
+    static std::string identifier() { return "ic_viscosity_test"; }
 
     DeviceType device_instance() const { return m_op; }
 
@@ -287,27 +270,23 @@ struct ThermalDiffusivityTest
 {
     struct DeviceOp
     {
-        amrex::Real waveLength{1.0}; // number of points in Y
+        amrex::Real waveLength{1.0}; 
         amrex::Real density{1.0};
         amrex::RealVect velocity = {AMREX_D_DECL(0.0, 0.0, 0.0)};
         amrex::RealVect MachComponents = {AMREX_D_DECL(0.0, 0.0, 0.0)};
 
         amrex::Real initialTemperature =
-            1.0 / 3.0; // ns: Safe default, lattice temperature, LB unit
+            1.0 / 3.0; 
         amrex::Real adiabaticExponent =
-            5.0 / 3.0; // ns: Safe default, monoatomic gas. 1.4 for air,
-                       // non-dimensional. Safety constant declaration.
+            5.0 / 3.0; 
         const amrex::Real R_u =
-            28.96; // ns: Universal Gas constant, LB unit. Never change.
+            28.96; 
         amrex::Real m_bar =
-            28.96; // ns: mean molecular mass, Safe default air. Unit kg/kmol.
+            28.96; 
         amrex::Real speedOfSound_Ref = std::sqrt(
             adiabaticExponent * (R_u / m_bar) *
-            initialTemperature); // the actual speed of sound
+            initialTemperature); 
 
-        // ns: LBM Scheme selector. "energyD3Q27" activates product equilibrium,
-        // energy equation etc.
-        // std::string m_model_type = "isothermal";
         int m_model_type = 0; // 0 is isothermal, 1 is energyD3Q27
 
         AMREX_GPU_DEVICE
@@ -320,18 +299,14 @@ struct ThermalDiffusivityTest
             const amrex::Real* prob_lo = geom.ProbLo();
             const amrex::Real* dx = geom.CellSize();
 
-            // const amrex::Real x = prob_lo[0] + (iv[0] + 0.5 * 0.0) * dx[0];
             const amrex::Real y = prob_lo[1] + (iv[1] + 0.5 * 0.0) * dx[1];
-            // const amrex::Real z =
-            //     AMREX_D_PICK(, 0.0, prob_lo[2] + (iv[2] + 0.5 * 0.0) *
-            //     dx[2]);
-
+ 
             const amrex::Real a0 =
-                0.0010 * initialTemperature; // ns:the perturbation amplitude
+                0.0010 * initialTemperature; 
 
             rho = density + a0 * std::sin(2.0 * M_PI * y / waveLength);
 
-            vel[0] = velocity[0]; //+a0*std::sin(2.0*M_PI*y/waveLength);
+            vel[0] = velocity[0]; 
             vel[1] = velocity[1];
             if (AMREX_SPACEDIM == 3) {
                 vel[2] = velocity[2];
@@ -352,16 +327,12 @@ struct ThermalDiffusivityTest
             const amrex::Real* prob_lo = geom.ProbLo();
             const amrex::Real* dx = geom.CellSize();
 
-            // const amrex::Real x = prob_lo[0] + (iv[0] + 0.5 * 0.0) * dx[0];
             const amrex::Real y = prob_lo[1] + (iv[1] + 0.5 * 0.0) * dx[1];
-            // const amrex::Real z =
-            //     AMREX_D_PICK(, 0.0, prob_lo[2] + (iv[2] + 0.5 * 0.0) *
-            //     dx[2]);
 
             const amrex::Real a0 =
-                0.0010 * initialTemperature; // ns:the perturbation amplitude
+                0.0010 * initialTemperature; 
 
-            R = R_u / m_bar; // ns: Specific gas constant. Implemented.
+            R = R_u / m_bar; 
             const amrex::Real pressure = density * R * initialTemperature;
             rho = density + a0 * std::sin(2.0 * M_PI * y / waveLength);
 
@@ -371,7 +342,7 @@ struct ThermalDiffusivityTest
                 vel[2] = velocity[2];
             }
 
-            gamma = adiabaticExponent; // ns: not implemented yet
+            gamma = adiabaticExponent; 
 
             temperature = pressure / (rho * R);
         }
@@ -381,7 +352,7 @@ struct ThermalDiffusivityTest
 
     explicit ThermalDiffusivityTest();
 
-    static std::string identifier() { return "ic_thermalDiffusivityTest"; }
+    static std::string identifier() { return "ic_thermaldiffusivity_test"; }
 
     DeviceType device_instance() const { return m_op; }
 
@@ -392,30 +363,26 @@ struct SodTest
 {
     struct DeviceOp
     {
-        amrex::Real densityRatio{1.0}; // ns:
+        amrex::Real densityRatio{1.0}; 
         amrex::Real temperatureRatio{1.0};
-        amrex::Real xDiscontinuity{10.0}; // ns: discontinuity location
+        amrex::Real xDiscontinuity{10.0}; 
         amrex::Real density{1.0};
         amrex::RealVect velocity = {AMREX_D_DECL(0.0, 0.0, 0.0)};
         amrex::RealVect MachComponents = {AMREX_D_DECL(0.0, 0.0, 0.0)};
 
         amrex::Real initialTemperature =
-            1.0 / 3.0; // ns: Safe default, lattice temperature, LB unit
+            1.0 / 3.0; 
 
         amrex::Real adiabaticExponent =
-            5.0 / 3.0; // ns: Safe default, monoatomic gas. 1.4 for air,
-                       // non-dimensional. Safety constant declaration.
+            5.0 / 3.0; 
         const amrex::Real R_u =
-            28.96; // ns: Universal Gas constant, LB unit. Never change.
+            28.96; 
         amrex::Real m_bar =
-            28.96; // ns: mean molecular mass, Safe default air. Unit kg/kmol.
+            28.96; 
         amrex::Real speedOfSound_Ref = std::sqrt(
             adiabaticExponent * (R_u / m_bar) *
-            initialTemperature); // the actual speed of sound
-
-        // ns: LBM Scheme selector. "energyD3Q27" activates product equilibrium,
-        // energy equation etc.
-        // std::string m_model_type = "isothermal";
+            initialTemperature); 
+            
         int m_model_type = 0; // 0 is isothermal, 1 is energyD3Q27
 
         AMREX_GPU_DEVICE
@@ -429,11 +396,7 @@ struct SodTest
             const amrex::Real* dx = geom.CellSize();
 
             const amrex::Real x = prob_lo[0] + (iv[0] + 0.5 * 0.0) * dx[0];
-            // const amrex::Real y = prob_lo[1] + (iv[1] + 0.5 * 0.0) * dx[1];
-            // const amrex::Real z =
-            //     AMREX_D_PICK(, 0.0, prob_lo[2] + (iv[2] + 0.5 * 0.0) *
-            //     dx[2]);
-
+            
             vel[0] = velocity[0];
             vel[1] = velocity[1];
             if (AMREX_SPACEDIM == 3) {
@@ -460,12 +423,8 @@ struct SodTest
             const amrex::Real* dx = geom.CellSize();
 
             const amrex::Real x = prob_lo[0] + (iv[0] + 0.5 * 0.0) * dx[0];
-            // const amrex::Real y = prob_lo[1] + (iv[1] + 0.5 * 0.0) * dx[1];
-            // const amrex::Real z =
-            //     AMREX_D_PICK(, 0.0, prob_lo[2] + (iv[2] + 0.5 * 0.0) *
-            //     dx[2]);
 
-            R = R_u / m_bar; // ns: Specific gas constant. Implemented.
+            R = R_u / m_bar; 
 
             vel[0] = velocity[0];
             vel[1] = velocity[1];
@@ -473,7 +432,7 @@ struct SodTest
                 vel[2] = velocity[2];
             }
 
-            gamma = adiabaticExponent; // ns: not implemented yet
+            gamma = adiabaticExponent; 
 
             rho = density + 0.5 *
                                 (1.0 + std::tanh((x - xDiscontinuity) * 3.0)) *
@@ -489,7 +448,7 @@ struct SodTest
 
     explicit SodTest();
 
-    static std::string identifier() { return "ic_sodTest"; }
+    static std::string identifier() { return "ic_sod_test"; }
 
     DeviceType device_instance() const { return m_op; }
 
@@ -541,7 +500,6 @@ public:
 
         amrex::RealVect zero_vec = {AMREX_D_DECL(0.0, 0.0, 0.0)};
 
-        // if (ic.m_model_type == "energyD3Q27") {
         if (ic.m_model_type == 1) {
             amrex::ParallelFor(
                 m_f[lev], m_f[lev].nGrowVect(), constants::N_MICRO_STATES,
@@ -599,9 +557,6 @@ public:
                     const amrex::IntVect iv(AMREX_D_DECL(i, j, k));
                     amrex::Real rho = 1.0;
                     amrex::RealVect vel(AMREX_D_DECL(0.0, 0.0, 0.0));
-                    // amrex::Real temperature = 1.0 / 3.0;
-                    // amrex::Real R = ic.R_u / 28.96;
-                    // amrex::Real gamma = 1.667;
 
                     ic(iv, geom, rho, vel);
 
