@@ -216,10 +216,6 @@ struct BCFill
         // In this case, a value for u, v, and w must be
         // specified, either hard coded or set by a
         // user-specified function
-        // amrex::Real rho_out = 0.0;
-        // amrex::Real rho_tan = 0.0;
-
-        // const amrex::IntVect ivn(iv + ev);
 
         amrex::Real cv = R / (adiabaticExponent - 1.0);
 
