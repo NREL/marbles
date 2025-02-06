@@ -84,19 +84,19 @@ public:
 
     // calculate the macro fluid properties from the distributions and store
     // part of (4.45) of http://dx.doi.org/10.3929/ethz-b-000607045
-    void f_to_macrodata_d3_q27(const int lev); 
+    void f_to_macrodata_d3_q27(const int lev);
 
     // Stream the information to the neighbor particles
     void stream(const int lev);
 
     // Stream the information to the neighbor particles
-    void stream_g(const int lev); 
+    void stream_g(const int lev);
 
     // Collide the particles
     void collide(const int lev);
 
     // Collide the particles
-    void collide_d3_q27(const int lev); 
+    void collide_d3_q27(const int lev);
 
     // Relax the particles toward the equilibrium state
     void relax_f_to_equilibrium(const int lev);
@@ -225,17 +225,16 @@ private:
     amrex::Vector<std::string> m_lbm_varnames;
     amrex::Vector<std::string> m_macrodata_varnames;
     amrex::Vector<std::string> m_microdata_varnames;
-    amrex::Vector<std::string>
-        m_microdata_g_varnames; 
+    amrex::Vector<std::string> m_microdata_g_varnames;
     amrex::Vector<std::string> m_deriveddata_varnames;
     amrex::Vector<std::string> m_idata_varnames;
 
     // array of multifabs to store the solution at each level of refinement
     amrex::Vector<amrex::MultiFab> m_macrodata;
     amrex::Vector<amrex::MultiFab> m_f;
-    amrex::Vector<amrex::MultiFab> m_g; 
+    amrex::Vector<amrex::MultiFab> m_g;
     amrex::Vector<amrex::MultiFab> m_eq;
-    amrex::Vector<amrex::MultiFab> m_eq_g; 
+    amrex::Vector<amrex::MultiFab> m_eq_g;
     amrex::Vector<amrex::MultiFab> m_derived;
     amrex::Vector<amrex::iMultiFab> m_is_fluid;
     amrex::Vector<amrex::MultiFab> m_plt_mf;
@@ -287,7 +286,7 @@ private:
     amrex::Real m_dx_outer = 1.0;
     amrex::Real m_dt_outer = 1.0;
     amrex::Real m_nu = 1.0;
-    amrex::Real m_alpha = 1.0; 
+    amrex::Real m_alpha = 1.0;
 
     // save streaming data to plot file
     bool m_save_streaming = true;
@@ -316,16 +315,16 @@ private:
     // energy equation etc.
     std::string m_model_type = "isothermal";
 
-    // Initial temperature. 
+    // Initial temperature.
     amrex::Real m_initialTemperature = 1.0 / 3.0;
 
-    // Adiabatic exponent. 
-    amrex::Real m_adiabaticExponent = 5.0 / 3.0; 
+    // Adiabatic exponent.
+    amrex::Real m_adiabaticExponent = 5.0 / 3.0;
 
-    // Universal Gas constant, LB unit. Never change. 
+    // Universal Gas constant, LB unit. Never change.
     const amrex::Real m_R_u = 28.96;
 
-    // Mean molecular mass, Safe default air. Unit kg/kmol. 
+    // Mean molecular mass, Safe default air. Unit kg/kmol.
     amrex::Real m_m_bar = 28.96;
 
     // Set the actual reference speed of sound

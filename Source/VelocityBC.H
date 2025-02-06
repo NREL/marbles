@@ -44,20 +44,15 @@ struct Constant
         int dir{1};
         amrex::Real u0{0.0};
 
-        amrex::Real initialTemperature =
-            1.0 / 3.0; 
-        amrex::Real adiabaticExponent =
-            5.0 / 3.0; 
-        const amrex::Real R_u =
-            28.96; 
-        amrex::Real m_bar =
-            28.96; 
-        amrex::Real speedOfSound_Ref = std::sqrt(
-            adiabaticExponent * (R_u / m_bar) *
-            initialTemperature); 
+        amrex::Real initialTemperature = 1.0 / 3.0;
+        amrex::Real adiabaticExponent = 5.0 / 3.0;
+        const amrex::Real R_u = 28.96;
+        amrex::Real m_bar = 28.96;
+        amrex::Real speedOfSound_Ref =
+            std::sqrt(adiabaticExponent * (R_u / m_bar) * initialTemperature);
 
-        int m_model_type = 0;     // 0 is isothermal, 1 is energyD3Q27
-        amrex::Real Mach_0{0.05}; 
+        int m_model_type = 0; // 0 is isothermal, 1 is energyD3Q27
+        amrex::Real Mach_0{0.05};
 
         AMREX_GPU_DEVICE
         void operator()(
@@ -110,9 +105,9 @@ struct Channel
             const amrex::Real c2 =
                 AMREX_D_PICK(, c1, iv[2] * (domhi[2] - iv[2]));
             vel[0] = 16.0 * u_ref * c1 * c2 / std::pow((domhi[1] + 1), 4);
-            R = 1.0;           
-            T = 1.0 / 3.0;     
-            gamma = 5.0 / 3.0; 
+            R = 1.0;
+            T = 1.0 / 3.0;
+            gamma = 5.0 / 3.0;
         }
     };
 
@@ -133,21 +128,16 @@ struct Parabolic
         int tangential_dir{1};
         amrex::Real um{1.0};
 
-        amrex::Real initialTemperature =
-            1.0 / 3.0; 
-        amrex::Real adiabaticExponent =
-            5.0 / 3.0; 
-            
-        const amrex::Real R_u =
-            28.96; 
-        amrex::Real m_bar =
-            28.96; 
-        amrex::Real speedOfSound_Ref = std::sqrt(
-            adiabaticExponent * (R_u / m_bar) *
-            initialTemperature); 
+        amrex::Real initialTemperature = 1.0 / 3.0;
+        amrex::Real adiabaticExponent = 5.0 / 3.0;
 
-        int m_model_type = 0;     // 0 is isothermal, 1 is energyD3Q27
-        amrex::Real Mach_m{0.05}; 
+        const amrex::Real R_u = 28.96;
+        amrex::Real m_bar = 28.96;
+        amrex::Real speedOfSound_Ref =
+            std::sqrt(adiabaticExponent * (R_u / m_bar) * initialTemperature);
+
+        int m_model_type = 0; // 0 is isothermal, 1 is energyD3Q27
+        amrex::Real Mach_m{0.05};
 
         AMREX_GPU_DEVICE
         void operator()(

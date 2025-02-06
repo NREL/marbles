@@ -225,8 +225,8 @@ struct BCFill
 
         amrex::Real two_rho_e = get_energy(temperature, rho_bc, vel_bc, cv);
 
-        amrex::Real rxx_eq(0.0), ryy_eq(0.0), rzz_eq(0.0),
-            rxy_eq(0.0), rxz_eq(0.0), ryz_eq(0.0);
+        amrex::Real rxx_eq(0.0), ryy_eq(0.0), rzz_eq(0.0), rxy_eq(0.0),
+            rxz_eq(0.0), ryz_eq(0.0);
 
         amrex::RealVect heat_flux = {AMREX_D_DECL(0.0, 0.0, 0.0)};
 
@@ -475,22 +475,18 @@ struct BCFill
                                 amrex::RealVect vel_bc(
                                     AMREX_D_DECL(0.0, 0.0, 0.0));
                                 amrex::Real specific_gas_constant(1.0),
-                                    temperature(
-                                        1.0 /
-                                        3.0); 
-                                amrex::Real gamma(
-                                    5.0 / 3.0); 
+                                    temperature(1.0 / 3.0);
+                                amrex::Real gamma(5.0 / 3.0);
 
                                 amrex::Real rho_bc(1.0);
-                                
+
                                 m_vel_bc_op(
                                     iv, idir, normal_dir, time, geom, vel_bc,
                                     specific_gas_constant, temperature, gamma);
 
                                 if (isAnEnergyLattice) {
-                                    rho_bc =
-                                        1.0; 
-                                        
+                                    rho_bc = 1.0;
+
                                     velocity_bc_g(
                                         iv, q, ev, idir, normal_dir, rho_bc,
                                         vel_bc, specific_gas_constant,
