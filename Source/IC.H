@@ -451,7 +451,7 @@ public:
 
     Initializer(
         const amrex::Real& mesh_speed,
-        const ICOp ic_op,
+        const ICOp &ic_op,
         amrex::Vector<amrex::MultiFab>& f,
         amrex::Vector<amrex::MultiFab>& g)
         : m_mesh_speed(mesh_speed), m_op(ic_op), m_f(f), m_g(g)
