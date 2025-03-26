@@ -41,14 +41,12 @@ LBM::LBM()
         m_microdata_varnames.push_back("f_" + zero_padded_str);
     }
 
-    if (m_model_type == "energyD3Q27") {
-        for (int q = 0; q < constants::N_MICRO_STATES; q++) {
-            const auto num_str = std::to_string(q);
-            const auto zero_padded_str =
-                std::string(n_zero - std::min(n_zero, num_str.length()), '0') +
-                num_str;
-            m_microdata_g_varnames.push_back("g_" + zero_padded_str);
-        }
+    for (int q = 0; q < constants::N_MICRO_STATES; q++) {
+        const auto num_str = std::to_string(q);
+        const auto zero_padded_str =
+            std::string(n_zero - std::min(n_zero, num_str.length()), '0') +
+            num_str;
+        m_microdata_g_varnames.push_back("g_" + zero_padded_str);
     }
 
     m_deriveddata_varnames.push_back("vort_x");
@@ -70,10 +68,8 @@ LBM::LBM()
             m_lbm_varnames.push_back(vname);
         }
 
-        if (m_model_type == "energyD3Q27") {
-            for (const auto& vname : m_microdata_g_varnames) {
-                m_lbm_varnames.push_back(vname);
-            }
+        for (const auto& vname : m_microdata_g_varnames) {
+            m_lbm_varnames.push_back(vname);
         }
     }
     if (m_save_derived) {
@@ -418,9 +414,7 @@ void LBM::evolve()
 
         m_fillpatch_op->fillpatch(0, cur_time, m_f[0]);
 
-        if (m_model_type == "energyD3Q27") {
-            m_fillpatch_g_op->fillpatch(0, cur_time, m_g[0]);
-        }
+        m_fillpatch_g_op->fillpatch(0, cur_time, m_g[0]);
 
         time_step(0, cur_time, 1);
 
@@ -503,10 +497,7 @@ void LBM::time_step(const int lev, const amrex::Real time, const int iteration)
     if (lev < finest_level) {
         m_fillpatch_op->fillpatch(lev + 1, m_ts_new[lev + 1], m_f[lev + 1]);
 
-        if (m_model_type == "energyD3Q27") {
-            m_fillpatch_g_op->fillpatch(
-                lev + 1, m_ts_new[lev + 1], m_g[lev + 1]);
-        }
+        m_fillpatch_g_op->fillpatch(lev + 1, m_ts_new[lev + 1], m_g[lev + 1]);
 
         for (int i = 1; i <= m_nsubsteps[lev + 1]; ++i) {
             time_step(lev + 1, time + (i - 1) * m_dts[lev + 1], i);
@@ -538,23 +529,13 @@ void LBM::advance(
 
     stream(lev);
 
-    if (m_model_type == "energyD3Q27") {
-        stream_g(lev);
-    }
+    stream_g(lev);
 
     if (lev < finest_level) {
         average_down_to(lev, amrex::IntVect(1));
     }
 
-    if (m_model_type == "energyD3Q27") {
-        collide_d3_q27(lev);
-    } else {
-        collide(lev);
-    }
-
-    if (m_model_type != "energyD3Q27") {
-        sanity_check_f(lev);
-    }
+    collide_d3_q27(lev);
 }
 
 void LBM::post_time_step()
@@ -1318,31 +1299,21 @@ void LBM::MakeNewLevelFromCoarse(
     initialize_is_fluid(lev);
     initialize_mask(lev);
     m_fillpatch_op->fillpatch_from_coarse(lev, time, m_f[lev]);
-    if (m_model_type == "energyD3Q27") {
-        m_fillpatch_g_op->fillpatch_from_coarse(lev, time, m_g[lev]);
-    }
+
+    m_fillpatch_g_op->fillpatch_from_coarse(lev, time, m_g[lev]);
+
     m_macrodata[lev].setVal(0.0);
     m_eq[lev].setVal(0.0);
     m_eq_g[lev].setVal(0.0);
     m_derived[lev].setVal(0.0);
 
-    if (m_model_type == "energyD3Q27") {
-        f_to_macrodata_d3_q27(lev);
-    } else {
-        f_to_macrodata(lev);
-    }
+    f_to_macrodata_d3_q27(lev);
 
-    if (m_model_type == "energyD3Q27") {
-        macrodata_to_equilibrium_d3_q27(lev);
-    } else {
-        macrodata_to_equilibrium(lev);
-    }
+    macrodata_to_equilibrium_d3_q27(lev);
 
     compute_derived(lev);
 
-    if (m_model_type == "energyD3Q27") {
-        compute_q_corrections(lev);
-    }
+    compute_q_corrections(lev);
 }
 
 // Make a new level from scratch using provided BoxArray and
@@ -1392,23 +1363,13 @@ void LBM::MakeNewLevelFromScratch(
     m_eq_g[lev].setVal(0.0);
     m_derived[lev].setVal(0.0);
 
-    if (m_model_type == "energyD3Q27") {
-        f_to_macrodata_d3_q27(lev);
-    } else {
-        f_to_macrodata(lev);
-    }
+    f_to_macrodata_d3_q27(lev);
 
-    if (m_model_type == "energyD3Q27") {
-        macrodata_to_equilibrium_d3_q27(lev);
-    } else {
-        macrodata_to_equilibrium(lev);
-    }
+    macrodata_to_equilibrium_d3_q27(lev);
 
     compute_derived(lev);
 
-    if (m_model_type == "energyD3Q27") {
-        compute_q_corrections(lev);
-    }
+    compute_q_corrections(lev);
 }
 
 void LBM::initialize_f(const int lev)
@@ -1421,10 +1382,6 @@ void LBM::initialize_f(const int lev)
 
     m_f[lev].FillBoundary(Geom(lev).periodicity());
     m_g[lev].FillBoundary(Geom(lev).periodicity());
-
-    if (m_model_type != "energyD3Q27") {
-        sanity_check_f(lev);
-    }
 }
 
 void LBM::initialize_is_fluid(const int lev)
@@ -1508,30 +1465,15 @@ void LBM::fill_f_inside_eb(const int lev)
     const auto& weight = stencil.weights;
     const auto model_type = m_model_type;
 
-    if (model_type == "energyD3Q27") {
-        amrex::ParallelFor(
-            m_f[lev], m_f[lev].nGrowVect(), constants::N_MICRO_STATES,
-            [=] AMREX_GPU_DEVICE(int nbx, int i, int j, int k, int q) noexcept {
-                if (is_fluid_arrs[nbx](i, j, k, 0) == 0) {
+    amrex::ParallelFor(
+        m_f[lev], m_f[lev].nGrowVect(), constants::N_MICRO_STATES,
+        [=] AMREX_GPU_DEVICE(int nbx, int i, int j, int k, int q) noexcept {
+            if (is_fluid_arrs[nbx](i, j, k, 0) == 0) {
 
-                    set_population_zero(f_arrs[nbx](i, j, k, q));
-                    set_population_zero(g_arrs[nbx](i, j, k, q));
-                }
-            });
-    } else {
-        amrex::ParallelFor(
-            m_f[lev], m_f[lev].nGrowVect(), constants::N_MICRO_STATES,
-            [=] AMREX_GPU_DEVICE(int nbx, int i, int j, int k, int q) noexcept {
-                if (is_fluid_arrs[nbx](i, j, k, 0) == 0) {
-                    const amrex::Real wt = weight[q];
-                    const auto& ev = evs[q];
-
-                    set_equilibrium_value(
-                        rho_inside, vel_inside, l_mesh_speed, wt, ev,
-                        f_arrs[nbx](i, j, k, q));
-                }
-            });
-    }
+                set_population_zero(f_arrs[nbx](i, j, k, q));
+                set_population_zero(g_arrs[nbx](i, j, k, q));
+            }
+        });
 
     amrex::Gpu::synchronize();
 }
@@ -1672,7 +1614,7 @@ bool LBM::check_field_existence(const std::string& name)
 {
     BL_PROFILE("LBM::check_field_existence()");
 
-    if (m_model_type == "energyD3Q27") {
+    {
         const auto vnames = {
             m_macrodata_varnames, m_microdata_varnames, m_microdata_g_varnames,
             m_deriveddata_varnames, m_idata_varnames};
@@ -1769,11 +1711,9 @@ void LBM::average_down_to(int crse_lev, amrex::IntVect crse_ng)
         m_f[crse_lev + 1], m_f[crse_lev], Geom(crse_lev), crse_ng,
         refRatio(crse_lev));
 
-    if (m_model_type == "energyD3Q27") {
-        average_down_with_ghosts(
-            m_g[crse_lev + 1], m_g[crse_lev], Geom(crse_lev), crse_ng,
-            refRatio(crse_lev));
-    }
+    average_down_with_ghosts(
+        m_g[crse_lev + 1], m_g[crse_lev], Geom(crse_lev), crse_ng,
+        refRatio(crse_lev));
 
     amrex::Gpu::synchronize();
 }
@@ -1842,12 +1782,10 @@ amrex::Vector<const amrex::MultiFab*> LBM::plot_file_mf()
             cnt += m_f[lev].nComp();
         }
 
-        if (m_model_type == "energyD3Q27") {
-            if (m_save_streaming) {
-                amrex::MultiFab::Copy(
-                    m_plt_mf[lev], m_g[lev], 0, cnt, m_g[lev].nComp(), 0);
-                cnt += m_g[lev].nComp();
-            }
+        if (m_save_streaming) {
+            amrex::MultiFab::Copy(
+                m_plt_mf[lev], m_g[lev], 0, cnt, m_g[lev].nComp(), 0);
+            cnt += m_g[lev].nComp();
         }
 
         if (m_save_derived) {
@@ -1972,12 +1910,10 @@ void LBM::write_checkpoint_file() const
                           lev, checkpointname, "Level_", varnames[0]));
     }
 
-    if (m_model_type == "energyD3Q27") {
-        for (int lev = 0; lev <= finest_level; ++lev) {
-            amrex::VisMF::Write(
-                m_g[lev], amrex::MultiFabFileFullPrefix(
-                              lev, checkpointname, "Level_", varnames_g[0]));
-        }
+    for (int lev = 0; lev <= finest_level; ++lev) {
+        amrex::VisMF::Write(
+            m_g[lev], amrex::MultiFabFileFullPrefix(
+                          lev, checkpointname, "Level_", varnames_g[0]));
     }
 }
 
@@ -2086,12 +2022,10 @@ void LBM::read_checkpoint_file()
                           lev, m_restart_chkfile, "Level_", varnames[0]));
     }
 
-    if (m_model_type == "energyD3Q27") {
-        for (int lev = 0; lev <= finest_level; ++lev) {
-            amrex::VisMF::Read(
-                m_g[lev], amrex::MultiFabFileFullPrefix(
-                              lev, m_restart_chkfile, "Level_", varnames_g[0]));
-        }
+    for (int lev = 0; lev <= finest_level; ++lev) {
+        amrex::VisMF::Read(
+            m_g[lev], amrex::MultiFabFileFullPrefix(
+                          lev, m_restart_chkfile, "Level_", varnames_g[0]));
     }
 
     // Populate the other data
@@ -2106,23 +2040,13 @@ void LBM::read_checkpoint_file()
         m_eq_g[lev].setVal(0.0);
         m_derived[lev].setVal(0.0);
 
-        if (m_model_type == "energyD3Q27") {
-            f_to_macrodata_d3_q27(lev);
-        } else {
-            f_to_macrodata(lev);
-        }
+        f_to_macrodata_d3_q27(lev);
 
-        if (m_model_type == "energyD3Q27") {
-            macrodata_to_equilibrium_d3_q27(lev);
-        } else {
-            macrodata_to_equilibrium(lev);
-        }
+        macrodata_to_equilibrium_d3_q27(lev);
 
         compute_derived(lev);
 
-        if (m_model_type == "energyD3Q27") {
-            compute_q_corrections(lev);
-        }
+        compute_q_corrections(lev);
     }
 }
 
