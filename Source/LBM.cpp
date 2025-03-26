@@ -1452,18 +1452,12 @@ void LBM::initialize_mask(const int lev)
 void LBM::fill_f_inside_eb(const int lev)
 {
     BL_PROFILE("LBM::fill_f_inside_eb()");
-    const amrex::Real rho_inside = 0.0;
-    const amrex::RealVect vel_inside(AMREX_D_DECL(0.0, 0.0, 0.0));
-    const amrex::Real l_mesh_speed = m_mesh_speed;
 
     auto const& f_arrs = m_f[lev].arrays();
     auto const& g_arrs = m_g[lev].arrays();
 
     auto const& is_fluid_arrs = m_is_fluid[lev].arrays();
     const stencil::Stencil stencil;
-    const auto& evs = stencil.evs;
-    const auto& weight = stencil.weights;
-    const auto model_type = m_model_type;
 
     amrex::ParallelFor(
         m_f[lev], m_f[lev].nGrowVect(), constants::N_MICRO_STATES,
@@ -1618,16 +1612,6 @@ bool LBM::check_field_existence(const std::string& name)
         const auto vnames = {
             m_macrodata_varnames, m_microdata_varnames, m_microdata_g_varnames,
             m_deriveddata_varnames, m_idata_varnames};
-
-        return std::any_of(vnames.begin(), vnames.end(), [=](const auto& vn) {
-            return get_field_component(name, vn) != -1;
-        });
-    }
-
-    {
-        const auto vnames = {
-            m_macrodata_varnames, m_microdata_varnames, m_deriveddata_varnames,
-            m_idata_varnames};
 
         return std::any_of(vnames.begin(), vnames.end(), [=](const auto& vn) {
             return get_field_component(name, vn) != -1;
