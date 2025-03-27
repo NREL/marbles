@@ -26,7 +26,7 @@ struct Constant
         amrex::Real speedOfSound_Ref =
             std::sqrt(adiabaticExponent * (R_u / m_bar) * initialTemperature);
 
-        int m_model_type = 0; // 0 is isothermal, 1 is energyD3Q27
+        int m_model_type = 1; // 0 is isothermal, 1 is energyD3Q27
 
         AMREX_GPU_DEVICE
         void operator()(
@@ -181,7 +181,7 @@ struct ViscosityTest
         amrex::Real speedOfSound_Ref =
             std::sqrt(adiabaticExponent * (R_u / m_bar) * initialTemperature);
 
-        int m_model_type = 0; // 0 is isothermal, 1 is energyD3Q27
+        int m_model_type = 1; // 0 is isothermal, 1 is energyD3Q27
 
         AMREX_GPU_DEVICE
         void operator()(
@@ -265,7 +265,7 @@ struct ThermalDiffusivityTest
         amrex::Real speedOfSound_Ref =
             std::sqrt(adiabaticExponent * (R_u / m_bar) * initialTemperature);
 
-        int m_model_type = 0; // 0 is isothermal, 1 is energyD3Q27
+        int m_model_type = 1; // 0 is isothermal, 1 is energyD3Q27
 
         AMREX_GPU_DEVICE
         void operator()(
@@ -354,7 +354,7 @@ struct SodTest
         amrex::Real speedOfSound_Ref =
             std::sqrt(adiabaticExponent * (R_u / m_bar) * initialTemperature);
 
-        int m_model_type = 0; // 0 is isothermal, 1 is energyD3Q27
+        int m_model_type = 1; // 0 is isothermal, 1 is energyD3Q27
 
         AMREX_GPU_DEVICE
         void operator()(
