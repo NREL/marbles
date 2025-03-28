@@ -609,7 +609,7 @@ struct BCFill
                                     temperature(1.0 / 3.0);
                                 amrex::Real gamma(5.0 / 3.0);
 
-                                amrex::Real rho_bcOut(1.0);
+                                amrex::Real rho_bcout(1.0);
 
                                 m_vel_bc_op(
                                     iv, idir, normal_dir, time, geom, vel_bc,
@@ -617,9 +617,9 @@ struct BCFill
 
                                 if (isAnEnergyLattice) {
 
-                                    rho_bcOut = 1.0;
+                                    rho_bcout = 1.0;
                                     pressure_bc_g(
-                                        iv, q, ev, idir, normal_dir, rho_bcOut,
+                                        iv, q, ev, idir, normal_dir, rho_bcout,
                                         rho_bc, specific_gas_constant,
                                         temperature, gamma, data);
 
@@ -627,7 +627,7 @@ struct BCFill
                                     pressure_bc_f(
                                         iv, q, ev, idir, normal_dir, rho_bc,
                                         specific_gas_constant * temperature,
-                                        data, rho_bcOut);
+                                        data, rho_bcout);
                                 }
 
                             } else if (m_bc_type[bc_idx] == 4) {
