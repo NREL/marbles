@@ -1022,10 +1022,16 @@ void LBM::f_to_macrodata_d3_q27(const int lev)
 
                     pxx += ev[0] * ev[0] * f_arr(iv, q);
                     pyy += ev[1] * ev[1] * f_arr(iv, q);
-                    pzz += ev[2] * ev[2] * f_arr(iv, q);
+                    if (AMREX_SPACEDIM == 3) {
+                        pzz += ev[2] * ev[2] * f_arr(iv, q);
+                    }
                     pxy += ev[0] * ev[1] * f_arr(iv, q);
-                    pxz += ev[0] * ev[2] * f_arr(iv, q);
-                    pyz += ev[1] * ev[2] * f_arr(iv, q);
+                    if (AMREX_SPACEDIM == 3) {
+                        pxz += ev[0] * ev[2] * f_arr(iv, q);
+                    }
+                    if (AMREX_SPACEDIM == 3) {
+                        pyz += ev[1] * ev[2] * f_arr(iv, q);
+                    }
 
                     two_rho_e += g_arr(iv, q);
 
