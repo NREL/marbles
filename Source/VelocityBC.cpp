@@ -37,8 +37,8 @@ Channel::Channel()
     pp.query("adiabatic_exponent", m_op.adiabaticExponent);
     pp.query("mean_molecular_mass", m_op.m_bar);
     m_op.speedOfSound_Ref = std::sqrt(
-    m_op.adiabaticExponent * (m_op.R_u / m_op.m_bar) *
-    m_op.initialTemperature);
+        m_op.adiabaticExponent * (m_op.R_u / m_op.m_bar) *
+        m_op.initialTemperature);
     m_op.u_ref = m_op.Mach_ref * m_op.speedOfSound_Ref;
 }
 

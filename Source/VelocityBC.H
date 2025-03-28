@@ -93,7 +93,7 @@ struct Channel
         const amrex::Real R_u = 28.96;
         amrex::Real m_bar = 28.96;
         amrex::Real speedOfSound_Ref =
-        std::sqrt(adiabaticExponent * (R_u / m_bar) * initialTemperature);
+            std::sqrt(adiabaticExponent * (R_u / m_bar) * initialTemperature);
 
         int m_model_type = 1; // 0 is isothermal, 1 is energyD3Q27
         amrex::Real Mach_ref{0.005};
