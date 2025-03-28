@@ -313,7 +313,7 @@ private:
 
     // LBM Scheme selector. "energyD3Q27" activates product equilibrium,
     // energy equation etc.
-    std::string m_model_type = "isothermal";
+    std::string m_model_type = "energyD3Q27";
 
     // Initial temperature.
     amrex::Real m_initialTemperature = 1.0 / 3.0;

@@ -341,6 +341,109 @@ struct BCFill
 
     AMREX_GPU_DEVICE
     AMREX_FORCE_INLINE
+    void pressure_bc_f(
+        const amrex::IntVect& iv,
+        const int q,
+        const amrex::IntVect& ev,
+        const int idir,
+        const int ndir,
+        const amrex::Real rho_bc,
+        const amrex::Real& RT,
+        amrex::Array4<amrex::Real> const& data,
+        amrex::Real &rho_bcOut) const
+    {
+        // Prepare the ghost cell layer of f_ for
+        // streaming due to a prescribed
+        // pressure/density. This is done by assigning
+        // all the values of f_ on this ghost layer to
+        // be the equilibrium distributions associated
+        // with the desired density. They will naturally
+        // exert their effect on the interior fluid
+        // points during the streaming step.
+
+        amrex::Real rho_out = 0.0;
+        amrex::Real rho_tan = 0.0;
+
+        const amrex::IntVect ivn(iv + ev);
+
+        // Build the 3-part rho calculation at the
+        // (iv+ev) fluid cell
+        for (int qq = 0; qq < constants::N_MICRO_STATES; qq++) {
+
+            const auto& evn_out = m_evs[qq];
+            const int bounce_qq = m_bounce_dirs[qq];
+            const auto& evn_in = m_evs[bounce_qq];
+
+            if (evn_in[idir] == -ndir) {
+                rho_out += 2.0 * data(ivn + evn_out, bounce_qq);
+            } else if (evn_in[idir] == 0) {
+                rho_tan += 1.0 * data(ivn + evn_out, bounce_qq);
+            }
+        }
+
+        amrex::RealVect vel_bc(AMREX_D_DECL(0.0, 0.0, 0.0));
+        vel_bc[idir] = ndir * (1.0 - (rho_out + rho_tan) / rho_bc);
+
+        set_equilibrium_value_d3_q27(
+                rho_bc, vel_bc, RT, m_mesh_speed, m_weights[q], ev, data(iv, q));
+        
+        rho_bcOut = rho_out+rho_tan;    
+    }
+    
+    AMREX_GPU_DEVICE
+    AMREX_FORCE_INLINE
+    void pressure_bc_g(
+        const amrex::IntVect& iv,
+        const int q,
+        const amrex::IntVect& ev,
+        const int idir,
+        const int ndir,
+        const amrex::Real rho_bcOut,
+        const amrex::Real rho_bc,
+        const amrex::Real& R,
+        const amrex::Real& temperature,
+        const amrex::Real& adiabaticExponent,
+        amrex::Array4<amrex::Real> const& data) const
+    {
+        // Prepare the ghost cell layer of f_ for
+        // streaming due to a prescribed
+        // pressure/density. This is done by assigning
+        // all the values of f_ on this ghost layer to
+        // be the equilibrium distributions associated
+        // with the desired density. They will naturally
+        // exert their effect on the interior fluid
+        // points during the streaming step.
+
+        // Build the 3-part rho calculation at the
+        // (iv+ev) fluid cell
+
+        amrex::RealVect vel_bc(AMREX_D_DECL(0.0, 0.0, 0.0));
+        vel_bc[idir] = ndir * (1.0 - (rho_bcOut) / rho_bc);
+
+        amrex::Real cv = R / (adiabaticExponent - 1.0);
+
+        amrex::Real two_rho_e = get_energy(temperature, rho_bc, vel_bc, cv);
+    
+            amrex::Real rxx_eq(0.0), ryy_eq(0.0), rzz_eq(0.0), rxy_eq(0.0),
+                rxz_eq(0.0), ryz_eq(0.0);
+    
+            amrex::RealVect heat_flux = {AMREX_D_DECL(0.0, 0.0, 0.0)};
+    
+            get_equilibrium_moments(
+                rho_bc, vel_bc, two_rho_e, cv, R, heat_flux, rxx_eq, ryy_eq, rzz_eq,
+                rxy_eq, rxz_eq, ryz_eq);
+    
+            amrex::GpuArray<amrex::Real, 6> flux_of_heat_flux = {
+                rxx_eq, ryy_eq, rzz_eq, rxy_eq, rxz_eq, ryz_eq};
+    
+            set_extended_grad_expansion_generic(
+                two_rho_e, heat_flux, flux_of_heat_flux, m_mesh_speed, m_weights[q],
+                ev, theta0, zeroVec, 1.0, data(iv, q));
+    
+    }
+
+    AMREX_GPU_DEVICE
+    AMREX_FORCE_INLINE
     void outflow_bc(
         const amrex::IntVect& iv,
         const int q,
@@ -474,30 +577,60 @@ struct BCFill
                                     temperature(1.0 / 3.0);
                                 amrex::Real gamma(5.0 / 3.0);
 
-                                amrex::Real rho_bc(1.0);
+                                amrex::Real rho_bcOut(1.0);
 
                                 m_vel_bc_op(
                                     iv, idir, normal_dir, time, geom, vel_bc,
                                     specific_gas_constant, temperature, gamma);
 
                                 if (isAnEnergyLattice) {
-                                    rho_bc = 1.0;
+                                    rho_bcOut = 1.0;
 
                                     velocity_bc_g(
-                                        iv, q, ev, idir, normal_dir, rho_bc,
+                                        iv, q, ev, idir, normal_dir, rho_bcOut,
                                         vel_bc, specific_gas_constant,
                                         temperature, gamma, data);
                                 } else {
                                     velocity_bc_f(
                                         iv, q, ev, idir, normal_dir, vel_bc,
                                         specific_gas_constant * temperature,
-                                        data, rho_bc);
+                                        data, rho_bcOut);
                                 }
 
                             } else if (m_bc_type[bc_idx] == 3) {
+
                                 const amrex::Real rho_bc = 1.0;
-                                pressure_bc(
-                                    iv, q, ev, idir, normal_dir, rho_bc, data);
+                                // pressure_bc(
+                                //     iv, q, ev, idir, normal_dir, rho_bc, data);
+
+                                amrex::RealVect vel_bc(
+                                        AMREX_D_DECL(0.0, 0.0, 0.0));
+                                amrex::Real specific_gas_constant(1.0),
+                                    temperature(1.0 / 3.0);
+                                amrex::Real gamma(5.0 / 3.0);
+
+                                amrex::Real rho_bcOut(1.0);
+
+                                m_vel_bc_op(
+                                    iv, idir, normal_dir, time, geom, vel_bc,
+                                    specific_gas_constant, temperature, gamma);
+    
+                                if (isAnEnergyLattice) {
+
+                                    rho_bcOut=1.0;
+                                    pressure_bc_g(iv,q,ev,idir,normal_dir,rho_bcOut,
+                                        rho_bc,specific_gas_constant,temperature,
+                                        gamma,data);
+
+                                }
+                                    else{
+                                    pressure_bc_f(iv,q,ev,idir,normal_dir,rho_bc,
+                                    specific_gas_constant * temperature,
+                                        data,rho_bcOut); 
+                                }   
+
+
+
                             } else if (m_bc_type[bc_idx] == 4) {
                                 outflow_bc(iv, q, ev, idir, normal_dir, data);
                             } else if (m_bc_type[bc_idx] == 5) {
