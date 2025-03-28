@@ -76,20 +76,39 @@ public:
     // convert macrodata to equilibrium
     void macrodata_to_equilibrium(const int lev);
 
+    // convert macrodata to equilibrium
+    void macrodata_to_equilibrium_d3_q27(const int lev);
+
     // calculate the macro fluid properties from the distributions
     void f_to_macrodata(const int lev);
+
+    // calculate the macro fluid properties from the distributions and store
+    // part of (4.45) of http://dx.doi.org/10.3929/ethz-b-000607045
+    void f_to_macrodata_d3_q27(const int lev);
 
     // Stream the information to the neighbor particles
     void stream(const int lev);
 
+    // Stream the information to the neighbor particles
+    void stream_g(const int lev);
+
     // Collide the particles
     void collide(const int lev);
+
+    // Collide the particles
+    void collide_d3_q27(const int lev);
 
     // Relax the particles toward the equilibrium state
     void relax_f_to_equilibrium(const int lev);
 
+    // Relax the particles toward the equilibrium state
+    void relax_f_to_equilibrium_d3_q27(const int lev);
+
     // Compute derived quantities
     void compute_derived(const int lev);
+
+    // Compute derived quantities
+    void compute_q_corrections(const int lev);
 
     // Compute forces on EB
     void compute_eb_forces();
@@ -206,13 +225,16 @@ private:
     amrex::Vector<std::string> m_lbm_varnames;
     amrex::Vector<std::string> m_macrodata_varnames;
     amrex::Vector<std::string> m_microdata_varnames;
+    amrex::Vector<std::string> m_microdata_g_varnames;
     amrex::Vector<std::string> m_deriveddata_varnames;
     amrex::Vector<std::string> m_idata_varnames;
 
     // array of multifabs to store the solution at each level of refinement
     amrex::Vector<amrex::MultiFab> m_macrodata;
     amrex::Vector<amrex::MultiFab> m_f;
+    amrex::Vector<amrex::MultiFab> m_g;
     amrex::Vector<amrex::MultiFab> m_eq;
+    amrex::Vector<amrex::MultiFab> m_eq_g;
     amrex::Vector<amrex::MultiFab> m_derived;
     amrex::Vector<amrex::iMultiFab> m_is_fluid;
     amrex::Vector<amrex::MultiFab> m_plt_mf;
@@ -233,6 +255,7 @@ private:
     amrex::Vector<amrex::BCRec> m_bcs; // 1-component
 
     std::unique_ptr<FillPatchOpsBase> m_fillpatch_op;
+    std::unique_ptr<FillPatchOpsBase> m_fillpatch_g_op;
 
     amrex::Vector<std::unique_ptr<amrex::FabFactory<amrex::FArrayBox>>>
         m_factory;
@@ -263,6 +286,7 @@ private:
     amrex::Real m_dx_outer = 1.0;
     amrex::Real m_dt_outer = 1.0;
     amrex::Real m_nu = 1.0;
+    amrex::Real m_alpha = 1.0;
 
     // save streaming data to plot file
     bool m_save_streaming = true;
@@ -286,6 +310,26 @@ private:
 
     std::unique_ptr<ic::InitializerBase> m_ic_op;
     std::string m_ic_type;
+
+    // LBM Scheme selector. "energyD3Q27" activates product equilibrium,
+    // energy equation etc.
+    std::string m_model_type = "energyD3Q27";
+
+    // Initial temperature.
+    amrex::Real m_initialTemperature = 1.0 / 3.0;
+
+    // Adiabatic exponent.
+    amrex::Real m_adiabaticExponent = 5.0 / 3.0;
+
+    // Universal Gas constant, LB unit. Never change.
+    const amrex::Real m_R_u = 28.96;
+
+    // Mean molecular mass, Safe default air. Unit kg/kmol.
+    amrex::Real m_m_bar = 28.96;
+
+    // Set the actual reference speed of sound
+    amrex::Real m_speedOfSound_Ref = std::sqrt(
+        m_adiabaticExponent * (m_R_u / m_m_bar) * m_initialTemperature);
 };
 } // namespace lbm
 #endif
