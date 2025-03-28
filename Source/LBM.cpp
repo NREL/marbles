@@ -1153,8 +1153,14 @@ void LBM::compute_q_corrections(const int lev)
                     0, constants::Q_CORR_X_IDX, iv, idx, dbox, if_arr, md_arr);
                 const amrex::Real d_qyyy = gradient(
                     1, constants::Q_CORR_Y_IDX, iv, idx, dbox, if_arr, md_arr);
-                const amrex::Real d_qzzz = gradient(
-                    2, constants::Q_CORR_Z_IDX, iv, idx, dbox, if_arr, md_arr);
+
+                amrex::Real d_qzzz = 0.0;
+
+                if (AMREX_SPACEDIM == 3) {
+                    d_qzzz = gradient(
+                        2, constants::Q_CORR_Z_IDX, iv, idx, dbox, if_arr,
+                        md_arr);
+                }
 
                 d_arr(iv, constants::D_Q_CORR_X_IDX) = d_qxxx;
                 d_arr(iv, constants::D_Q_CORR_Y_IDX) = d_qyyy;
