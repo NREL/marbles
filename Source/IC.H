@@ -490,7 +490,7 @@ public:
                         iv, geom, rho, vel, temperature, specific_gas_constant,
                         gamma);
 
-                    set_equilibrium_value_d3_q27(
+                    set_equilibrium_value(
                         rho, vel, specific_gas_constant * temperature,
                         l_mesh_speed, wt, ev, f_arrs[nbx](i, j, k, q));
 
@@ -518,7 +518,7 @@ public:
                         g_arrs[nbx](i, j, k, q));
                 });
         } else {
-          amrex::Abort("Invalid model_type");
+            amrex::Abort("Invalid model_type");
         }
 
         amrex::Gpu::synchronize();

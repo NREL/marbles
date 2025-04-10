@@ -14,7 +14,6 @@ static constexpr int PERIODIC = 0;
 static constexpr int NOSLIPWALL = 1;
 static constexpr int VELOCITY = 2;
 static constexpr int PRESSURE = 3;
-static constexpr int OUTFLOW = 4;
 static constexpr int OUTFLOW_ZEROTH_ORDER = 5;
 static constexpr int SLIPWALLXNORMAL = 6;
 static constexpr int SLIPWALLYNORMAL = 7;
@@ -141,56 +140,6 @@ struct BCFill
 
     AMREX_GPU_DEVICE
     AMREX_FORCE_INLINE
-    void velocity_bc(
-        const amrex::IntVect& iv,
-        const int q,
-        const amrex::IntVect& ev,
-        const int idir,
-        const int ndir,
-        const amrex::RealVect& vel_bc,
-        amrex::Array4<amrex::Real> const& data) const
-    {
-        // Prepare the ghost cell layer of f_ for
-        // streaming due to a prescribed velocity. This
-        // is done by assigning all the values of f_ on
-        // this ghost layer to be the equilibrium
-        // distributions associated with the desired
-        // velocity. They will naturally exert their
-        // effect on the interior fluid points during
-        // the streaming step.
-
-        // In this case, a value for u, v, and w must be
-        // specified, either hard coded or set by a
-        // user-specified function
-        amrex::Real rho_out = 0.0;
-        amrex::Real rho_tan = 0.0;
-
-        const amrex::IntVect ivn(iv + ev);
-
-        // Build the 3-part rho calculation at the
-        // (iv+ev) fluid cell
-        for (int qq = 0; qq < constants::N_MICRO_STATES; qq++) {
-
-            const auto& evn_out = m_evs[qq];
-            const int bounce_qq = m_bounce_dirs[qq];
-            const auto& evn_in = m_evs[bounce_qq];
-
-            if (evn_in[idir] == -ndir) {
-                rho_out += 2.0 * data(ivn + evn_out, bounce_qq);
-            } else if (evn_in[idir] == 0) {
-                rho_tan += 1.0 * data(ivn + evn_out, bounce_qq);
-            }
-        }
-
-        const amrex::Real rho_bc =
-            (rho_out + rho_tan) / (1.0 - ndir * vel_bc[idir]);
-
-        set_equilibrium_value(
-            rho_bc, vel_bc, m_mesh_speed, m_weights[q], ev, data(iv, q));
-    }
-
-    AMREX_GPU_DEVICE
-    AMREX_FORCE_INLINE
     void velocity_bc_g(
         const amrex::IntVect& iv,
         const int q,
@@ -287,57 +236,10 @@ struct BCFill
         const amrex::Real rho_bc =
             (rho_out + rho_tan) / (1.0 - ndir * vel_bc[idir]);
 
-        set_equilibrium_value_d3_q27(
+        set_equilibrium_value(
             rho_bc, vel_bc, RT, m_mesh_speed, m_weights[q], ev, data(iv, q));
 
         rho_bc_out = rho_bc;
-    }
-
-    AMREX_GPU_DEVICE
-    AMREX_FORCE_INLINE
-    void pressure_bc(
-        const amrex::IntVect& iv,
-        const int q,
-        const amrex::IntVect& ev,
-        const int idir,
-        const int ndir,
-        const amrex::Real rho_bc,
-        amrex::Array4<amrex::Real> const& data) const
-    {
-        // Prepare the ghost cell layer of f_ for
-        // streaming due to a prescribed
-        // pressure/density. This is done by assigning
-        // all the values of f_ on this ghost layer to
-        // be the equilibrium distributions associated
-        // with the desired density. They will naturally
-        // exert their effect on the interior fluid
-        // points during the streaming step.
-
-        amrex::Real rho_out = 0.0;
-        amrex::Real rho_tan = 0.0;
-
-        const amrex::IntVect ivn(iv + ev);
-
-        // Build the 3-part rho calculation at the
-        // (iv+ev) fluid cell
-        for (int qq = 0; qq < constants::N_MICRO_STATES; qq++) {
-
-            const auto& evn_out = m_evs[qq];
-            const int bounce_qq = m_bounce_dirs[qq];
-            const auto& evn_in = m_evs[bounce_qq];
-
-            if (evn_in[idir] == -ndir) {
-                rho_out += 2.0 * data(ivn + evn_out, bounce_qq);
-            } else if (evn_in[idir] == 0) {
-                rho_tan += 1.0 * data(ivn + evn_out, bounce_qq);
-            }
-        }
-
-        amrex::RealVect vel_bc(AMREX_D_DECL(0.0, 0.0, 0.0));
-        vel_bc[idir] = ndir * (1.0 - (rho_out + rho_tan) / rho_bc);
-
-        set_equilibrium_value(
-            rho_bc, vel_bc, m_mesh_speed, m_weights[q], ev, data(iv, q));
     }
 
     AMREX_GPU_DEVICE
@@ -385,7 +287,7 @@ struct BCFill
         amrex::RealVect vel_bc(AMREX_D_DECL(0.0, 0.0, 0.0));
         vel_bc[idir] = ndir * (1.0 - (rho_out + rho_tan) / rho_bc);
 
-        set_equilibrium_value_d3_q27(
+        set_equilibrium_value(
             rho_bc, vel_bc, RT, m_mesh_speed, m_weights[q], ev, data(iv, q));
 
         rho_bc_out = rho_out + rho_tan;
@@ -441,63 +343,6 @@ struct BCFill
         set_extended_grad_expansion_generic(
             two_rho_e, heat_flux, flux_of_heat_flux, m_mesh_speed, m_weights[q],
             ev, m_theta0, m_zero_vec, 1.0, data(iv, q));
-    }
-
-    AMREX_GPU_DEVICE
-    AMREX_FORCE_INLINE
-    void outflow_bc(
-        const amrex::IntVect& iv,
-        const int q,
-        const amrex::IntVect& ev,
-        const int idir,
-        const int ndir,
-        amrex::Array4<amrex::Real> const& data) const
-    {
-        // Prepare the ghost cell layer of f_ for
-        // streaming due to an outflow condition This
-        // copies the rate of change from the last two
-        // interior cell onto the ghost layer such that
-        // when streaming you have the effect of "no
-        // change" in the direction across the boundary.
-        amrex::IntVect iv_shift(amrex::IntVect::TheDimensionVector(idir));
-
-        if (AMREX_D_TERM(
-                ndir * iv_shift[0] == ev[0], &&ndir * iv_shift[1] == ev[1],
-                &&ndir * iv_shift[2] == ev[2])) {
-
-            amrex::Real rho = 0.0;
-            amrex::RealVect vel(AMREX_D_DECL(0.0, 0.0, 0.0));
-            for (int qq = 0; qq < constants::N_MICRO_STATES; qq++) {
-                rho += data(iv + ndir * iv_shift, qq);
-                const auto& ev_qq = m_evs[qq];
-                AMREX_D_DECL(
-                    vel[0] += ev_qq[0] * data(iv + ndir * iv_shift, qq),
-                    vel[1] += ev_qq[1] * data(iv + ndir * iv_shift, qq),
-                    vel[2] += ev_qq[2] * data(iv + ndir * iv_shift, qq));
-            }
-
-            vel *= m_mesh_speed / rho;
-
-            amrex::Real f_eq = 0.0;
-            amrex::Real f_star_eq = 0.0;
-
-            const int bounce_q = m_bounce_dirs[q];
-            const auto& ev_star = m_evs[bounce_q];
-
-            set_equilibrium_value(
-                rho, vel, m_mesh_speed, m_weights[q], ev, f_eq);
-
-            set_equilibrium_value(
-                rho, vel, m_mesh_speed, m_weights[bounce_q], ev_star,
-                f_star_eq);
-
-            data(iv, q) =
-                f_eq + data(iv + ndir * iv_shift, bounce_q) - f_star_eq;
-
-        } else {
-            data(iv, q) = 2.0 * data(iv + 1 * ndir * iv_shift, q) -
-                          data(iv + 2 * ndir * iv_shift, q);
-        }
     }
 
     AMREX_GPU_DEVICE
@@ -569,9 +414,9 @@ struct BCFill
                         // bounds
                         if (inside.contains(ivn)) {
 
-                            if (m_bc_type[bc_idx] == 1) {
+                            if (m_bc_type[bc_idx] == NOSLIPWALL) {
                                 bounce_back_bc(iv, q, ev, data);
-                            } else if (m_bc_type[bc_idx] == 2) {
+                            } else if (m_bc_type[bc_idx] == VELOCITY) {
                                 amrex::RealVect vel_bc(
                                     AMREX_D_DECL(0.0, 0.0, 0.0));
                                 amrex::Real specific_gas_constant(1.0),
@@ -598,12 +443,9 @@ struct BCFill
                                         data, rho_bcout);
                                 }
 
-                            } else if (m_bc_type[bc_idx] == 3) {
+                            } else if (m_bc_type[bc_idx] == PRESSURE) {
 
                                 const amrex::Real rho_bc = 1.0;
-                                // pressure_bc(
-                                //     iv, q, ev, idir, normal_dir, rho_bc,
-                                //     data);
 
                                 amrex::RealVect vel_bc(
                                     AMREX_D_DECL(0.0, 0.0, 0.0));
@@ -632,16 +474,14 @@ struct BCFill
                                         data, rho_bcout);
                                 }
 
-                            } else if (m_bc_type[bc_idx] == 4) {
-                                outflow_bc(iv, q, ev, idir, normal_dir, data);
-                            } else if (m_bc_type[bc_idx] == 5) {
+                            } else if (m_bc_type[bc_idx] == OUTFLOW_ZEROTH_ORDER) {
                                 simple_outflow_bc(
                                     iv, q, ev, idir, normal_dir, data);
-                            } else if (m_bc_type[bc_idx] == 6) {
+                            } else if (m_bc_type[bc_idx] == SLIPWALLXNORMAL) {
                                 bounce_back_xbc(iv, q, ev, data);
-                            } else if (m_bc_type[bc_idx] == 7) {
+                            } else if (m_bc_type[bc_idx] == SLIPWALLYNORMAL) {
                                 bounce_back_ybc(iv, q, ev, data);
-                            } else if (m_bc_type[bc_idx] == 8) {
+                            } else if (m_bc_type[bc_idx] == SLIPWALLZNORMAL) {
                                 bounce_back_zbc(iv, q, ev, data);
                             }
                         }

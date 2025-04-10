@@ -119,7 +119,7 @@ LBM::LBM()
             (m_bc_lo[idim] == bc::SLIPWALLYNORMAL) ||
             (m_bc_lo[idim] == bc::SLIPWALLZNORMAL) ||
             (m_bc_lo[idim] == bc::VELOCITY) ||
-            (m_bc_lo[idim] == bc::PRESSURE) || (m_bc_lo[idim] == bc::OUTFLOW) ||
+            (m_bc_lo[idim] == bc::PRESSURE) ||
             (m_bc_lo[idim] == bc::OUTFLOW_ZEROTH_ORDER)) {
             for (auto& bc : m_bcs) {
                 bc.setLo(idim, amrex::BCType::ext_dir);
@@ -139,7 +139,7 @@ LBM::LBM()
             (m_bc_hi[idim] == bc::SLIPWALLYNORMAL) ||
             (m_bc_hi[idim] == bc::SLIPWALLZNORMAL) ||
             (m_bc_hi[idim] == bc::VELOCITY) ||
-            (m_bc_hi[idim] == bc::PRESSURE) || (m_bc_hi[idim] == bc::OUTFLOW) ||
+            (m_bc_hi[idim] == bc::PRESSURE) ||
             (m_bc_hi[idim] == bc::OUTFLOW_ZEROTH_ORDER)) {
             for (auto& bc : m_bcs) {
                 bc.setHi(idim, amrex::BCType::ext_dir);
@@ -744,7 +744,7 @@ void LBM::macrodata_to_equilibrium(const int lev)
                         dt * (omega_corr)*d_arr(iv, constants::D_Q_CORR_Z_IDX);
                 }
 
-                set_extended_equilibrium_value_d3_q27(
+                set_extended_equilibrium_value(
                     rho, vel, pxx_ext, pyy_ext, pzz_ext, l_mesh_speed, wt, ev,
                     eq_arr(iv, q));
 
