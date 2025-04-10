@@ -50,7 +50,7 @@ where :math:`u` is the velocity vector, :math:`\rho` is the density, :math:`w_i`
 
    u(x, t) &= \frac{1}{\rho} \sum_{i} e_i f_i(x, t)
 
-MARBLES implements both the D2Q9 and D3Q27 LBM approaches for two dimensional and three dimensional flow, respectively.
+MARBLES implements both the D3Q27 LBM approach for two dimensional and three dimensional flow, respectively.
 
 For the thermal version of MARBLES, please refer to additional theory related to the additional energy lattice and cross coupling, 
 in the PhD thesis  
