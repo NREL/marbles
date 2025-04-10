@@ -535,7 +535,7 @@ void LBM::advance(
         average_down_to(lev, amrex::IntVect(1));
     }
 
-    collide_d3_q27(lev);
+    collide(lev);
 }
 
 void LBM::post_time_step()
@@ -650,21 +650,21 @@ void LBM::stream_g(const int lev)
 }
 
 // Collide the particles
-void LBM::collide_d3_q27(const int lev)
+void LBM::collide(const int lev)
 {
     BL_PROFILE("LBM::collide()");
 
-    f_to_macrodata_d3_q27(lev);
+    f_to_macrodata(lev);
 
     compute_q_corrections(lev);
 
-    macrodata_to_equilibrium_d3_q27(lev);
+    macrodata_to_equilibrium(lev);
 
-    relax_f_to_equilibrium_d3_q27(lev);
+    relax_f_to_equilibrium(lev);
 }
 
 // convert macrodata to equilibrium.
-void LBM::macrodata_to_equilibrium_d3_q27(const int lev)
+void LBM::macrodata_to_equilibrium(const int lev)
 {
     BL_PROFILE("LBM::macrodata_to_equilibrium()");
     AMREX_ASSERT(m_macrodata[lev].nGrow() >= m_eq[lev].nGrow());
@@ -814,7 +814,7 @@ void LBM::macrodata_to_equilibrium_d3_q27(const int lev)
 }
 
 // Relax the particles toward the equilibrium state.
-void LBM::relax_f_to_equilibrium_d3_q27(const int lev)
+void LBM::relax_f_to_equilibrium(const int lev)
 {
     BL_PROFILE("LBM::relax_f_to_equilibrium()");
     auto const& is_fluid_arrs = m_is_fluid[lev].const_arrays();
@@ -859,7 +859,7 @@ void LBM::relax_f_to_equilibrium_d3_q27(const int lev)
 }
 
 // calculate the macro fluid properties from the distributions
-void LBM::f_to_macrodata_d3_q27(const int lev)
+void LBM::f_to_macrodata(const int lev)
 {
     BL_PROFILE("LBM::f_to_macrodata()");
     auto const& md_arrs = m_macrodata[lev].arrays();
@@ -1196,9 +1196,9 @@ void LBM::MakeNewLevelFromCoarse(
     m_eq_g[lev].setVal(0.0);
     m_derived[lev].setVal(0.0);
 
-    f_to_macrodata_d3_q27(lev);
+    f_to_macrodata(lev);
 
-    macrodata_to_equilibrium_d3_q27(lev);
+    macrodata_to_equilibrium(lev);
 
     compute_derived(lev);
 
@@ -1252,9 +1252,9 @@ void LBM::MakeNewLevelFromScratch(
     m_eq_g[lev].setVal(0.0);
     m_derived[lev].setVal(0.0);
 
-    f_to_macrodata_d3_q27(lev);
+    f_to_macrodata(lev);
 
-    macrodata_to_equilibrium_d3_q27(lev);
+    macrodata_to_equilibrium(lev);
 
     compute_derived(lev);
 
@@ -1913,9 +1913,9 @@ void LBM::read_checkpoint_file()
         m_eq_g[lev].setVal(0.0);
         m_derived[lev].setVal(0.0);
 
-        f_to_macrodata_d3_q27(lev);
+        f_to_macrodata(lev);
 
-        macrodata_to_equilibrium_d3_q27(lev);
+        macrodata_to_equilibrium(lev);
 
         compute_derived(lev);
 

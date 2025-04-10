@@ -518,23 +518,7 @@ public:
                         g_arrs[nbx](i, j, k, q));
                 });
         } else {
-            amrex::ParallelFor(
-                m_f[lev], m_f[lev].nGrowVect(), constants::N_MICRO_STATES,
-                [=] AMREX_GPU_DEVICE(
-                    int nbx, int i, int j, int k, int q) noexcept {
-                    const amrex::Real wt = weight[q];
-                    const auto& ev = evs[q];
-
-                    const amrex::IntVect iv(AMREX_D_DECL(i, j, k));
-                    amrex::Real rho = 1.0;
-                    amrex::RealVect vel(AMREX_D_DECL(0.0, 0.0, 0.0));
-
-                    ic(iv, geom, rho, vel);
-
-                    set_equilibrium_value(
-                        rho, vel, l_mesh_speed, wt, ev,
-                        f_arrs[nbx](i, j, k, q));
-                });
+          amrex::Abort("Invalid model_type");
         }
 
         amrex::Gpu::synchronize();
