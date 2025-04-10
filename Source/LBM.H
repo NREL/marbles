@@ -95,7 +95,7 @@ public:
     // Compute derived quantities
     void compute_derived(const int lev);
 
-    // Compute derived quantities
+    // Compute corrections
     void compute_q_corrections(const int lev);
 
     // Compute forces on EB
