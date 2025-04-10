@@ -52,7 +52,7 @@ struct Constant
         amrex::Real speed_of_sound_ref =
             std::sqrt(adiabatic_exponent * (R_u / m_bar) * initial_temperature);
 
-        int model_type = 1; 
+        int model_type = 1;
         amrex::Real Mach_0{0.005};
 
         AMREX_GPU_DEVICE
@@ -96,7 +96,7 @@ struct Channel
         amrex::Real speed_of_sound_ref =
             std::sqrt(adiabatic_exponent * (R_u / m_bar) * initial_temperature);
 
-        int model_type = 1; 
+        int model_type = 1;
         amrex::Real Mach_ref{0.005};
 
         AMREX_GPU_DEVICE
@@ -147,7 +147,7 @@ struct Parabolic
         amrex::Real speed_of_sound_ref =
             std::sqrt(adiabatic_exponent * (R_u / m_bar) * initial_temperature);
 
-        int model_type = 1; 
+        int model_type = 1;
         amrex::Real mach_m{0.05};
 
         AMREX_GPU_DEVICE

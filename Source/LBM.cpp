@@ -284,8 +284,6 @@ void LBM::read_parameters()
         pp.query("compute_forces", m_compute_forces);
         pp.query("forces_file", m_forces_file);
 
-        pp.query("model_type", m_model_type);
-
         pp.query("initial_temperature", m_initialTemperature);
 
         pp.query("adiabatic_exponent", m_adiabaticExponent);

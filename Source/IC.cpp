@@ -12,9 +12,6 @@ Constant::Constant()
         m_op.velocity[n] = velocity[n];
     }
 
-    std::string model_type;
-    pp.query("model_type", model_type);
-
     m_op.model_type = 1;
     amrex::Vector<amrex::Real> mach_components{AMREX_D_DECL(0, 0, 0)};
     pp.queryarr("mach_components", mach_components, 0, AMREX_SPACEDIM);
@@ -59,9 +56,6 @@ ViscosityTest::ViscosityTest()
     }
 
     pp.query("wave_length", m_op.wave_length);
-    std::string model_type;
-    pp.query("model_type", model_type);
-
     m_op.model_type = 1;
     amrex::Vector<amrex::Real> mach_components{AMREX_D_DECL(0, 0, 0)};
     pp.queryarr("mach_components", mach_components, 0, AMREX_SPACEDIM);
@@ -94,9 +88,6 @@ ThermalDiffusivityTest::ThermalDiffusivityTest()
     }
 
     pp.query("wave_length", m_op.wave_length);
-    std::string model_type;
-    pp.query("model_type", model_type);
-
     m_op.model_type = 1;
     amrex::Vector<amrex::Real> mach_components{AMREX_D_DECL(0, 0, 0)};
     pp.queryarr("mach_components", mach_components, 0, AMREX_SPACEDIM);
@@ -130,9 +121,6 @@ SodTest::SodTest()
     pp.query("density_ratio", m_op.density_ratio);
     pp.query("temperature_ratio", m_op.temperature_ratio);
     pp.query("x_discontinuity", m_op.x_discontinuity);
-
-    std::string model_type;
-    pp.query("model_type", model_type);
 
     m_op.model_type = 1;
     amrex::Vector<amrex::Real> mach_components{AMREX_D_DECL(0, 0, 0)};

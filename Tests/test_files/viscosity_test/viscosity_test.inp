@@ -20,11 +20,6 @@ amr.plot_int = 5000
 amr.chk_int = 5000
 amr.file_name_digits = 5
 
-# select model type. "energyD3Q27" activates product equilibrium, energy equation etc.
-lbm.model_type = "energyD3Q27"
-ic_viscosity_test.model_type = "energyD3Q27"
-velocity_bc_parabolic.model_type = "energyD3Q27"
-
 lbm.bc_lo = 0 0 0
 lbm.bc_hi = 0 0 0
 lbm.dx_outer = 1.0

@@ -9,9 +9,6 @@ Constant::Constant()
     pp.query("dir", m_op.dir);
     pp.query("u0", m_op.u0);
 
-    std::string model_type;
-    pp.query("model_type", model_type);
-
     m_op.model_type = 1;
     pp.query("Mach_0", m_op.Mach_0);
     pp.query("initial_temperature", m_op.initial_temperature);
@@ -27,9 +24,6 @@ Channel::Channel()
 {
     amrex::ParmParse pp("velocity_bc_channel");
     pp.query("u_ref", m_op.u_ref);
-
-    std::string model_type;
-    pp.query("model_type", model_type);
 
     m_op.model_type = 1;
     pp.query("Mach_ref", m_op.Mach_ref);
@@ -48,9 +42,6 @@ Parabolic::Parabolic()
     pp.query("normal_dir", m_op.normal_dir);
     pp.query("tangential_dir", m_op.tangential_dir);
     pp.query("um", m_op.um);
-
-    std::string model_type;
-    pp.query("model_type", model_type);
 
     m_op.model_type = 1;
     pp.query("Mach_m", m_op.mach_m);
