@@ -104,7 +104,7 @@ AMREX_GPU_DEVICE AMREX_INLINE void set_extended_equilibrium_value_d3_q27(
 AMREX_GPU_DEVICE AMREX_INLINE void set_extended_grad_expansion_generic(
     const amrex::Real& rho,
     const amrex::RealVect& momentum,
-    const amrex::GpuArray<amrex::Real, 6>& fluxOfMomentum,
+    const amrex::GpuArray<amrex::Real, 6>& flux_of_momentum,
     /*const amrex::Real& pxx,
     const amrex::Real& pyy,
     const amrex::Real& pzz,
@@ -115,7 +115,7 @@ AMREX_GPU_DEVICE AMREX_INLINE void set_extended_grad_expansion_generic(
     const amrex::Real& wt,
     const amrex::IntVect& ev,
     const amrex::Real& theta0,
-    const amrex::RealVect& frameVelocity,
+    const amrex::RealVect& frame_velocity,
     const amrex::Real& s,
     amrex::Real& f)
 {
@@ -132,19 +132,19 @@ AMREX_GPU_DEVICE AMREX_INLINE void set_extended_grad_expansion_generic(
     // ux=uy=uz=0 and s=1, always. Thank you for your understanding.
     // This is a special grad expansion with some future proofing.
     // Reference (A.93) of https://doi.org/10.3929/ethz-b-000607045
-    const amrex::Real ux = frameVelocity[0];
-    const amrex::Real uy = frameVelocity[1];
-    AMREX_3D_ONLY(const amrex::Real uz = frameVelocity[2]);
+    const amrex::Real ux = frame_velocity[0];
+    const amrex::Real uy = frame_velocity[1];
+    AMREX_3D_ONLY(const amrex::Real uz = frame_velocity[2]);
 
     const amrex::Real AMREX_D_DECL(
-        pxx = fluxOfMomentum[0], pyy = fluxOfMomentum[1],
-        pzz = fluxOfMomentum[2]);
+        pxx = flux_of_momentum[0], pyy = flux_of_momentum[1],
+        pzz = flux_of_momentum[2]);
 
-    AMREX_2D_ONLY(const amrex::Real pxy = fluxOfMomentum[3]);
+    AMREX_2D_ONLY(const amrex::Real pxy = flux_of_momentum[3]);
 
-    AMREX_3D_ONLY(const amrex::Real pxy = fluxOfMomentum[3]);
-    AMREX_3D_ONLY(const amrex::Real pxz = fluxOfMomentum[4]);
-    AMREX_3D_ONLY(const amrex::Real pyz = fluxOfMomentum[5]);
+    AMREX_3D_ONLY(const amrex::Real pxy = flux_of_momentum[3]);
+    AMREX_3D_ONLY(const amrex::Real pxz = flux_of_momentum[4]);
+    AMREX_3D_ONLY(const amrex::Real pyz = flux_of_momentum[5]);
 
     const amrex::Real stheta0 = s * theta0;
     const amrex::Real one_bystheta0 = 1.0 / stheta0;

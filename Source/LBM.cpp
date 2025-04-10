@@ -801,7 +801,7 @@ void LBM::macrodata_to_equilibrium_d3_q27(const int lev)
                     rho, vel, pxx_ext, pyy_ext, pzz_ext, l_mesh_speed, wt, ev,
                     eq_arr(iv, q));
 
-                amrex::Real AMREX_D_DECL(qxEq = 0.0, qyEq = 0.0, qzEq = 0.0);
+                amrex::Real AMREX_D_DECL(qx_eq = 0.0, qy_eq = 0.0, qz_eq = 0.0);
                 amrex::Real rxx_eq(0.0), ryy_eq(0.0), rzz_eq(0.0), rxy_eq(0.0),
                     rxz_eq(0.0), ryz_eq(0.0);
 
@@ -810,9 +810,9 @@ void LBM::macrodata_to_equilibrium_d3_q27(const int lev)
                     rho, vel, two_rho_e, cv, specific_gas_constant, heat_flux,
                     rxx_eq, ryy_eq, rzz_eq, rxy_eq, rxz_eq, ryz_eq);
 
-                qxEq = heat_flux[0];
-                qyEq = heat_flux[1];
-                AMREX_3D_ONLY(qzEq = heat_flux[2]);
+                qx_eq = heat_flux[0];
+                qy_eq = heat_flux[1];
+                AMREX_3D_ONLY(qz_eq = heat_flux[2]);
 
                 const amrex::Real pxx = md_arr(iv, constants::PXX_IDX);
                 const amrex::Real pyy = md_arr(iv, constants::PYY_IDX);
@@ -829,31 +829,31 @@ void LBM::macrodata_to_equilibrium_d3_q27(const int lev)
                 AMREX_3D_ONLY(
                     const amrex::Real qz = md_arr(iv, constants::QZ_IDX));
 
-                qxEq *= omega_one_by_omega;
-                qyEq *= omega_one_by_omega;
-                AMREX_3D_ONLY(qzEq *= omega_one_by_omega);
+                qx_eq *= omega_one_by_omega;
+                qy_eq *= omega_one_by_omega;
+                AMREX_3D_ONLY(qz_eq *= omega_one_by_omega);
 
-                qxEq += (1.0 - omega_one_by_omega) *
-                        (qx AMREX_D_TERM(
-                             -2.0 * vel[0] * pxx, -2.0 * vel[1] * pxy,
-                             -2.0 * vel[2] * pxz) -
-                         vel[0] * dt * d_arr(iv, constants::D_Q_CORR_X_IDX));
+                qx_eq += (1.0 - omega_one_by_omega) *
+                         (qx AMREX_D_TERM(
+                              -2.0 * vel[0] * pxx, -2.0 * vel[1] * pxy,
+                              -2.0 * vel[2] * pxz) -
+                          vel[0] * dt * d_arr(iv, constants::D_Q_CORR_X_IDX));
 
-                qyEq += (1.0 - omega_one_by_omega) *
-                        (qy AMREX_D_TERM(
-                             -2.0 * vel[0] * pxy, -2.0 * vel[1] * pyy,
-                             -2.0 * vel[2] * pyz) -
-                         vel[1] * dt * d_arr(iv, constants::D_Q_CORR_Y_IDX));
+                qy_eq += (1.0 - omega_one_by_omega) *
+                         (qy AMREX_D_TERM(
+                              -2.0 * vel[0] * pxy, -2.0 * vel[1] * pyy,
+                              -2.0 * vel[2] * pyz) -
+                          vel[1] * dt * d_arr(iv, constants::D_Q_CORR_Y_IDX));
 
                 AMREX_3D_ONLY(
-                    qzEq +=
+                    qz_eq +=
                     (1.0 - omega_one_by_omega) *
                     (qz - 2.0 * vel[0] * pxz - 2.0 * vel[1] * pyz -
                      2.0 * vel[2] * pzz -
                      vel[2] * dt * d_arr(iv, constants::D_Q_CORR_Z_IDX)));
 
                 amrex::RealVect heat_flux_mrt = {
-                    AMREX_D_DECL(qxEq, qyEq, qzEq)};
+                    AMREX_D_DECL(qx_eq, qy_eq, qz_eq)};
 
                 amrex::GpuArray<amrex::Real, 6> flux_of_heat_flux = {
                     rxx_eq, ryy_eq, rzz_eq, rxy_eq, rxz_eq, ryz_eq};
@@ -1199,8 +1199,8 @@ void LBM::compute_eb_forces()
             m_f[lev], amrex::IntVect(0),
             [=] AMREX_GPU_DEVICE(
                 int nbx, int i, int j, int AMREX_D_PICK(, /*k*/, k)) noexcept
-            -> amrex::GpuTuple<AMREX_D_DECL(
-                amrex::Real, amrex::Real, amrex::Real)> {
+                -> amrex::GpuTuple<AMREX_D_DECL(
+                    amrex::Real, amrex::Real, amrex::Real)> {
                 const amrex::IntVect iv(AMREX_D_DECL(i, j, k));
                 amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> fs = {0.0};
                 if ((is_fluid_arrs[nbx](iv, 1) == 1) &&

@@ -16,17 +16,17 @@ struct Constant
     {
         amrex::Real density{1.0};
         amrex::RealVect velocity = {AMREX_D_DECL(0.0, 0.0, 0.0)};
-        amrex::RealVect MachComponents = {AMREX_D_DECL(0.0, 0.0, 0.0)};
+        amrex::RealVect mach_components = {AMREX_D_DECL(0.0, 0.0, 0.0)};
 
-        amrex::Real initialTemperature = 1.0 / 3.0;
-        amrex::Real adiabaticExponent = 5.0 / 3.0;
+        amrex::Real initial_temperature = 1.0 / 3.0;
+        amrex::Real adiabatic_exponent = 5.0 / 3.0;
 
         const amrex::Real R_u = 28.96;
         amrex::Real m_bar = 28.96;
-        amrex::Real speedOfSound_Ref =
-            std::sqrt(adiabaticExponent * (R_u / m_bar) * initialTemperature);
+        amrex::Real speed_of_sound_ref =
+            std::sqrt(adiabatic_exponent * (R_u / m_bar) * initial_temperature);
 
-        int m_model_type = 1; // 0 is isothermal, 1 is energyD3Q27
+        int model_type = 1;
 
         AMREX_GPU_DEVICE
         void operator()(
@@ -51,9 +51,9 @@ struct Constant
             rho = density;
             vel = velocity;
 
-            temperature = initialTemperature;
+            temperature = initial_temperature;
             R = R_u / m_bar;
-            gamma = adiabaticExponent;
+            gamma = adiabatic_exponent;
         }
     };
 
@@ -77,15 +77,15 @@ struct TaylorGreen
         amrex::RealVect omega = {AMREX_D_DECL(1.0, 1.0, 1.0)};
         amrex::Real L{1.0 / M_PI};
 
-        amrex::Real initialTemperature = 1.0 / 3.0;
-        const amrex::Real adiabaticExponent = 5.0 / 3.0;
+        amrex::Real initial_temperature = 1.0 / 3.0;
+        const amrex::Real adiabatic_exponent = 5.0 / 3.0;
 
         const amrex::Real R_u = 28.96;
         amrex::Real m_bar = 28.96;
-        amrex::Real speedOfSound_Ref =
-            std::sqrt(adiabaticExponent * (R_u / m_bar) * initialTemperature);
+        amrex::Real speed_of_sound_ref =
+            std::sqrt(adiabatic_exponent * (R_u / m_bar) * initial_temperature);
 
-        int m_model_type = 1; // 0 is isothermal, 1 is energyD3Q27
+        int model_type = 1;
 
         AMREX_GPU_DEVICE
         void operator()(
@@ -147,9 +147,9 @@ struct TaylorGreen
                          std::sin(omega1 * y / L) * std::cos(omega2 * z / L),
                 vel[2] = 0.0);
 
-            temperature = initialTemperature;
+            temperature = initial_temperature;
             R = R_u / m_bar;
-            gamma = adiabaticExponent;
+            gamma = adiabatic_exponent;
         }
     };
 
@@ -168,20 +168,20 @@ struct ViscosityTest
 {
     struct DeviceOp
     {
-        amrex::Real waveLength{1.0};
+        amrex::Real wave_length{1.0};
         amrex::Real density{1.0};
         amrex::RealVect velocity = {AMREX_D_DECL(0.0, 0.0, 0.0)};
-        amrex::RealVect MachComponents = {AMREX_D_DECL(0.0, 0.0, 0.0)};
+        amrex::RealVect mach_components = {AMREX_D_DECL(0.0, 0.0, 0.0)};
 
-        amrex::Real initialTemperature = 1.0 / 3.0;
-        amrex::Real adiabaticExponent = 5.0 / 3.0;
+        amrex::Real initial_temperature = 1.0 / 3.0;
+        amrex::Real adiabatic_exponent = 5.0 / 3.0;
 
         const amrex::Real R_u = 28.96;
         amrex::Real m_bar = 28.96;
-        amrex::Real speedOfSound_Ref =
-            std::sqrt(adiabaticExponent * (R_u / m_bar) * initialTemperature);
+        amrex::Real speed_of_sound_ref =
+            std::sqrt(adiabatic_exponent * (R_u / m_bar) * initial_temperature);
 
-        int m_model_type = 1; // 0 is isothermal, 1 is energyD3Q27
+        int model_type = 1;
 
         AMREX_GPU_DEVICE
         void operator()(
@@ -197,9 +197,9 @@ struct ViscosityTest
 
             rho = density;
 
-            const amrex::Real a0 = 0.010 * speedOfSound_Ref;
+            const amrex::Real a0 = 0.010 * speed_of_sound_ref;
 
-            vel[0] = velocity[0] + a0 * std::sin(2.0 * M_PI * y / waveLength);
+            vel[0] = velocity[0] + a0 * std::sin(2.0 * M_PI * y / wave_length);
             vel[1] = velocity[1];
             if (AMREX_SPACEDIM == 3) {
                 vel[2] = velocity[2];
@@ -224,17 +224,17 @@ struct ViscosityTest
 
             rho = density;
 
-            const amrex::Real a0 = 0.010 * speedOfSound_Ref;
+            const amrex::Real a0 = 0.010 * speed_of_sound_ref;
 
-            vel[0] = velocity[0] + a0 * std::sin(2.0 * M_PI * y / waveLength);
+            vel[0] = velocity[0] + a0 * std::sin(2.0 * M_PI * y / wave_length);
             vel[1] = velocity[1];
             if (AMREX_SPACEDIM == 3) {
                 vel[2] = velocity[2];
             }
 
-            temperature = initialTemperature;
+            temperature = initial_temperature;
             R = R_u / m_bar;
-            gamma = adiabaticExponent;
+            gamma = adiabatic_exponent;
         }
     };
 
@@ -253,19 +253,19 @@ struct ThermalDiffusivityTest
 {
     struct DeviceOp
     {
-        amrex::Real waveLength{1.0};
+        amrex::Real wave_length{1.0};
         amrex::Real density{1.0};
         amrex::RealVect velocity = {AMREX_D_DECL(0.0, 0.0, 0.0)};
-        amrex::RealVect MachComponents = {AMREX_D_DECL(0.0, 0.0, 0.0)};
+        amrex::RealVect mach_components = {AMREX_D_DECL(0.0, 0.0, 0.0)};
 
-        amrex::Real initialTemperature = 1.0 / 3.0;
-        amrex::Real adiabaticExponent = 5.0 / 3.0;
+        amrex::Real initial_temperature = 1.0 / 3.0;
+        amrex::Real adiabatic_exponent = 5.0 / 3.0;
         const amrex::Real R_u = 28.96;
         amrex::Real m_bar = 28.96;
-        amrex::Real speedOfSound_Ref =
-            std::sqrt(adiabaticExponent * (R_u / m_bar) * initialTemperature);
+        amrex::Real speed_of_sound_ref =
+            std::sqrt(adiabatic_exponent * (R_u / m_bar) * initial_temperature);
 
-        int m_model_type = 1; // 0 is isothermal, 1 is energyD3Q27
+        int model_type = 1;
 
         AMREX_GPU_DEVICE
         void operator()(
@@ -279,9 +279,9 @@ struct ThermalDiffusivityTest
 
             const amrex::Real y = prob_lo[1] + (iv[1] + 0.5 * 0.0) * dx[1];
 
-            const amrex::Real a0 = 0.0010 * initialTemperature;
+            const amrex::Real a0 = 0.0010 * initial_temperature;
 
-            rho = density + a0 * std::sin(2.0 * M_PI * y / waveLength);
+            rho = density + a0 * std::sin(2.0 * M_PI * y / wave_length);
 
             vel[0] = velocity[0];
             vel[1] = velocity[1];
@@ -306,11 +306,11 @@ struct ThermalDiffusivityTest
 
             const amrex::Real y = prob_lo[1] + (iv[1] + 0.5 * 0.0) * dx[1];
 
-            const amrex::Real a0 = 0.0010 * initialTemperature;
+            const amrex::Real a0 = 0.0010 * initial_temperature;
 
             R = R_u / m_bar;
-            const amrex::Real pressure = density * R * initialTemperature;
-            rho = density + a0 * std::sin(2.0 * M_PI * y / waveLength);
+            const amrex::Real pressure = density * R * initial_temperature;
+            rho = density + a0 * std::sin(2.0 * M_PI * y / wave_length);
 
             vel[0] = velocity[0];
             vel[1] = velocity[1];
@@ -318,7 +318,7 @@ struct ThermalDiffusivityTest
                 vel[2] = velocity[2];
             }
 
-            gamma = adiabaticExponent;
+            gamma = adiabatic_exponent;
 
             temperature = pressure / (rho * R);
         }
@@ -339,22 +339,22 @@ struct SodTest
 {
     struct DeviceOp
     {
-        amrex::Real densityRatio{1.0};
-        amrex::Real temperatureRatio{1.0};
-        amrex::Real xDiscontinuity{10.0};
+        amrex::Real density_ratio{1.0};
+        amrex::Real temperature_ratio{1.0};
+        amrex::Real x_discontinuity{10.0};
         amrex::Real density{1.0};
         amrex::RealVect velocity = {AMREX_D_DECL(0.0, 0.0, 0.0)};
-        amrex::RealVect MachComponents = {AMREX_D_DECL(0.0, 0.0, 0.0)};
+        amrex::RealVect mach_components = {AMREX_D_DECL(0.0, 0.0, 0.0)};
 
-        amrex::Real initialTemperature = 1.0 / 3.0;
+        amrex::Real initial_temperature = 1.0 / 3.0;
 
-        amrex::Real adiabaticExponent = 5.0 / 3.0;
+        amrex::Real adiabatic_exponent = 5.0 / 3.0;
         const amrex::Real R_u = 28.96;
         amrex::Real m_bar = 28.96;
-        amrex::Real speedOfSound_Ref =
-            std::sqrt(adiabaticExponent * (R_u / m_bar) * initialTemperature);
+        amrex::Real speed_of_sound_ref =
+            std::sqrt(adiabatic_exponent * (R_u / m_bar) * initial_temperature);
 
-        int m_model_type = 1; // 0 is isothermal, 1 is energyD3Q27
+        int model_type = 1;
 
         AMREX_GPU_DEVICE
         void operator()(
@@ -375,8 +375,8 @@ struct SodTest
             }
 
             rho = density + 0.5 *
-                                (1.0 + std::tanh((x - xDiscontinuity) * 3.0)) *
-                                (densityRatio * density - density);
+                                (1.0 + std::tanh((x - x_discontinuity) * 3.0)) *
+                                (density_ratio * density - density);
         }
 
         AMREX_GPU_DEVICE
@@ -403,15 +403,15 @@ struct SodTest
                 vel[2] = velocity[2];
             }
 
-            gamma = adiabaticExponent;
+            gamma = adiabatic_exponent;
 
             rho = density + 0.5 *
-                                (1.0 + std::tanh((x - xDiscontinuity) * 3.0)) *
-                                (densityRatio * density - density);
-            temperature = initialTemperature +
-                          0.5 * (1.0 + std::tanh((x - xDiscontinuity) * 3.0)) *
-                              (temperatureRatio * initialTemperature -
-                               initialTemperature);
+                                (1.0 + std::tanh((x - x_discontinuity) * 3.0)) *
+                                (density_ratio * density - density);
+            temperature = initial_temperature +
+                          0.5 * (1.0 + std::tanh((x - x_discontinuity) * 3.0)) *
+                              (temperature_ratio * initial_temperature -
+                               initial_temperature);
         }
     };
 
@@ -471,7 +471,7 @@ public:
 
         amrex::RealVect zero_vec = {AMREX_D_DECL(0.0, 0.0, 0.0)};
 
-        if (ic.m_model_type == 1) {
+        if (ic.model_type == 1) {
             amrex::ParallelFor(
                 m_f[lev], m_f[lev].nGrowVect(), constants::N_MICRO_STATES,
                 [=] AMREX_GPU_DEVICE(
