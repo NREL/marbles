@@ -81,10 +81,7 @@ public:
     void f_to_macrodata(const int lev);
 
     // Stream the information to the neighbor particles
-    void stream(const int lev);
-
-    // Stream the information to the neighbor particles
-    void stream_g(const int lev);
+    void stream(const int lev, amrex::Vector<amrex::MultiFab>& fs);
 
     // Collide the particles
     void collide(const int lev);

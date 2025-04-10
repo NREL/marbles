@@ -525,9 +525,9 @@ void LBM::advance(
     m_ts_old[lev] = m_ts_new[lev]; // old time is now current time (time)
     m_ts_new[lev] += dt_lev;       // new time is ahead
 
-    stream(lev);
+    stream(lev, m_f);
 
-    stream_g(lev);
+    stream(lev, m_g);
 
     if (lev < finest_level) {
         average_down_to(lev, amrex::IntVect(1));
@@ -548,24 +548,24 @@ void LBM::post_time_step()
 }
 
 // Stream the information to the neighbor particles
-void LBM::stream(const int lev)
+void LBM::stream(const int lev, amrex::Vector<amrex::MultiFab>& fs)
 {
     BL_PROFILE("LBM::stream()");
 
     amrex::MultiFab f_star(
         boxArray(lev), DistributionMap(lev), constants::N_MICRO_STATES,
-        m_f[lev].nGrow(), amrex::MFInfo(), *(m_factory[lev]));
+        fs[lev].nGrow(), amrex::MFInfo(), *(m_factory[lev]));
     f_star.setVal(-1.0);
 
     auto const& fs_arrs = f_star.arrays();
     auto const& is_fluid_arrs = m_is_fluid[lev].const_arrays();
-    auto const& f_arrs = m_f[lev].const_arrays();
+    auto const& f_arrs = fs[lev].const_arrays();
 
     const stencil::Stencil stencil;
     const auto& evs = stencil.evs;
     const auto& bounce_dirs = stencil.bounce_dirs;
     amrex::ParallelFor(
-        m_f[lev], m_f[lev].nGrowVect(), constants::N_MICRO_STATES,
+        fs[lev], fs[lev].nGrowVect(), constants::N_MICRO_STATES,
         [=] AMREX_GPU_DEVICE(
             int nbx, int i, int j, int AMREX_D_PICK(, /*k*/, k),
             int q) noexcept {
@@ -592,59 +592,8 @@ void LBM::stream(const int lev)
     amrex::Gpu::synchronize();
 
     amrex::MultiFab::Copy(
-        m_f[lev], f_star, 0, 0, constants::N_MICRO_STATES,
-        m_f[lev].nGrowVect());
-    m_f[lev].FillBoundary(Geom(lev).periodicity());
-}
-
-// Stream the information to the neighbor particles
-void LBM::stream_g(const int lev)
-{
-    BL_PROFILE("LBM::stream()");
-
-    amrex::MultiFab g_star(
-        boxArray(lev), DistributionMap(lev), constants::N_MICRO_STATES,
-        m_g[lev].nGrow(), amrex::MFInfo(), *(m_factory[lev]));
-    g_star.setVal(-1.0);
-
-    auto const& gs_arrs = g_star.arrays();
-    auto const& is_fluid_arrs = m_is_fluid[lev].const_arrays();
-    auto const& g_arrs = m_g[lev].const_arrays();
-
-    const stencil::Stencil stencil;
-    const auto& evs = stencil.evs;
-    const auto& bounce_dirs = stencil.bounce_dirs;
-    amrex::ParallelFor(
-        m_g[lev], m_g[lev].nGrowVect(), constants::N_MICRO_STATES,
-        [=] AMREX_GPU_DEVICE(
-            int nbx, int i, int j, int AMREX_D_PICK(, /*k*/, k),
-            int q) noexcept {
-            const amrex::IntVect iv(AMREX_D_DECL(i, j, k));
-            const auto& ev = evs[q];
-            const amrex::IntVect ivn(iv + ev);
-            if (is_fluid_arrs[nbx](iv, 0) == 1) {
-                const auto g_arr = g_arrs[nbx];
-                const auto gs_arr = gs_arrs[nbx];
-                const auto& lb = amrex::lbound(g_arr);
-                const auto& ub = amrex::ubound(g_arr);
-                const amrex::Box fbox(
-                    amrex::IntVect(AMREX_D_DECL(lb.x, lb.y, lb.z)),
-                    amrex::IntVect(AMREX_D_DECL(ub.x, ub.y, ub.z)));
-                if (fbox.contains(ivn)) {
-                    if (is_fluid_arrs[nbx](ivn, 0) != 0) {
-                        gs_arr(ivn, q) = g_arr(iv, q);
-                    } else {
-                        gs_arr(iv, bounce_dirs[q]) = g_arr(iv, q);
-                    }
-                }
-            }
-        });
-    amrex::Gpu::synchronize();
-
-    amrex::MultiFab::Copy(
-        m_g[lev], g_star, 0, 0, constants::N_MICRO_STATES,
-        m_g[lev].nGrowVect());
-    m_g[lev].FillBoundary(Geom(lev).periodicity());
+        fs[lev], f_star, 0, 0, constants::N_MICRO_STATES, fs[lev].nGrowVect());
+    fs[lev].FillBoundary(Geom(lev).periodicity());
 }
 
 // Collide the particles
@@ -1074,8 +1023,8 @@ void LBM::compute_eb_forces()
             m_f[lev], amrex::IntVect(0),
             [=] AMREX_GPU_DEVICE(
                 int nbx, int i, int j, int AMREX_D_PICK(, /*k*/, k)) noexcept
-            -> amrex::GpuTuple<AMREX_D_DECL(
-                amrex::Real, amrex::Real, amrex::Real)> {
+                -> amrex::GpuTuple<AMREX_D_DECL(
+                    amrex::Real, amrex::Real, amrex::Real)> {
                 const amrex::IntVect iv(AMREX_D_DECL(i, j, k));
                 amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> fs = {0.0};
                 if ((is_fluid_arrs[nbx](iv, 1) == 1) &&
