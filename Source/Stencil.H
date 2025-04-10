@@ -13,9 +13,8 @@ struct Stencil
 
 #if AMREX_SPACEDIM == 2
 
-    const amrex::Real theta0 = 1.0 / 3.0;
-    const amrex::Real theta0_sqrt = sqrt(theta0);
-    const amrex::Real oneByTheta0 = (1.0 / theta0);
+    static constexpr amrex::Real THETA0 = 1.0 / 3.0;
+    static constexpr amrex::Real INVTHETA0 = (1.0 / THETA0);
 
     const amrex::GpuArray<amrex::IntVect, constants::N_MICRO_STATES> evs = {
         amrex::IntVect(0, 0),   amrex::IntVect(1, 0),  amrex::IntVect(-1, 0),
@@ -40,13 +39,12 @@ struct Stencil
 
 #else
 
-    const amrex::Real theta0 = 1.0 / 3.0;
-    const amrex::Real theta0_sqrt = sqrt(theta0);
-    const amrex::Real oneByTheta0 = (1.0 / theta0);
+    static constexpr amrex::Real THETA0 = 1.0 / 3.0;
+    static constexpr amrex::Real INVTHETA0 = (1.0 / THETA0);
 
-    const int cSC1 = 1;  // simple cubic
-    const int cFCC1 = 1; // face centered cubic
-    const int cBCC1 = 1; // body centered cubic
+    static constexpr int cSC1 = 1;  // simple cubic
+    static constexpr int cFCC1 = 1; // face centered cubic
+    static constexpr int cBCC1 = 1; // body centered cubic
 
     const amrex::GpuArray<amrex::IntVect, constants::N_MICRO_STATES> evs = {
         amrex::IntVect(0, 0, 0),
@@ -80,10 +78,10 @@ struct Stencil
         amrex::IntVect(cBCC1, cBCC1, -cBCC1),
         amrex::IntVect(-cBCC1, -cBCC1, cBCC1)};
 
-    const amrex::Real wSC1 = 2.0 / 27.0;
-    const amrex::Real wFCC1 = 1.0 / 54.0;
-    const amrex::Real wBCC1 = 1.0 / 216.0;
-    const amrex::Real w0 =
+    static constexpr amrex::Real wSC1 = 2.0 / 27.0;
+    static constexpr amrex::Real wFCC1 = 1.0 / 54.0;
+    static constexpr amrex::Real wBCC1 = 1.0 / 216.0;
+    static constexpr amrex::Real w0 =
         1.0 - (6.0 * (wSC1) + 12.0 * (wFCC1) + 8.0 * (wBCC1));
 
     const amrex::GpuArray<amrex::Real, constants::N_MICRO_STATES> weights = {

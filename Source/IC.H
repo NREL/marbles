@@ -515,7 +515,7 @@ public:
 
                     set_extended_grad_expansion_generic(
                         two_rho_e, heat_flux, flux_of_heat_flux, l_mesh_speed,
-                        wt, ev, stencil.theta0, zero_vec, 1.0,
+                        wt, ev, stencil::Stencil::THETA0, zero_vec, 1.0,
                         g_arrs[nbx](i, j, k, q));
                 });
         } else {

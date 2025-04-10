@@ -754,7 +754,8 @@ void LBM::macrodata_to_equilibrium(const int lev)
 
                 set_extended_grad_expansion_generic(
                     two_rho_e, heat_flux_mrt, flux_of_heat_flux, l_mesh_speed,
-                    wt, ev, stencil.theta0, zero_vec, 1.0, eq_arr_g(iv, q));
+                    wt, ev, stencil::Stencil::THETA0, zero_vec, 1.0,
+                    eq_arr_g(iv, q));
             }
         });
     amrex::Gpu::synchronize();

@@ -38,7 +38,7 @@ struct BCFill
     const amrex::GpuArray<amrex::Real, constants::N_MICRO_STATES> m_weights =
         stencil::Stencil().weights;
 
-    const amrex::Real m_theta0 = stencil::Stencil().theta0;
+    const amrex::Real m_theta0 = stencil::Stencil::THETA0;
     amrex::RealVect m_zero_vec = {AMREX_D_DECL(0.0, 0.0, 0.0)};
 
     const amrex::Real m_mesh_speed;
