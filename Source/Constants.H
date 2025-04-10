@@ -63,6 +63,8 @@ static constexpr amrex::Real LARGE_NUM =
 static constexpr int DATWIDTH = 24;
 static constexpr int DATPRECISION = 16;
 
+static constexpr amrex::Real AIR_MOLAR_MASS = 28.96;
+
 } // namespace lbm::constants
 
 #endif

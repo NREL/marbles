@@ -474,7 +474,8 @@ struct BCFill
                                         data, rho_bcout);
                                 }
 
-                            } else if (m_bc_type[bc_idx] == OUTFLOW_ZEROTH_ORDER) {
+                            } else if (
+                                m_bc_type[bc_idx] == OUTFLOW_ZEROTH_ORDER) {
                                 simple_outflow_bc(
                                     iv, q, ev, idir, normal_dir, data);
                             } else if (m_bc_type[bc_idx] == SLIPWALLXNORMAL) {

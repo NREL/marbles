@@ -21,8 +21,8 @@ struct Constant
         amrex::Real initial_temperature = 1.0 / 3.0;
         amrex::Real adiabatic_exponent = 5.0 / 3.0;
 
-        const amrex::Real R_u = 28.96;
-        amrex::Real m_bar = 28.96;
+        const amrex::Real R_u = constants::AIR_MOLAR_MASS;
+        amrex::Real m_bar = constants::AIR_MOLAR_MASS;
         amrex::Real speed_of_sound_ref =
             std::sqrt(adiabatic_exponent * (R_u / m_bar) * initial_temperature);
 
@@ -80,8 +80,8 @@ struct TaylorGreen
         amrex::Real initial_temperature = 1.0 / 3.0;
         const amrex::Real adiabatic_exponent = 5.0 / 3.0;
 
-        const amrex::Real R_u = 28.96;
-        amrex::Real m_bar = 28.96;
+        const amrex::Real R_u = constants::AIR_MOLAR_MASS;
+        amrex::Real m_bar = constants::AIR_MOLAR_MASS;
         amrex::Real speed_of_sound_ref =
             std::sqrt(adiabatic_exponent * (R_u / m_bar) * initial_temperature);
 
@@ -176,8 +176,8 @@ struct ViscosityTest
         amrex::Real initial_temperature = 1.0 / 3.0;
         amrex::Real adiabatic_exponent = 5.0 / 3.0;
 
-        const amrex::Real R_u = 28.96;
-        amrex::Real m_bar = 28.96;
+        const amrex::Real R_u = constants::AIR_MOLAR_MASS;
+        amrex::Real m_bar = constants::AIR_MOLAR_MASS;
         amrex::Real speed_of_sound_ref =
             std::sqrt(adiabatic_exponent * (R_u / m_bar) * initial_temperature);
 
@@ -260,8 +260,8 @@ struct ThermalDiffusivityTest
 
         amrex::Real initial_temperature = 1.0 / 3.0;
         amrex::Real adiabatic_exponent = 5.0 / 3.0;
-        const amrex::Real R_u = 28.96;
-        amrex::Real m_bar = 28.96;
+        const amrex::Real R_u = constants::AIR_MOLAR_MASS;
+        amrex::Real m_bar = constants::AIR_MOLAR_MASS;
         amrex::Real speed_of_sound_ref =
             std::sqrt(adiabatic_exponent * (R_u / m_bar) * initial_temperature);
 
@@ -349,8 +349,8 @@ struct SodTest
         amrex::Real initial_temperature = 1.0 / 3.0;
 
         amrex::Real adiabatic_exponent = 5.0 / 3.0;
-        const amrex::Real R_u = 28.96;
-        amrex::Real m_bar = 28.96;
+        const amrex::Real R_u = constants::AIR_MOLAR_MASS;
+        amrex::Real m_bar = constants::AIR_MOLAR_MASS;
         amrex::Real speed_of_sound_ref =
             std::sqrt(adiabatic_exponent * (R_u / m_bar) * initial_temperature);
 
@@ -483,7 +483,8 @@ public:
                     amrex::Real rho = 1.0;
                     amrex::RealVect vel(AMREX_D_DECL(0.0, 0.0, 0.0));
                     amrex::Real temperature = 1.0 / 3.0;
-                    amrex::Real specific_gas_constant = ic.R_u / 28.96;
+                    amrex::Real specific_gas_constant =
+                        ic.R_u / constants::AIR_MOLAR_MASS;
                     amrex::Real gamma = 1.667;
 
                     ic.thermal_initialise(

@@ -9,18 +9,18 @@ Constant::Constant()
     pp.query("dir", m_op.dir);
     pp.query("u0", m_op.u0);
 
-    std::string m_model_type;
-    pp.query("model_type", m_model_type);
+    std::string model_type;
+    pp.query("model_type", model_type);
 
-    m_op.m_model_type = 1;
+    m_op.model_type = 1;
     pp.query("Mach_0", m_op.Mach_0);
-    pp.query("initial_temperature", m_op.initialTemperature);
-    pp.query("adiabatic_exponent", m_op.adiabaticExponent);
+    pp.query("initial_temperature", m_op.initial_temperature);
+    pp.query("adiabatic_exponent", m_op.adiabatic_exponent);
     pp.query("mean_molecular_mass", m_op.m_bar);
-    m_op.speedOfSound_Ref = std::sqrt(
-        m_op.adiabaticExponent * (m_op.R_u / m_op.m_bar) *
-        m_op.initialTemperature);
-    m_op.u0 = m_op.Mach_0 * m_op.speedOfSound_Ref;
+    m_op.speed_of_sound_ref = std::sqrt(
+        m_op.adiabatic_exponent * (m_op.R_u / m_op.m_bar) *
+        m_op.initial_temperature);
+    m_op.u0 = m_op.Mach_0 * m_op.speed_of_sound_ref;
 }
 
 Channel::Channel()
@@ -28,18 +28,18 @@ Channel::Channel()
     amrex::ParmParse pp("velocity_bc_channel");
     pp.query("u_ref", m_op.u_ref);
 
-    std::string m_model_type;
-    pp.query("model_type", m_model_type);
+    std::string model_type;
+    pp.query("model_type", model_type);
 
-    m_op.m_model_type = 1;
+    m_op.model_type = 1;
     pp.query("Mach_ref", m_op.Mach_ref);
-    pp.query("initial_temperature", m_op.initialTemperature);
-    pp.query("adiabatic_exponent", m_op.adiabaticExponent);
+    pp.query("initial_temperature", m_op.initial_temperature);
+    pp.query("adiabatic_exponent", m_op.adiabatic_exponent);
     pp.query("mean_molecular_mass", m_op.m_bar);
-    m_op.speedOfSound_Ref = std::sqrt(
-        m_op.adiabaticExponent * (m_op.R_u / m_op.m_bar) *
-        m_op.initialTemperature);
-    m_op.u_ref = m_op.Mach_ref * m_op.speedOfSound_Ref;
+    m_op.speed_of_sound_ref = std::sqrt(
+        m_op.adiabatic_exponent * (m_op.R_u / m_op.m_bar) *
+        m_op.initial_temperature);
+    m_op.u_ref = m_op.Mach_ref * m_op.speed_of_sound_ref;
 }
 
 Parabolic::Parabolic()
@@ -49,18 +49,18 @@ Parabolic::Parabolic()
     pp.query("tangential_dir", m_op.tangential_dir);
     pp.query("um", m_op.um);
 
-    std::string m_model_type;
-    pp.query("model_type", m_model_type);
+    std::string model_type;
+    pp.query("model_type", model_type);
 
-    m_op.m_model_type = 1;
-    pp.query("Mach_m", m_op.Mach_m);
-    pp.query("initial_temperature", m_op.initialTemperature);
-    pp.query("adiabatic_exponent", m_op.adiabaticExponent);
+    m_op.model_type = 1;
+    pp.query("Mach_m", m_op.mach_m);
+    pp.query("initial_temperature", m_op.initial_temperature);
+    pp.query("adiabatic_exponent", m_op.adiabatic_exponent);
     pp.query("mean_molecular_mass", m_op.m_bar);
-    m_op.speedOfSound_Ref = std::sqrt(
-        m_op.adiabaticExponent * (m_op.R_u / m_op.m_bar) *
-        m_op.initialTemperature);
-    m_op.um = m_op.Mach_m * m_op.speedOfSound_Ref;
+    m_op.speed_of_sound_ref = std::sqrt(
+        m_op.adiabatic_exponent * (m_op.R_u / m_op.m_bar) *
+        m_op.initial_temperature);
+    m_op.um = m_op.mach_m * m_op.speed_of_sound_ref;
 }
 
 } // namespace lbm::bc

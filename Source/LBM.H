@@ -309,10 +309,10 @@ private:
     amrex::Real m_adiabaticExponent = 5.0 / 3.0;
 
     // Universal Gas constant, LB unit. Never change.
-    const amrex::Real m_R_u = 28.96;
+    const amrex::Real m_R_u = constants::AIR_MOLAR_MASS;
 
     // Mean molecular mass, Safe default air. Unit kg/kmol.
-    amrex::Real m_m_bar = 28.96;
+    amrex::Real m_m_bar = constants::AIR_MOLAR_MASS;
 
     // Set the actual reference speed of sound
     amrex::Real m_speedOfSound_Ref = std::sqrt(
