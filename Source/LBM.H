@@ -74,13 +74,7 @@ public:
     static amrex::Real est_time_step(const int lev);
 
     // convert macrodata to equilibrium
-    void macrodata_to_equilibrium(const int lev);
-
-    // convert macrodata to equilibrium
     void macrodata_to_equilibrium_d3_q27(const int lev);
-
-    // calculate the macro fluid properties from the distributions
-    void f_to_macrodata(const int lev);
 
     // calculate the macro fluid properties from the distributions and store
     // part of (4.45) of http://dx.doi.org/10.3929/ethz-b-000607045
@@ -93,15 +87,8 @@ public:
     void stream_g(const int lev);
 
     // Collide the particles
-    void collide(const int lev);
-
-    // Collide the particles
     void collide_d3_q27(const int lev);
 
-    // Relax the particles toward the equilibrium state
-    void relax_f_to_equilibrium(const int lev);
-
-    // Relax the particles toward the equilibrium state
     void relax_f_to_equilibrium_d3_q27(const int lev);
 
     // Compute derived quantities

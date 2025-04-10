@@ -650,18 +650,6 @@ void LBM::stream_g(const int lev)
 }
 
 // Collide the particles
-void LBM::collide(const int lev)
-{
-    BL_PROFILE("LBM::collide()");
-
-    f_to_macrodata(lev);
-
-    macrodata_to_equilibrium(lev);
-
-    relax_f_to_equilibrium(lev);
-}
-
-// Collide the particles
 void LBM::collide_d3_q27(const int lev)
 {
     BL_PROFILE("LBM::collide()");
@@ -673,47 +661,6 @@ void LBM::collide_d3_q27(const int lev)
     macrodata_to_equilibrium_d3_q27(lev);
 
     relax_f_to_equilibrium_d3_q27(lev);
-}
-
-// convert macrodata to equilibrium
-void LBM::macrodata_to_equilibrium(const int lev)
-{
-    BL_PROFILE("LBM::macrodata_to_equilibrium()");
-    AMREX_ASSERT(m_macrodata[lev].nGrow() >= m_eq[lev].nGrow());
-    auto const& md_arrs = m_macrodata[lev].const_arrays();
-    auto const& is_fluid_arrs = m_is_fluid[lev].const_arrays();
-    auto const& eq_arrs = m_eq[lev].arrays();
-    const amrex::Real l_mesh_speed = m_mesh_speed;
-
-    const stencil::Stencil stencil;
-    const auto& evs = stencil.evs;
-    const auto& weight = stencil.weights;
-    amrex::ParallelFor(
-        m_eq[lev], m_eq[lev].nGrowVect(), constants::N_MICRO_STATES,
-        [=] AMREX_GPU_DEVICE(
-            int nbx, int i, int j, int AMREX_D_PICK(, /*k*/, k),
-            int q) noexcept {
-            const amrex::IntVect iv(AMREX_D_DECL(i, j, k));
-            if (is_fluid_arrs[nbx](iv, 0) == 1) {
-
-                const auto md_arr = md_arrs[nbx];
-                const auto eq_arr = eq_arrs[nbx];
-
-                const amrex::Real rho = md_arr(iv, constants::RHO_IDX);
-                const amrex::RealVect vel = {AMREX_D_DECL(
-                    md_arr(iv, constants::VELX_IDX),
-                    md_arr(iv, constants::VELY_IDX),
-                    md_arr(iv, constants::VELZ_IDX))};
-
-                const amrex::Real wt = weight[q];
-
-                const auto& ev = evs[q];
-
-                set_equilibrium_value(
-                    rho, vel, l_mesh_speed, wt, ev, eq_arr(iv, q));
-            }
-        });
-    amrex::Gpu::synchronize();
 }
 
 // convert macrodata to equilibrium.
@@ -866,30 +813,6 @@ void LBM::macrodata_to_equilibrium_d3_q27(const int lev)
     amrex::Gpu::synchronize();
 }
 
-// Relax the particles toward the equilibrium state
-void LBM::relax_f_to_equilibrium(const int lev)
-{
-    BL_PROFILE("LBM::relax_f_to_equilibrium()");
-    auto const& is_fluid_arrs = m_is_fluid[lev].const_arrays();
-    auto const& eq_arrs = m_eq[lev].const_arrays();
-    auto const& f_arrs = m_f[lev].arrays();
-    const amrex::Real tau = m_nu / (m_dts[lev] * m_cs_2) + 0.5;
-    amrex::ParallelFor(
-        m_f[lev], m_eq[lev].nGrowVect(), constants::N_MICRO_STATES,
-        [=] AMREX_GPU_DEVICE(
-            int nbx, int i, int j, int AMREX_D_PICK(, /*k*/, k),
-            int q) noexcept {
-            const amrex::IntVect iv(AMREX_D_DECL(i, j, k));
-            if (is_fluid_arrs[nbx](iv, 0) == 1) {
-                const auto f_arr = f_arrs[nbx];
-                const auto eq_arr = eq_arrs[nbx];
-                f_arr(iv, q) -= 1.0 / tau * (f_arr(iv, q) - eq_arr(iv, q));
-            }
-        });
-    amrex::Gpu::synchronize();
-    m_f[lev].FillBoundary(Geom(lev).periodicity());
-}
-
 // Relax the particles toward the equilibrium state.
 void LBM::relax_f_to_equilibrium_d3_q27(const int lev)
 {
@@ -933,52 +856,6 @@ void LBM::relax_f_to_equilibrium_d3_q27(const int lev)
     amrex::Gpu::synchronize();
     m_f[lev].FillBoundary(Geom(lev).periodicity());
     m_g[lev].FillBoundary(Geom(lev).periodicity());
-}
-
-// calculate the macro fluid properties from the distributions
-void LBM::f_to_macrodata(const int lev)
-{
-    BL_PROFILE("LBM::f_to_macrodata()");
-    auto const& md_arrs = m_macrodata[lev].arrays();
-    auto const& is_fluid_arrs = m_is_fluid[lev].const_arrays();
-    auto const& f_arrs = m_f[lev].const_arrays();
-    const amrex::Real l_mesh_speed = m_mesh_speed;
-
-    const stencil::Stencil stencil;
-    const auto& evs = stencil.evs;
-    amrex::ParallelFor(
-        m_macrodata[lev], m_macrodata[lev].nGrowVect(),
-        [=] AMREX_GPU_DEVICE(
-            int nbx, int i, int j, int AMREX_D_PICK(, /*k*/, k)) noexcept {
-            const amrex::IntVect iv(AMREX_D_DECL(i, j, k));
-            if (is_fluid_arrs[nbx](iv, 0) == 1) {
-
-                const auto f_arr = f_arrs[nbx];
-                const auto md_arr = md_arrs[nbx];
-
-                amrex::Real rho = 0.0, AMREX_D_DECL(u = 0.0, v = 0.0, w = 0.0);
-                for (int q = 0; q < constants::N_MICRO_STATES; q++) {
-                    rho += f_arr(iv, q);
-                    const auto& ev = evs[q];
-                    AMREX_D_DECL(
-                        u += ev[0] * f_arr(iv, q), v += ev[1] * f_arr(iv, q),
-                        w += ev[2] * f_arr(iv, q));
-                }
-                AMREX_D_DECL(
-                    u *= l_mesh_speed / rho, v *= l_mesh_speed / rho,
-                    w *= l_mesh_speed / rho);
-
-                md_arr(iv, constants::RHO_IDX) = rho;
-                AMREX_D_DECL(
-                    md_arr(iv, constants::VELX_IDX) = u,
-                    md_arr(iv, constants::VELY_IDX) = v,
-                    md_arr(iv, constants::VELZ_IDX) = w);
-                md_arr(iv, constants::VMAG_IDX) =
-                    std::sqrt(AMREX_D_TERM(u * u, +v * v, +w * w));
-            }
-        });
-    amrex::Gpu::synchronize();
-    m_macrodata[lev].FillBoundary(Geom(lev).periodicity());
 }
 
 // calculate the macro fluid properties from the distributions
