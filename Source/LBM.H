@@ -89,6 +89,7 @@ public:
     // Collide the particles
     void collide(const int lev);
 
+    // Relax the particles toward the equilibrium state
     void relax_f_to_equilibrium(const int lev);
 
     // Compute derived quantities
