@@ -43,7 +43,7 @@ AMREX_GPU_DEVICE AMREX_INLINE void set_equilibrium_value(
 AMREX_GPU_DEVICE AMREX_INLINE void set_equilibrium_value_d3_q27(
     const amrex::Real& rho,
     const amrex::RealVect& vel,
-    const amrex::Real& Rtemperature,
+    const amrex::Real& r_temperature,
     const amrex::Real& /*mesh_speed*/,
     const amrex::Real& /*wt*/,
     const amrex::IntVect& ev,
@@ -56,11 +56,11 @@ AMREX_GPU_DEVICE AMREX_INLINE void set_equilibrium_value_d3_q27(
     // Qyyy and Qzzz are always wrong. We correct them in pxx, pyy and pzz
     // during collision.
 
-    const amrex::Real pxx = vel[0] * vel[0] + Rtemperature;
-    const amrex::Real pyy = vel[1] * vel[1] + Rtemperature;
+    const amrex::Real pxx = vel[0] * vel[0] + r_temperature;
+    const amrex::Real pyy = vel[1] * vel[1] + r_temperature;
     amrex::Real pzz = 0.0;
     if (AMREX_SPACEDIM == 3) {
-        pzz = vel[2] * vel[2] + Rtemperature;
+        pzz = vel[2] * vel[2] + r_temperature;
     }
 
     const amrex::Real phix =
@@ -205,80 +205,74 @@ AMREX_GPU_DEVICE AMREX_INLINE void set_population_zero(amrex::Real& eq)
     eq = 0.0;
 }
 
-template <class dType>
-AMREX_GPU_DEVICE AMREX_INLINE dType get_energy(
-    const dType T_,
-    const dType rho_,
-    const dType ux_,
-    const dType uy_,
-    const dType uz_,
-    const dType Cv_)
+AMREX_GPU_DEVICE AMREX_INLINE amrex::Real get_energy(
+    const amrex::Real T,
+    const amrex::Real rho,
+    const amrex::Real ux,
+    const amrex::Real uy,
+    const amrex::Real uz,
+    const amrex::Real Cv)
 {
-    return rho_ * (2.0 * Cv_ * T_ + (ux_ * ux_ + uy_ * uy_ + uz_ * uz_));
+    return rho * (2.0 * Cv * T + (ux * ux + uy * uy + uz * uz));
 }
 
-template <class dType>
-AMREX_GPU_DEVICE AMREX_INLINE dType get_energy(
-    const dType T_,
-    const dType rho_,
-    const amrex::RealVect& vel_,
-    const dType Cv_)
+AMREX_GPU_DEVICE AMREX_INLINE amrex::Real get_energy(
+    const amrex::Real T,
+    const amrex::Real rho,
+    const amrex::RealVect& vel,
+    const amrex::Real Cv)
 {
-    return rho_ * (2.0 * Cv_ * T_ + AMREX_D_TERM(
-                                        vel_[0] * vel_[0], +vel_[1] * vel_[1],
-                                        +vel_[2] * vel_[2]));
+    return rho *
+           (2.0 * Cv * T +
+            AMREX_D_TERM(vel[0] * vel[0], +vel[1] * vel[1], +vel[2] * vel[2]));
 }
 
-template <class dType>
-AMREX_GPU_DEVICE AMREX_INLINE dType get_temperature(
-    const dType twoRhoE_,
-    const dType rho_,
-    const dType ux_,
-    const dType uy_,
-    const dType uz_,
-    const dType Cv_)
+AMREX_GPU_DEVICE AMREX_INLINE amrex::Real get_temperature(
+    const amrex::Real two_rho_e,
+    const amrex::Real rho,
+    const amrex::Real ux,
+    const amrex::Real uy,
+    const amrex::Real uz,
+    const amrex::Real Cv)
 {
-    return (0.50 / Cv_) *
-           ((twoRhoE_ / rho_) - (ux_ * ux_ + uy_ * uy_ + uz_ * uz_));
+    return (0.50 / Cv) * ((two_rho_e / rho) - (ux * ux + uy * uy + uz * uz));
 }
 
-template <class dType>
-AMREX_GPU_DEVICE AMREX_INLINE dType get_temperature(
-    const dType twoRhoE_,
-    const dType rho_,
-    const amrex::RealVect& vel_,
-    const dType Cv_)
+AMREX_GPU_DEVICE AMREX_INLINE amrex::Real get_temperature(
+    const amrex::Real two_rho_e,
+    const amrex::Real rho,
+    const amrex::RealVect& vel,
+    const amrex::Real Cv)
 {
-    return (0.50 / Cv_) *
-           ((twoRhoE_ / rho_) -
-            AMREX_D_TERM(
-                vel_[0] * vel_[0], +vel_[1] * vel_[1], +vel_[2] * vel_[2]));
+    return (0.50 / Cv) *
+           ((two_rho_e / rho) -
+            AMREX_D_TERM(vel[0] * vel[0], +vel[1] * vel[1], +vel[2] * vel[2]));
 }
 
-template <class dType>
 AMREX_GPU_DEVICE AMREX_INLINE void get_equilibrium_moments(
-    const dType rho,
-    const dType ux,
-    const dType uy,
-    const dType uz,
-    const dType totalEnergy,
-    const dType Cv,
-    const dType R,
-    dType& qxEq,
-    dType& qyEq,
-    dType& qzEq,
-    dType& RxxEq,
-    dType& RyyEq,
-    dType& RzzEq,
-    dType& RxyEq,
-    dType& RxzEq,
-    dType& RyzEq)
+    const amrex::Real rho,
+    const amrex::Real ux,
+    const amrex::Real uy,
+    const amrex::Real uz,
+    const amrex::Real total_energy,
+    const amrex::Real Cv,
+    const amrex::Real R,
+    amrex::Real& qxEq,
+    amrex::Real& qyEq,
+    amrex::Real& qzEq,
+    amrex::Real& RxxEq,
+    amrex::Real& RyyEq,
+    amrex::Real& RzzEq,
+    amrex::Real& RxyEq,
+    amrex::Real& RxzEq,
+    amrex::Real& RyzEq)
 {
 
-    dType energy = totalEnergy / (2.0 * rho);
-    dType temperature = getTemperature(totalEnergy, rho, ux, uy, uz, Cv);
-    dType p = rho * R * temperature;
-    dType h = energy + (p / rho);
+    amrex::Real energy = total_energy / (2.0 * rho);
+    amrex::Real temperature =
+        get_temperature(total_energy, rho, ux, uy, uz, Cv);
+    amrex::Real p = rho * R * temperature;
+    amrex::Real h = energy + (p / rho);
 
     qxEq = 2.0 * rho * ux * h;
     qyEq = 2.0 * rho * uy * h;
@@ -291,44 +285,43 @@ AMREX_GPU_DEVICE AMREX_INLINE void get_equilibrium_moments(
     RyzEq = 2.0 * rho * uy * uz * (h + (p / rho)) + 0;
 }
 
-template <class dType>
 AMREX_GPU_DEVICE AMREX_INLINE void get_equilibrium_moments(
-    const dType rho,
-    const amrex::RealVect& vel_,
-    const dType totalEnergy,
-    const dType Cv,
-    const dType R,
-    amrex::RealVect& qEq_,
-    dType& RxxEq,
-    dType& RyyEq,
-    dType& RzzEq,
-    dType& RxyEq,
-    dType& RxzEq,
-    dType& RyzEq)
+    const amrex::Real rho,
+    const amrex::RealVect& vel,
+    const amrex::Real total_energy,
+    const amrex::Real Cv,
+    const amrex::Real R,
+    amrex::RealVect& qEq,
+    amrex::Real& RxxEq,
+    amrex::Real& RyyEq,
+    amrex::Real& RzzEq,
+    amrex::Real& RxyEq,
+    amrex::Real& RxzEq,
+    amrex::Real& RyzEq)
 {
 
-    dType energy = totalEnergy / (2.0 * rho);
-    dType temperature = get_temperature(totalEnergy, rho, vel_, Cv);
-    dType p = rho * R * temperature;
-    dType h = energy + (p / rho);
+    amrex::Real energy = total_energy / (2.0 * rho);
+    amrex::Real temperature = get_temperature(total_energy, rho, vel, Cv);
+    amrex::Real p = rho * R * temperature;
+    amrex::Real h = energy + (p / rho);
 
-    qEq_[0] = 2.0 * rho * vel_[0] * h;
-    qEq_[1] = 2.0 * rho * vel_[1] * h;
+    qEq[0] = 2.0 * rho * vel[0] * h;
+    qEq[1] = 2.0 * rho * vel[1] * h;
     if (AMREX_SPACEDIM == 3) {
-        qEq_[2] = 2.0 * rho * vel_[2] * h;
+        qEq[2] = 2.0 * rho * vel[2] * h;
     }
 
-    RxxEq = 2.0 * rho * vel_[0] * vel_[0] * (h + (p / rho)) + 2.0 * p * h;
-    RyyEq = 2.0 * rho * vel_[1] * vel_[1] * (h + (p / rho)) + 2.0 * p * h;
+    RxxEq = 2.0 * rho * vel[0] * vel[0] * (h + (p / rho)) + 2.0 * p * h;
+    RyyEq = 2.0 * rho * vel[1] * vel[1] * (h + (p / rho)) + 2.0 * p * h;
     if (AMREX_SPACEDIM == 3) {
-        RzzEq = 2.0 * rho * vel_[2] * vel_[2] * (h + (p / rho)) + 2.0 * p * h;
+        RzzEq = 2.0 * rho * vel[2] * vel[2] * (h + (p / rho)) + 2.0 * p * h;
     }
-    RxyEq = 2.0 * rho * vel_[0] * vel_[1] * (h + (p / rho)) + 0;
+    RxyEq = 2.0 * rho * vel[0] * vel[1] * (h + (p / rho)) + 0;
     if (AMREX_SPACEDIM == 3) {
-        RxzEq = 2.0 * rho * vel_[0] * vel_[2] * (h + (p / rho)) + 0;
+        RxzEq = 2.0 * rho * vel[0] * vel[2] * (h + (p / rho)) + 0;
     }
     if (AMREX_SPACEDIM == 3) {
-        RyzEq = 2.0 * rho * vel_[1] * vel_[2] * (h + (p / rho)) + 0;
+        RyzEq = 2.0 * rho * vel[1] * vel[2] * (h + (p / rho)) + 0;
     }
 }
 
