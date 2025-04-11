@@ -16,6 +16,7 @@ Checks: 'bugprone-*,
          -readability-function-cognitive-complexity'
 WarningsAsErrors: ''
 HeaderFilterRegex: '.*'
+HeaderFileExtensions: ['', "H", 'h', 'hh', 'hpp', 'hxx']
 FormatStyle:     none
 User:            user
 CheckOptions:
@@ -55,6 +56,12 @@ CheckOptions:
     value:           llvm
   - key:             modernize-use-nullptr.NullMacros
     value:           'NULL'
+  - { key: readability-identifier-length.MinimumVariableNameLength, value: 2 }
+  - { key: readability-identifier-length.IgnoredVariableNames, value: "^[ijkp]$" }
+  - { key: readability-identifier-length.MinimumParameterNameLength, value: 2 }
+  - { key: readability-identifier-length.IgnoredParameterNames, value: "^[ijknp]$" }
+  - { key: readability-identifier-length.MinimumExceptionNameLength, value: 2 }
+  - { key: readability-identifier-length.MinimumLoopCounterNameLength, value: 1 }
   - { key: readability-identifier-naming.NamespaceCase,       value: lower_case }
   - { key: readability-identifier-naming.ClassCase,           value: CamelCase  }
   - { key: readability-identifier-naming.PrivateMemberPrefix, value: m_         }
