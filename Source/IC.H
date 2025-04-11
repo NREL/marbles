@@ -470,6 +470,7 @@ public:
         ICDeviceOp ic(m_op.device_instance());
 
         amrex::RealVect zero_vec = {AMREX_D_DECL(0.0, 0.0, 0.0)};
+        const amrex::Real theta0 = stencil::Stencil::THETA0;
 
         if (ic.model_type == 1) {
             amrex::ParallelFor(
@@ -515,8 +516,7 @@ public:
 
                     set_extended_grad_expansion_generic(
                         two_rho_e, heat_flux, flux_of_heat_flux, l_mesh_speed,
-                        wt, ev, stencil::Stencil::THETA0, zero_vec, 1.0,
-                        g_arrs[nbx](i, j, k, q));
+                        wt, ev, theta0, zero_vec, 1.0, g_arrs[nbx](i, j, k, q));
                 });
         } else {
             amrex::Abort("Invalid model_type");

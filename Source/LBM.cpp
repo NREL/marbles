@@ -628,17 +628,13 @@ void LBM::macrodata_to_equilibrium(const int lev)
     const auto& evs = stencil.evs;
     const auto& weight = stencil.weights;
 
-    amrex::RealVect zero_vec = {AMREX_D_DECL(0.0, 0.0, 0.0)};
-
-    amrex::Real specific_gas_constant = m_R_u / m_m_bar;
-
-    amrex::Real cv = specific_gas_constant / (m_adiabaticExponent - 1.0);
-
-    amrex::Real nu = m_nu;
-
-    amrex::Real dt = m_dts[lev];
-
-    amrex::Real alpha = m_alpha;
+    const amrex::RealVect zero_vec = {AMREX_D_DECL(0.0, 0.0, 0.0)};
+    const amrex::Real specific_gas_constant = m_R_u / m_m_bar;
+    const amrex::Real cv = specific_gas_constant / (m_adiabaticExponent - 1.0);
+    const amrex::Real nu = m_nu;
+    const amrex::Real dt = m_dts[lev];
+    const amrex::Real alpha = m_alpha;
+    const amrex::Real theta0 = stencil::Stencil::THETA0;
 
     amrex::ParallelFor(
         m_eq[lev], m_eq[lev].nGrowVect(), constants::N_MICRO_STATES,
@@ -754,8 +750,7 @@ void LBM::macrodata_to_equilibrium(const int lev)
 
                 set_extended_grad_expansion_generic(
                     two_rho_e, heat_flux_mrt, flux_of_heat_flux, l_mesh_speed,
-                    wt, ev, stencil::Stencil::THETA0, zero_vec, 1.0,
-                    eq_arr_g(iv, q));
+                    wt, ev, theta0, zero_vec, 1.0, eq_arr_g(iv, q));
             }
         });
     amrex::Gpu::synchronize();
