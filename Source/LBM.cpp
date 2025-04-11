@@ -1294,7 +1294,6 @@ void LBM::fill_f_inside_eb(const int lev)
     auto const& g_arrs = m_g[lev].arrays();
 
     auto const& is_fluid_arrs = m_is_fluid[lev].arrays();
-    const stencil::Stencil stencil;
 
     amrex::ParallelFor(
         m_f[lev], m_f[lev].nGrowVect(), constants::N_MICRO_STATES,
