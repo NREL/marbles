@@ -42,52 +42,52 @@ struct Stencil
     static constexpr amrex::Real THETA0 = 1.0 / 3.0;
     static constexpr amrex::Real INVTHETA0 = (1.0 / THETA0);
 
-    static constexpr int cSC1 = 1;  // simple cubic
-    static constexpr int cFCC1 = 1; // face centered cubic
-    static constexpr int cBCC1 = 1; // body centered cubic
+    static constexpr int CSC1 = 1;  // simple cubic
+    static constexpr int CFCC1 = 1; // face centered cubic
+    static constexpr int CBCC1 = 1; // body centered cubic
 
     const amrex::GpuArray<amrex::IntVect, constants::N_MICRO_STATES> evs = {
         amrex::IntVect(0, 0, 0),
 
-        amrex::IntVect(cSC1, 0, 0),
-        amrex::IntVect(-cSC1, 0, 0),
-        amrex::IntVect(0, cSC1, 0),
-        amrex::IntVect(0, -cSC1, 0),
-        amrex::IntVect(0, 0, cSC1),
-        amrex::IntVect(0, 0, -cSC1),
+        amrex::IntVect(CSC1, 0, 0),
+        amrex::IntVect(-CSC1, 0, 0),
+        amrex::IntVect(0, CSC1, 0),
+        amrex::IntVect(0, -CSC1, 0),
+        amrex::IntVect(0, 0, CSC1),
+        amrex::IntVect(0, 0, -CSC1),
 
-        amrex::IntVect(cFCC1, cFCC1, 0),
-        amrex::IntVect(-cFCC1, -cFCC1, 0),
-        amrex::IntVect(cFCC1, -cFCC1, 0),
-        amrex::IntVect(-cFCC1, cFCC1, 0),
-        amrex::IntVect(cFCC1, 0, cFCC1),
-        amrex::IntVect(-cFCC1, 0, -cFCC1),
-        amrex::IntVect(cFCC1, 0, -cFCC1),
-        amrex::IntVect(-cFCC1, 0, cFCC1),
-        amrex::IntVect(0, cFCC1, cFCC1),
-        amrex::IntVect(0, -cFCC1, -cFCC1),
-        amrex::IntVect(0, cFCC1, -cFCC1),
-        amrex::IntVect(0, -cFCC1, cFCC1),
+        amrex::IntVect(CFCC1, CFCC1, 0),
+        amrex::IntVect(-CFCC1, -CFCC1, 0),
+        amrex::IntVect(CFCC1, -CFCC1, 0),
+        amrex::IntVect(-CFCC1, CFCC1, 0),
+        amrex::IntVect(CFCC1, 0, CFCC1),
+        amrex::IntVect(-CFCC1, 0, -CFCC1),
+        amrex::IntVect(CFCC1, 0, -CFCC1),
+        amrex::IntVect(-CFCC1, 0, CFCC1),
+        amrex::IntVect(0, CFCC1, CFCC1),
+        amrex::IntVect(0, -CFCC1, -CFCC1),
+        amrex::IntVect(0, CFCC1, -CFCC1),
+        amrex::IntVect(0, -CFCC1, CFCC1),
 
-        amrex::IntVect(cBCC1, cBCC1, cBCC1),
-        amrex::IntVect(-cBCC1, -cBCC1, -cBCC1),
-        amrex::IntVect(cBCC1, -cBCC1, cBCC1),
-        amrex::IntVect(-cBCC1, cBCC1, -cBCC1),
-        amrex::IntVect(cBCC1, -cBCC1, -cBCC1),
-        amrex::IntVect(-cBCC1, cBCC1, cBCC1),
-        amrex::IntVect(cBCC1, cBCC1, -cBCC1),
-        amrex::IntVect(-cBCC1, -cBCC1, cBCC1)};
+        amrex::IntVect(CBCC1, CBCC1, CBCC1),
+        amrex::IntVect(-CBCC1, -CBCC1, -CBCC1),
+        amrex::IntVect(CBCC1, -CBCC1, CBCC1),
+        amrex::IntVect(-CBCC1, CBCC1, -CBCC1),
+        amrex::IntVect(CBCC1, -CBCC1, -CBCC1),
+        amrex::IntVect(-CBCC1, CBCC1, CBCC1),
+        amrex::IntVect(CBCC1, CBCC1, -CBCC1),
+        amrex::IntVect(-CBCC1, -CBCC1, CBCC1)};
 
-    static constexpr amrex::Real wSC1 = 2.0 / 27.0;
-    static constexpr amrex::Real wFCC1 = 1.0 / 54.0;
-    static constexpr amrex::Real wBCC1 = 1.0 / 216.0;
-    static constexpr amrex::Real w0 =
-        1.0 - (6.0 * (wSC1) + 12.0 * (wFCC1) + 8.0 * (wBCC1));
+    static constexpr amrex::Real WSC1 = 2.0 / 27.0;
+    static constexpr amrex::Real WFCC1 = 1.0 / 54.0;
+    static constexpr amrex::Real WBCC1 = 1.0 / 216.0;
+    static constexpr amrex::Real WO =
+        1.0 - (6.0 * (WSC1) + 12.0 * (WFCC1) + 8.0 * (WBCC1));
 
     const amrex::GpuArray<amrex::Real, constants::N_MICRO_STATES> weights = {
-        w0,    wSC1,  wSC1,  wSC1,  wSC1,  wSC1,  wSC1,  wFCC1, wFCC1,
-        wFCC1, wFCC1, wFCC1, wFCC1, wFCC1, wFCC1, wFCC1, wFCC1, wFCC1,
-        wFCC1, wBCC1, wBCC1, wBCC1, wBCC1, wBCC1, wBCC1, wBCC1, wBCC1};
+        WO,    WSC1,  WSC1,  WSC1,  WSC1,  WSC1,  WSC1,  WFCC1, WFCC1,
+        WFCC1, WFCC1, WFCC1, WFCC1, WFCC1, WFCC1, WFCC1, WFCC1, WFCC1,
+        WFCC1, WBCC1, WBCC1, WBCC1, WBCC1, WBCC1, WBCC1, WBCC1, WBCC1};
 
     enum dvD3Q27 {
         DV_ZERO_ZERO_ZERO,
