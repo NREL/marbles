@@ -14,15 +14,15 @@ amr.plot_int = 10
 amr.chk_int = 10
 amr.file_name_digits = 5
 
-lbm.bc_lo = 1 2 0
-lbm.bc_hi = 1 5 0
+lbm.bc_lo = 6 2 0
+lbm.bc_hi = 6 5 0
 lbm.dx_outer = 1.0
 lbm.dt_outer = 1.0
-lbm.nu = 0.006
+lbm.nu = 0.20
 lbm.save_streaming = 0
 
 lbm.velocity_bc_type = "parabolic"
-velocity_bc_parabolic.um = 0.015
+velocity_bc_parabolic.Mach_m = 0.0025
 velocity_bc_parabolic.normal_dir = 0
 velocity_bc_parabolic.tangential_dir = 1
 

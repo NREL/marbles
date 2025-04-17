@@ -1,0 +1,56 @@
+# How to use this sod test tube case?
+# set ic_sod_test.initial_temperature=lbm.initial_temperature to a value <= 0.3333
+# set lbm.nu to a value <= 0.0100
+# Further instructions in sod_tester.ipynb
+# Note. Always: geometry.prob_hi[0]=amr.n_cell[0]=amr.max_grid_size=2.0*ic_sod_test.xDiscontinuity
+
+max_step = 1500
+
+# geometry parameters
+geometry.prob_lo = 0.0 -1.0 -1.0
+geometry.prob_hi = 3000.0 1.0 1.0
+geometry.is_periodic = 0 1 1
+
+# timestepping
+amr.n_cell  = 3000 2 2
+amr.max_level = 0
+amr.max_grid_size = 3000
+amr.blocking_factor = 1
+amr.plot_int = 100
+amr.chk_int = 100
+amr.file_name_digits = 5
+
+lbm.bc_lo = 5 0 0
+lbm.bc_hi = 5 0 0
+lbm.dx_outer = 1.0
+lbm.dt_outer = 1.0
+lbm.nu = 0.010
+lbm.alpha = 0.010
+lbm.save_streaming = 0
+lbm.compute_forces = 0
+
+lbm.ic_type = "sod_test"
+ic_sod_test.density = 0.50
+ic_sod_test.velocity = 0.0 0.0 0.0
+ic_sod_test.mach_components = 0.0 0.0 0.0
+
+# Set ic_sod_test.xDiscontinuity equal to half length to place 
+# discontinuity in the middle 
+ic_sod_test.x_discontinuity = 1500.0
+
+ic_sod_test.initial_temperature = 0.20
+ic_sod_test.adiabatic_exponent = 2.0
+ic_sod_test.mean_molecular_mass = 28.96
+ic_sod_test.density_ratio = 4.00
+ic_sod_test.temperature_ratio = 0.1250 
+lbm.initial_temperature = 0.20
+lbm.adiabatic_exponent = 2.0
+lbm.mean_molecular_mass = 28.96
+
+eb2.geom_type = "all_regular"
+
+amrex.fpe_trap_invalid = 1
+amrex.fpe_trap_zero = 1
+amrex.fpe_trap_overflow = 1
+amrex.the_arena_is_managed = 0
+amrex.abort_on_out_of_gpu_memory = 1
