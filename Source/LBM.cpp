@@ -1425,7 +1425,7 @@ void LBM::set_ics()
         m_ic_op = std::make_unique<ic::Initializer<ic::ThermalDiffusivityTest>>(
             m_mesh_speed,
             ic::ThermalDiffusivityTest(ic::ThermalDiffusivityTest()), m_f, m_g);
-    } else if (m_ic_type == "sod_test") {
+    } else if (m_ic_type == "sod") {
         m_ic_op = std::make_unique<ic::Initializer<ic::SodTest>>(
             m_mesh_speed, ic::SodTest(ic::SodTest()), m_f, m_g);
     } else {
