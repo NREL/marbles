@@ -12,11 +12,12 @@ geometry.is_periodic = 0 1 1
 # timestepping
 amr.n_cell  = 1000 4 4
 amr.regrid_int = 0
-amr.max_level = 1
+amr.max_level = 2
 amr.blocking_factor = 2
 amr.plot_int = 100
 amr.chk_int = 100
 amr.file_name_digits = 5
+amr.n_error_buf = 8
 
 lbm.bc_lo = 5 0 0
 lbm.bc_hi = 5 0 0
