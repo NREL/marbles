@@ -88,14 +88,17 @@ add_test_r(channel_regular)
 add_test_r(tg)
 add_test_r(single_rotated_box)
 
-if(PELEC_DIM EQUAL 2)
+if(MARBLES_DIM EQUAL 2)
   add_test_r(single_cylinder_2d)
 endif()
   
-if(PELEC_DIM EQUAL 3)
+if(MARBLES_DIM EQUAL 3)
   add_test_r(single_cylinder)
   add_test_r(channel_cylinder)
 endif()
+
+add_test_re(sod)
+add_test_re(sod_amr)
 
 #=============================================================================
 # Regression tests excluded from CI
