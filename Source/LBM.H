@@ -226,7 +226,7 @@ private:
     amrex::Vector<amrex::iMultiFab> m_mask;
 
     const int m_macrodata_nghost = 1;
-    const int m_f_nghost = 2;
+    amrex::Vector<int> m_f_nghosts;
     const int m_eq_nghost = 0;
     const int m_derived_nghost = 0;
 

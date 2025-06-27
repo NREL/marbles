@@ -85,8 +85,10 @@ LBM::LBM()
 
     m_isteps.resize(nlevs_max, 0);
     m_nsubsteps.resize(nlevs_max, 1);
+    m_f_nghosts.resize(nlevs_max, 2);
     for (int lev = 1; lev <= max_level; ++lev) {
         m_nsubsteps[lev] = MaxRefRatio(lev - 1);
+        m_f_nghosts[lev] = m_f_nghosts[lev - 1] * MaxRefRatio(lev - 1);
     }
 
     m_ts_new.resize(nlevs_max, 0.0);
@@ -953,8 +955,7 @@ void LBM::compute_derived(const int lev)
     amrex::Gpu::synchronize();
 }
 
-// Compute derived quantities
-
+// Compute Q corrections
 void LBM::compute_q_corrections(const int lev)
 {
     BL_PROFILE("LBM::compute_derived()");
@@ -1166,10 +1167,10 @@ void LBM::MakeNewLevelFromScratch(
         ba, dm, constants::N_MACRO_STATES, m_macrodata_nghost, amrex::MFInfo(),
         *(m_factory[lev]));
     m_f[lev].define(
-        ba, dm, constants::N_MICRO_STATES, m_f_nghost, amrex::MFInfo(),
+        ba, dm, constants::N_MICRO_STATES, m_f_nghosts[lev], amrex::MFInfo(),
         *(m_factory[lev]));
     m_g[lev].define(
-        ba, dm, constants::N_MICRO_STATES, m_f_nghost, amrex::MFInfo(),
+        ba, dm, constants::N_MICRO_STATES, m_f_nghosts[lev], amrex::MFInfo(),
         *(m_factory[lev]));
     m_is_fluid[lev].define(ba, dm, constants::N_IS_FLUID, m_f[lev].nGrow());
     m_eq[lev].define(
@@ -1811,9 +1812,11 @@ void LBM::read_checkpoint_file()
         m_factory[lev] = amrex::makeEBFabFactory(
             Geom(lev), ba, dm, {5, 5, 5}, amrex::EBSupport::basic);
         m_f[lev].define(
-            ba, dm, ncomp, m_f_nghost, amrex::MFInfo(), *(m_factory[lev]));
+            ba, dm, ncomp, m_f_nghosts[lev], amrex::MFInfo(),
+            *(m_factory[lev]));
         m_g[lev].define(
-            ba, dm, ncomp, m_f_nghost, amrex::MFInfo(), *(m_factory[lev]));
+            ba, dm, ncomp, m_f_nghosts[lev], amrex::MFInfo(),
+            *(m_factory[lev]));
         m_macrodata[lev].define(
             ba, dm, constants::N_MACRO_STATES, m_macrodata_nghost,
             amrex::MFInfo(), *(m_factory[lev]));
