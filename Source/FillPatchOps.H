@@ -22,6 +22,12 @@ public:
     virtual void
     fillpatch(const int lev, const amrex::Real time, amrex::MultiFab& mf) = 0;
 
+    virtual void fillpatch(
+        const int lev,
+        const amrex::Real time,
+        amrex::MultiFab& mf,
+        const amrex::IntVect& nghost) = 0;
+
     virtual void fillpatch_from_coarse(
         const int lev, const amrex::Real time, amrex::MultiFab& mf) = 0;
 };
@@ -52,6 +58,18 @@ public:
     // ghost by interpolating from coarse)
     void fillpatch(
         const int lev, const amrex::Real time, amrex::MultiFab& mf) override
+    {
+        fillpatch(lev, time, mf, mf.nGrowVect());
+    }
+
+    // compute a new multifab by coping in phi from valid region and filling
+    // ghost cells works for single level and 2-level cases (fill fine grid
+    // ghost by interpolating from coarse)
+    void fillpatch(
+        const int lev,
+        const amrex::Real time,
+        amrex::MultiFab& mf,
+        const amrex::IntVect& nghost) override
     {
         BL_PROFILE("FillPatchOps::fillpatch()");
         AMREX_ASSERT(mf.nComp() == constants::N_MICRO_STATES);
@@ -88,7 +106,7 @@ public:
             amrex::PhysBCFunct<amrex::GpuBndryFuncFab<Functor>> physbc(
                 m_geom[lev], m_bcs, bc_functor());
             amrex::FillPatchSingleLevel(
-                mf, time, {&(m_f[lev])}, {time}, 0, 0, m_f[lev].nComp(),
+                mf, nghost, time, {&(m_f[lev])}, {time}, 0, 0, m_f[lev].nComp(),
                 m_geom[lev], physbc, 0);
         } else {
             amrex::PhysBCFunct<amrex::GpuBndryFuncFab<Functor>> cphysbc(
@@ -97,9 +115,10 @@ public:
                 m_geom[lev], m_bcs, bc_functor());
 
             amrex::FillPatchTwoLevels(
-                mf, time, {&(m_f[lev - 1])}, {time}, {&(m_f[lev])}, {time}, 0,
-                0, m_f[lev].nComp(), m_geom[lev - 1], m_geom[lev], cphysbc, 0,
-                fphysbc, 0, m_ref_ratio[lev - 1], m_mapper, m_bcs, 0);
+                mf, nghost, time, {&(m_f[lev - 1])}, {time}, {&(m_f[lev])},
+                {time}, 0, 0, m_f[lev].nComp(), m_geom[lev - 1], m_geom[lev],
+                cphysbc, 0, fphysbc, 0, m_ref_ratio[lev - 1], m_mapper, m_bcs,
+                0);
         }
 
         amrex::Gpu::synchronize();

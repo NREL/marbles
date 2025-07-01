@@ -11,9 +11,9 @@ geometry.is_periodic = 0 1 1
 
 # timestepping
 amr.n_cell  = 1000 4 4
-amr.regrid_int = 0
-amr.max_level = 2
-amr.blocking_factor = 2
+amr.regrid_int = 1
+amr.max_level = 1
+amr.blocking_factor = 4
 amr.plot_int = 100
 amr.chk_int = 100
 amr.file_name_digits = 5
@@ -25,7 +25,7 @@ lbm.dx_outer = 1.0
 lbm.dt_outer = 1.0
 lbm.nu = 0.010
 lbm.alpha = 0.010
-lbm.save_streaming = 0
+lbm.save_streaming = 1
 lbm.compute_forces = 0
 
 lbm.ic_type = "sod"
@@ -48,9 +48,10 @@ lbm.mean_molecular_mass = 28.96
 
 eb2.geom_type = "all_regular"
 
-tagging.refinement_indicators = box
-tagging.box.in_box_lo = 450.0 -10.0 -10.0
-tagging.box.in_box_hi = 550.0  10.0  10.0
+tagging.refinement_indicators = rho
+tagging.rho.max_level     = 2
+tagging.rho.adjacent_difference_greater = 0.1
+tagging.rho.field_name    = rho
 
 amrex.fpe_trap_invalid = 1
 amrex.fpe_trap_zero = 1

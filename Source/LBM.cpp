@@ -1315,14 +1315,61 @@ void LBM::RemakeLevel(
     const amrex::DistributionMapping& dm)
 {
     BL_PROFILE("LBM::RemakeLevel()");
-    amrex::Abort("RemakeLevel not implemented");
-    amrex::MultiFab new_state(
-        ba, dm, m_macrodata[lev].nComp(), m_macrodata[lev].nGrow());
 
-    std::swap(new_state, m_macrodata[lev]);
+    if (Verbose() > 0) {
+        amrex::Print() << "Remaking level " << lev << std::endl;
+    }
+
+    m_factory[lev] = amrex::makeEBFabFactory(
+        Geom(lev), ba, dm, {5, 5, 5}, amrex::EBSupport::basic);
+    amrex::MultiFab new_f(
+        ba, dm, constants::N_MICRO_STATES, m_f_nghost, amrex::MFInfo(),
+        *(m_factory[lev]));
+    amrex::MultiFab new_g(
+        ba, dm, constants::N_MICRO_STATES, m_f_nghost, amrex::MFInfo(),
+        *(m_factory[lev]));
+
+    m_fillpatch_op->fillpatch(lev, time, new_f);
+    m_fillpatch_g_op->fillpatch(lev, time, new_g);
+
+    std::swap(new_f, m_f[lev]);
+    std::swap(new_g, m_g[lev]);
+
+    m_macrodata[lev].define(
+        ba, dm, constants::N_MACRO_STATES, m_macrodata_nghost, amrex::MFInfo(),
+        *(m_factory[lev]));
+    m_is_fluid[lev].define(ba, dm, constants::N_IS_FLUID, m_f[lev].nGrow());
+    m_eq[lev].define(
+        ba, dm, constants::N_MICRO_STATES, m_eq_nghost, amrex::MFInfo(),
+        *(m_factory[lev]));
+    m_eq_g[lev].define(
+        ba, dm, constants::N_MICRO_STATES, m_eq_nghost, amrex::MFInfo(),
+        *(m_factory[lev]));
+    m_derived[lev].define(
+        ba, dm, constants::N_DERIVED, m_derived_nghost, amrex::MFInfo(),
+        *(m_factory[lev]));
+    m_mask[lev].define(ba, dm, 1, 0);
+
+    initialize_is_fluid(lev);
+    initialize_mask(lev);
+    fill_f_inside_eb(lev);
+    m_f[lev].FillBoundary(Geom(lev).periodicity());
+    m_g[lev].FillBoundary(Geom(lev).periodicity());
+    m_macrodata[lev].setVal(0.0);
+    m_eq[lev].setVal(0.0);
+    m_eq_g[lev].setVal(0.0);
+    m_derived[lev].setVal(0.0);
+
+    f_to_macrodata(lev);
+
+    macrodata_to_equilibrium(lev);
+
+    compute_derived(lev);
+
+    compute_q_corrections(lev);
 
     m_ts_new[lev] = time;
-    m_ts_old[lev] = constants::LOW_NUM;
+    m_ts_old[lev] = time - constants::SMALL_NUM;
 }
 
 // Delete level data
