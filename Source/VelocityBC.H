@@ -22,6 +22,7 @@ struct NoOp
             const int /*ndir*/,
             const amrex::Real /*time*/,
             amrex::GeometryData const& /*geom*/,
+            amrex::Real& /*rho*/,
             amrex::RealVect& /*vel*/,
             amrex::Real& /*R*/,
             amrex::Real& /*T*/,
@@ -45,6 +46,7 @@ struct Constant
         int dir{1};
         amrex::Real u0{0.0};
 
+        amrex::Real initial_density = 1.0;
         amrex::Real initial_temperature = 1.0 / 3.0;
         amrex::Real adiabatic_exponent = 5.0 / 3.0;
         const amrex::Real R_u = constants::AIR_MOLAR_MASS;
@@ -62,11 +64,13 @@ struct Constant
             const int /*ndir*/,
             const amrex::Real /*time*/,
             amrex::GeometryData const& /*geom*/,
+            amrex::Real& rho,
             amrex::RealVect& vel,
             amrex::Real& R,
             amrex::Real& T,
             amrex::Real& gamma) const
         {
+            rho = initial_density;
             vel[dir] = u0;
             R = (R_u / m_bar);
             T = initial_temperature;
@@ -89,6 +93,7 @@ struct Channel
     {
         amrex::Real u_ref{1.0};
 
+        amrex::Real initial_density = 1.0;
         amrex::Real initial_temperature = 1.0 / 3.0;
         amrex::Real adiabatic_exponent = 5.0 / 3.0;
         const amrex::Real R_u = constants::AIR_MOLAR_MASS;
@@ -106,11 +111,13 @@ struct Channel
             const int /*ndir*/,
             const amrex::Real /*time*/,
             amrex::GeometryData const& geom,
+            amrex::Real& rho,
             amrex::RealVect& vel,
             amrex::Real& R,
             amrex::Real& T,
             amrex::Real& gamma) const
         {
+            rho = initial_density;
             const int* domhi = geom.Domain().hiVect();
             const amrex::Real c1 = iv[1] * (domhi[1] - iv[1]);
             const amrex::Real c2 =
@@ -139,6 +146,7 @@ struct Parabolic
         int tangential_dir{1};
         amrex::Real um{1.0};
 
+        amrex::Real initial_density = 1.0;
         amrex::Real initial_temperature = 1.0 / 3.0;
         amrex::Real adiabatic_exponent = 5.0 / 3.0;
 
@@ -157,11 +165,13 @@ struct Parabolic
             const int /*ndir*/,
             const amrex::Real /*time*/,
             amrex::GeometryData const& geom,
+            amrex::Real& rho,
             amrex::RealVect& vel,
             amrex::Real& R,
             amrex::Real& T,
             amrex::Real& gamma) const
         {
+            rho = initial_density;
             const amrex::Real* prob_lo = geom.ProbLo();
             const amrex::Real* prob_hi = geom.ProbHi();
             const amrex::Real* dx = geom.CellSize();

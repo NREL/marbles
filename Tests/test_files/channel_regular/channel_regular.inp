@@ -1,29 +1,32 @@
-max_step = 1000
+max_step = 10000
 
 geometry.prob_lo = 0.0 0.0 0.0
-geometry.prob_hi = 1.0 1.0 1.0
+geometry.prob_hi = 128.0 32.0 4.0
 geometry.is_periodic = 0 0 0
 
-amr.n_cell  = 32 32 32
+amr.n_cell  = 64 32 4
 amr.max_level = 0
-amr.max_grid_size = 16
-amr.plot_int = 10
-amr.chk_int = 10
+amr.max_grid_size = 4
+amr.plot_int = 100
+amr.chk_int = 1000
 
 lbm.bc_lo = 2 1 1
-lbm.bc_hi = 5 1 1
+lbm.bc_hi = 2 1 1
 lbm.dx_outer = 0.5
 lbm.dt_outer = 0.5
-#lbm.reynolds = 10.23
-lbm.nu = 0.20
+lbm.nu = 0.0050
 lbm.save_streaming = 0
 
-lbm.velocity_bc_type = "channel"
-velocity_bc_channel.Mach_ref = 0.001
+lbm.velocity_bc_type = "constant"
+velocity_bc_constant.dir = 0
+velocity_bc_constant.initial_density = 1.0
+velocity_bc_constant.Mach_0 = 0.01
+velocity_bc_constant.initial_temperature = 0.03
 
 lbm.ic_type = "constant"
 ic_constant.density = 1.0
-ic_constant.mach_components = 0.002 0.0 0.0
+ic_constant.initial_temperature = 0.03
+ic_constant.mach_components = 0.01 0.0 0.0
 
 eb2.geom_type="all_regular"
 
