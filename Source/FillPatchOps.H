@@ -28,6 +28,15 @@ public:
         amrex::MultiFab& mf,
         const amrex::IntVect& nghost) = 0;
 
+    virtual void
+    physbc(const int lev, const amrex::Real time, amrex::MultiFab& mf) = 0;
+
+    virtual void physbc(
+        const int lev,
+        const amrex::Real time,
+        amrex::MultiFab& mf,
+        const amrex::IntVect& nghost) = 0;
+
     virtual void fillpatch_from_coarse(
         const int lev, const amrex::Real time, amrex::MultiFab& mf) = 0;
 };
@@ -118,6 +127,33 @@ public:
                 cphysbc, 0, fphysbc, 0, m_ref_ratio[lev - 1], m_mapper, m_bcs,
                 0);
         }
+
+        amrex::Gpu::synchronize();
+    }
+
+    // apply the physical boundary conditions
+    void
+    physbc(const int lev, const amrex::Real time, amrex::MultiFab& mf) override
+    {
+        physbc(lev, time, mf, mf.nGrowVect());
+    }
+
+    // apply the physical boundary conditions
+    void physbc(
+        const int lev,
+        const amrex::Real time,
+        amrex::MultiFab& mf,
+        const amrex::IntVect& nghost) override
+    {
+        BL_PROFILE("FillPatchOps::fillpatch()");
+        AMREX_ASSERT(mf.nComp() == constants::N_MICRO_STATES);
+        AMREX_ASSERT(mf.nComp() == m_f[0].nComp());
+        AMREX_ASSERT(m_bcs.size() == mf.nComp());
+
+        amrex::PhysBCFunct<amrex::GpuBndryFuncFab<Functor>> physbc(
+            m_geom[lev], m_bcs, bc_functor());
+
+        physbc(mf, 0, m_f[lev].nComp(), nghost, time, 0);
 
         amrex::Gpu::synchronize();
     }

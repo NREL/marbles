@@ -33,25 +33,29 @@ ic_sod.density = 0.50
 ic_sod.velocity = 0.0 0.0 0.0
 ic_sod.mach_components = 0.0 0.0 0.0
 
-# Set ic_sod.xDiscontinuity equal to half length to place 
-# discontinuity in the middle 
+# Set ic_sod.xDiscontinuity equal to half length to place
+# discontinuity in the middle
 ic_sod.x_discontinuity = 500.0
 
 ic_sod.initial_temperature = 0.20
 ic_sod.adiabatic_exponent = 2.0
 ic_sod.mean_molecular_mass = 28.96
 ic_sod.density_ratio = 4.00
-ic_sod.temperature_ratio = 0.1250 
+ic_sod.temperature_ratio = 0.1250
 lbm.initial_temperature = 0.20
 lbm.adiabatic_exponent = 2.0
 lbm.mean_molecular_mass = 28.96
 
 eb2.geom_type = "all_regular"
 
-tagging.refinement_indicators = rho
+tagging.refinement_indicators = rho bc
 tagging.rho.max_level     = 2
 tagging.rho.adjacent_difference_greater = 0.1
 tagging.rho.field_name    = rho
+
+tagging.bc.in_box_lo = -10 -10 -10
+tagging.bc.in_box_hi =  20 10 10
+
 
 amrex.fpe_trap_invalid = 1
 amrex.fpe_trap_zero = 1
