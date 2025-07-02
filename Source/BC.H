@@ -485,6 +485,9 @@ struct BCFill
                             } else if (m_bc_type[bc_idx] == SLIPWALLZNORMAL) {
                                 bounce_back_zbc(iv, q, ev, data);
                             }
+                        } else {
+                            // to avoid spurious NaNs fill with a dummy value
+                            data(iv, q) = -1.0;
                         }
                     }
                 }

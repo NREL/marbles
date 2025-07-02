@@ -22,6 +22,21 @@ public:
     virtual void
     fillpatch(const int lev, const amrex::Real time, amrex::MultiFab& mf) = 0;
 
+    virtual void fillpatch(
+        const int lev,
+        const amrex::Real time,
+        amrex::MultiFab& mf,
+        const amrex::IntVect& nghost) = 0;
+
+    virtual void
+    physbc(const int lev, const amrex::Real time, amrex::MultiFab& mf) = 0;
+
+    virtual void physbc(
+        const int lev,
+        const amrex::Real time,
+        amrex::MultiFab& mf,
+        const amrex::IntVect& nghost) = 0;
+
     virtual void fillpatch_from_coarse(
         const int lev, const amrex::Real time, amrex::MultiFab& mf) = 0;
 };
@@ -37,14 +52,12 @@ public:
         const amrex::Vector<amrex::IntVect>& ref_ratio,
         const amrex::Vector<amrex::BCRec>& bcs,
         BCOpCreator bc_op,
-        amrex::Vector<amrex::MultiFab>& f_,
-        bool is_energy_lattice = false)
+        amrex::Vector<amrex::MultiFab>& f_)
         : m_geom(geom)
         , m_ref_ratio(ref_ratio)
         , m_bcs(bcs)
         , m_op(std::move(bc_op))
         , m_f(f_)
-        , m_is_energy_lattice(is_energy_lattice)
     {}
 
     // compute a new multifab by coping in phi from valid region and filling
@@ -52,6 +65,18 @@ public:
     // ghost by interpolating from coarse)
     void fillpatch(
         const int lev, const amrex::Real time, amrex::MultiFab& mf) override
+    {
+        fillpatch(lev, time, mf, mf.nGrowVect());
+    }
+
+    // compute a new multifab by coping in phi from valid region and filling
+    // ghost cells works for single level and 2-level cases (fill fine grid
+    // ghost by interpolating from coarse)
+    void fillpatch(
+        const int lev,
+        const amrex::Real time,
+        amrex::MultiFab& mf,
+        const amrex::IntVect& nghost) override
     {
         BL_PROFILE("FillPatchOps::fillpatch()");
         AMREX_ASSERT(mf.nComp() == constants::N_MICRO_STATES);
@@ -88,7 +113,7 @@ public:
             amrex::PhysBCFunct<amrex::GpuBndryFuncFab<Functor>> physbc(
                 m_geom[lev], m_bcs, bc_functor());
             amrex::FillPatchSingleLevel(
-                mf, time, {&(m_f[lev])}, {time}, 0, 0, m_f[lev].nComp(),
+                mf, nghost, time, {&(m_f[lev])}, {time}, 0, 0, m_f[lev].nComp(),
                 m_geom[lev], physbc, 0);
         } else {
             amrex::PhysBCFunct<amrex::GpuBndryFuncFab<Functor>> cphysbc(
@@ -97,10 +122,38 @@ public:
                 m_geom[lev], m_bcs, bc_functor());
 
             amrex::FillPatchTwoLevels(
-                mf, time, {&(m_f[lev - 1])}, {time}, {&(m_f[lev])}, {time}, 0,
-                0, m_f[lev].nComp(), m_geom[lev - 1], m_geom[lev], cphysbc, 0,
-                fphysbc, 0, m_ref_ratio[lev - 1], m_mapper, m_bcs, 0);
+                mf, nghost, time, {&(m_f[lev - 1])}, {time}, {&(m_f[lev])},
+                {time}, 0, 0, m_f[lev].nComp(), m_geom[lev - 1], m_geom[lev],
+                cphysbc, 0, fphysbc, 0, m_ref_ratio[lev - 1], m_mapper, m_bcs,
+                0);
         }
+
+        amrex::Gpu::synchronize();
+    }
+
+    // apply the physical boundary conditions
+    void
+    physbc(const int lev, const amrex::Real time, amrex::MultiFab& mf) override
+    {
+        physbc(lev, time, mf, mf.nGrowVect());
+    }
+
+    // apply the physical boundary conditions
+    void physbc(
+        const int lev,
+        const amrex::Real time,
+        amrex::MultiFab& mf,
+        const amrex::IntVect& nghost) override
+    {
+        BL_PROFILE("FillPatchOps::fillpatch()");
+        AMREX_ASSERT(mf.nComp() == constants::N_MICRO_STATES);
+        AMREX_ASSERT(mf.nComp() == m_f[0].nComp());
+        AMREX_ASSERT(m_bcs.size() == mf.nComp());
+
+        amrex::PhysBCFunct<amrex::GpuBndryFuncFab<Functor>> physbc(
+            m_geom[lev], m_bcs, bc_functor());
+
+        physbc(mf, 0, m_f[lev].nComp(), nghost, time, 0);
 
         amrex::Gpu::synchronize();
     }
@@ -135,7 +188,6 @@ protected:
     const BCOpCreator m_op;
     amrex::Vector<amrex::MultiFab>& m_f;
     amrex::Interpolater* m_mapper = &amrex::cell_cons_interp;
-    bool m_is_energy_lattice;
 };
 } // namespace lbm
 #endif

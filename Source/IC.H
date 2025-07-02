@@ -419,7 +419,7 @@ struct SodTest
 
     explicit SodTest();
 
-    static std::string identifier() { return "ic_sod_test"; }
+    static std::string identifier() { return "ic_sod"; }
 
     DeviceType device_instance() const { return m_op; }
 

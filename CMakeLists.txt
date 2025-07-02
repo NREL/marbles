@@ -64,10 +64,6 @@ endif()
 
 init_amrex()
 
-if(MARBLES_ENABLE_MPI)
-  find_package(MPI REQUIRED)
-endif()
-
 message(STATUS "Marbles Information:")
 message(STATUS "CMAKE_SYSTEM_NAME = ${CMAKE_SYSTEM_NAME}")
 message(STATUS "CMAKE_CXX_COMPILER_ID = ${CMAKE_CXX_COMPILER_ID}")

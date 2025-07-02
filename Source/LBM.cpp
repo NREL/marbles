@@ -353,24 +353,27 @@ void LBM::read_tagging_parameters()
             ppr.get("value_greater", value);
             std::string field;
             ppr.get("field_name", field);
-            m_err_tags.push_back(amrex::AMRErrorTag(
-                value, amrex::AMRErrorTag::GREATER, field, info));
+            m_err_tags.push_back(
+                amrex::AMRErrorTag(
+                    value, amrex::AMRErrorTag::GREATER, field, info));
             itexists = check_field_existence(field);
         } else if (ppr.countval("value_less") > 0) {
             amrex::Real value;
             ppr.get("value_less", value);
             std::string field;
             ppr.get("field_name", field);
-            m_err_tags.push_back(amrex::AMRErrorTag(
-                value, amrex::AMRErrorTag::LESS, field, info));
+            m_err_tags.push_back(
+                amrex::AMRErrorTag(
+                    value, amrex::AMRErrorTag::LESS, field, info));
             itexists = check_field_existence(field);
         } else if (ppr.countval("adjacent_difference_greater") > 0) {
             amrex::Real value;
             ppr.get("adjacent_difference_greater", value);
             std::string field;
             ppr.get("field_name", field);
-            m_err_tags.push_back(amrex::AMRErrorTag(
-                value, amrex::AMRErrorTag::GRAD, field, info));
+            m_err_tags.push_back(
+                amrex::AMRErrorTag(
+                    value, amrex::AMRErrorTag::GRAD, field, info));
             itexists = check_field_existence(field);
         } else if (realbox.ok()) {
             m_err_tags.push_back(amrex::AMRErrorTag(info));
@@ -498,6 +501,10 @@ void LBM::time_step(const int lev, const amrex::Real time, const int iteration)
         m_fillpatch_g_op->fillpatch(lev + 1, m_ts_new[lev + 1], m_g[lev + 1]);
 
         for (int i = 1; i <= m_nsubsteps[lev + 1]; ++i) {
+            m_fillpatch_op->physbc(lev + 1, m_ts_new[lev + 1], m_f[lev + 1]);
+
+            m_fillpatch_g_op->physbc(lev + 1, m_ts_new[lev + 1], m_g[lev + 1]);
+
             time_step(lev + 1, time + (i - 1) * m_dts[lev + 1], i);
         }
     }
@@ -1019,8 +1026,8 @@ void LBM::compute_eb_forces()
             m_f[lev], amrex::IntVect(0),
             [=] AMREX_GPU_DEVICE(
                 int nbx, int i, int j, int AMREX_D_PICK(, /*k*/, k)) noexcept
-            -> amrex::GpuTuple<AMREX_D_DECL(
-                amrex::Real, amrex::Real, amrex::Real)> {
+                -> amrex::GpuTuple<AMREX_D_DECL(
+                    amrex::Real, amrex::Real, amrex::Real)> {
                 const amrex::IntVect iv(AMREX_D_DECL(i, j, k));
                 amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> fs = {0.0};
                 if ((is_fluid_arrs[nbx](iv, 1) == 1) &&
@@ -1312,14 +1319,61 @@ void LBM::RemakeLevel(
     const amrex::DistributionMapping& dm)
 {
     BL_PROFILE("LBM::RemakeLevel()");
-    amrex::Abort("RemakeLevel not implemented");
-    amrex::MultiFab new_state(
-        ba, dm, m_macrodata[lev].nComp(), m_macrodata[lev].nGrow());
 
-    std::swap(new_state, m_macrodata[lev]);
+    if (Verbose() > 0) {
+        amrex::Print() << "Remaking level " << lev << std::endl;
+    }
+
+    m_factory[lev] = amrex::makeEBFabFactory(
+        Geom(lev), ba, dm, {5, 5, 5}, amrex::EBSupport::basic);
+    amrex::MultiFab new_f(
+        ba, dm, constants::N_MICRO_STATES, m_f_nghost, amrex::MFInfo(),
+        *(m_factory[lev]));
+    amrex::MultiFab new_g(
+        ba, dm, constants::N_MICRO_STATES, m_f_nghost, amrex::MFInfo(),
+        *(m_factory[lev]));
+
+    m_fillpatch_op->fillpatch(lev, time, new_f);
+    m_fillpatch_g_op->fillpatch(lev, time, new_g);
+
+    std::swap(new_f, m_f[lev]);
+    std::swap(new_g, m_g[lev]);
+
+    m_macrodata[lev].define(
+        ba, dm, constants::N_MACRO_STATES, m_macrodata_nghost, amrex::MFInfo(),
+        *(m_factory[lev]));
+    m_is_fluid[lev].define(ba, dm, constants::N_IS_FLUID, m_f[lev].nGrow());
+    m_eq[lev].define(
+        ba, dm, constants::N_MICRO_STATES, m_eq_nghost, amrex::MFInfo(),
+        *(m_factory[lev]));
+    m_eq_g[lev].define(
+        ba, dm, constants::N_MICRO_STATES, m_eq_nghost, amrex::MFInfo(),
+        *(m_factory[lev]));
+    m_derived[lev].define(
+        ba, dm, constants::N_DERIVED, m_derived_nghost, amrex::MFInfo(),
+        *(m_factory[lev]));
+    m_mask[lev].define(ba, dm, 1, 0);
+
+    initialize_is_fluid(lev);
+    initialize_mask(lev);
+    fill_f_inside_eb(lev);
+    m_f[lev].FillBoundary(Geom(lev).periodicity());
+    m_g[lev].FillBoundary(Geom(lev).periodicity());
+    m_macrodata[lev].setVal(0.0);
+    m_eq[lev].setVal(0.0);
+    m_eq_g[lev].setVal(0.0);
+    m_derived[lev].setVal(0.0);
+
+    f_to_macrodata(lev);
+
+    macrodata_to_equilibrium(lev);
+
+    compute_derived(lev);
+
+    compute_q_corrections(lev);
 
     m_ts_new[lev] = time;
-    m_ts_old[lev] = constants::LOW_NUM;
+    m_ts_old[lev] = time - constants::SMALL_NUM;
 }
 
 // Delete level data
@@ -1357,7 +1411,7 @@ void LBM::set_bcs()
             VelBCOp(
                 m_mesh_speed, m_bc_type, m_g[0].nGrowVect(),
                 is_an_energy_lattice),
-            m_g, is_an_energy_lattice);
+            m_g);
 
     } else if (m_velocity_bc_type == "constant") {
 
@@ -1372,7 +1426,7 @@ void LBM::set_bcs()
             VelBCOp(
                 m_mesh_speed, m_bc_type, m_g[0].nGrowVect(),
                 is_an_energy_lattice),
-            m_g, is_an_energy_lattice);
+            m_g);
 
     } else if (m_velocity_bc_type == "channel") {
 
@@ -1387,7 +1441,7 @@ void LBM::set_bcs()
             VelBCOp(
                 m_mesh_speed, m_bc_type, m_g[0].nGrowVect(),
                 is_an_energy_lattice),
-            m_g, is_an_energy_lattice);
+            m_g);
 
     } else if (m_velocity_bc_type == "parabolic") {
 
@@ -1402,7 +1456,7 @@ void LBM::set_bcs()
             VelBCOp(
                 m_mesh_speed, m_bc_type, m_g[0].nGrowVect(),
                 is_an_energy_lattice),
-            m_g, is_an_energy_lattice);
+            m_g);
 
     } else {
         amrex::Abort("LBM::set_bcs(): Unknown velocity BC");
@@ -1425,7 +1479,7 @@ void LBM::set_ics()
         m_ic_op = std::make_unique<ic::Initializer<ic::ThermalDiffusivityTest>>(
             m_mesh_speed,
             ic::ThermalDiffusivityTest(ic::ThermalDiffusivityTest()), m_f, m_g);
-    } else if (m_ic_type == "sod_test") {
+    } else if (m_ic_type == "sod") {
         m_ic_op = std::make_unique<ic::Initializer<ic::SodTest>>(
             m_mesh_speed, ic::SodTest(ic::SodTest()), m_f, m_g);
     } else {
@@ -1503,6 +1557,15 @@ LBM::get_field(const std::string& name, const int lev, const int ngrow)
             });
         amrex::Gpu::synchronize();
     }
+
+    amrex::Vector<amrex::BCRec> bcs(nc);
+    for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+        for (auto& bc : bcs) {
+            bc.setLo(idim, amrex::BCType::foextrap);
+            bc.setHi(idim, amrex::BCType::foextrap);
+        }
+    }
+    amrex::FillDomainBoundary(*mf, Geom(lev), bcs);
 
     return mf;
 }
