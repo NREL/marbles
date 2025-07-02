@@ -1554,6 +1554,15 @@ LBM::get_field(const std::string& name, const int lev, const int ngrow)
         amrex::Gpu::synchronize();
     }
 
+    amrex::Vector<amrex::BCRec> bcs(nc);
+    for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+        for (auto& bc : bcs) {
+            bc.setLo(idim, amrex::BCType::foextrap);
+            bc.setHi(idim, amrex::BCType::foextrap);
+        }
+    }
+    amrex::FillDomainBoundary(*mf, Geom(lev), bcs);
+
     return mf;
 }
 

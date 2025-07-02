@@ -9,6 +9,7 @@
 #include <AMReX_ParmParse.H>
 #include <AMReX_FluxRegister.H>
 #include <AMReX_PlotFileUtil.H>
+#include <AMReX_BCUtil.H>
 #include <AMReX_PhysBCFunct.H>
 #include <AMReX_ErrorList.H>
 #include "EB.H"
@@ -237,7 +238,7 @@ private:
 
     // this is essentially a 2*DIM integer array storing the physical boundary
     // condition types at the lo/hi walls in each direction
-    amrex::Vector<amrex::BCRec> m_bcs; // 1-component
+    amrex::Vector<amrex::BCRec> m_bcs;
 
     std::unique_ptr<FillPatchOpsBase> m_fillpatch_op;
     std::unique_ptr<FillPatchOpsBase> m_fillpatch_g_op;
