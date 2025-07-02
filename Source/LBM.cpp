@@ -1407,7 +1407,7 @@ void LBM::set_bcs()
             VelBCOp(
                 m_mesh_speed, m_bc_type, m_g[0].nGrowVect(),
                 is_an_energy_lattice),
-            m_g, is_an_energy_lattice);
+            m_g);
 
     } else if (m_velocity_bc_type == "constant") {
 
@@ -1422,7 +1422,7 @@ void LBM::set_bcs()
             VelBCOp(
                 m_mesh_speed, m_bc_type, m_g[0].nGrowVect(),
                 is_an_energy_lattice),
-            m_g, is_an_energy_lattice);
+            m_g);
 
     } else if (m_velocity_bc_type == "channel") {
 
@@ -1437,7 +1437,7 @@ void LBM::set_bcs()
             VelBCOp(
                 m_mesh_speed, m_bc_type, m_g[0].nGrowVect(),
                 is_an_energy_lattice),
-            m_g, is_an_energy_lattice);
+            m_g);
 
     } else if (m_velocity_bc_type == "parabolic") {
 
@@ -1452,7 +1452,7 @@ void LBM::set_bcs()
             VelBCOp(
                 m_mesh_speed, m_bc_type, m_g[0].nGrowVect(),
                 is_an_energy_lattice),
-            m_g, is_an_energy_lattice);
+            m_g);
 
     } else {
         amrex::Abort("LBM::set_bcs(): Unknown velocity BC");
