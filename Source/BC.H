@@ -213,28 +213,6 @@ struct BCFill
         // In this case, a value for u, v, and w must be
         // specified, either hard coded or set by a
         // user-specified function
-        // amrex::Real rho_out = 0.0;
-        // amrex::Real rho_tan = 0.0;
-
-        // const amrex::IntVect ivn(iv + ev);
-
-        // // Build the 3-part rho calculation at the
-        // // (iv+ev) fluid cell
-        // for (int qq = 0; qq < constants::N_MICRO_STATES; qq++) {
-
-        //     const auto& evn_out = m_evs[qq];
-        //     const int bounce_qq = m_bounce_dirs[qq];
-        //     const auto& evn_in = m_evs[bounce_qq];
-
-        //     if (evn_in[idir] == -ndir) {
-        //         rho_out += 2.0 * data(ivn + evn_out, bounce_qq);
-        //     } else if (evn_in[idir] == 0) {
-        //         rho_tan += 1.0 * data(ivn + evn_out, bounce_qq);
-        //     }
-        // }
-
-        // const amrex::Real rho_bc =
-        //     (rho_out + rho_tan) / (1.0 - ndir * vel_bc[idir]);
 
         set_equilibrium_value(
             rho_bc, vel_bc, RT, m_mesh_speed, m_weights[q], ev, data(iv, q));
