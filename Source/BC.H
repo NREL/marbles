@@ -194,8 +194,8 @@ struct BCFill
         const amrex::IntVect& iv,
         const int q,
         const amrex::IntVect& ev,
-        const int idir,
-        const int ndir,
+        const int /*idir*/,
+        const int /*ndir*/,
         const amrex::Real& rho_bc,
         const amrex::RealVect& vel_bc,
         const amrex::Real& RT,
@@ -213,10 +213,10 @@ struct BCFill
         // In this case, a value for u, v, and w must be
         // specified, either hard coded or set by a
         // user-specified function
-        amrex::Real rho_out = 0.0;
-        amrex::Real rho_tan = 0.0;
+        // amrex::Real rho_out = 0.0;
+        // amrex::Real rho_tan = 0.0;
 
-        const amrex::IntVect ivn(iv + ev);
+        // const amrex::IntVect ivn(iv + ev);
 
         // // Build the 3-part rho calculation at the
         // // (iv+ev) fluid cell
