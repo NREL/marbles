@@ -353,24 +353,27 @@ void LBM::read_tagging_parameters()
             ppr.get("value_greater", value);
             std::string field;
             ppr.get("field_name", field);
-            m_err_tags.push_back(amrex::AMRErrorTag(
-                value, amrex::AMRErrorTag::GREATER, field, info));
+            m_err_tags.push_back(
+                amrex::AMRErrorTag(
+                    value, amrex::AMRErrorTag::GREATER, field, info));
             itexists = check_field_existence(field);
         } else if (ppr.countval("value_less") > 0) {
             amrex::Real value;
             ppr.get("value_less", value);
             std::string field;
             ppr.get("field_name", field);
-            m_err_tags.push_back(amrex::AMRErrorTag(
-                value, amrex::AMRErrorTag::LESS, field, info));
+            m_err_tags.push_back(
+                amrex::AMRErrorTag(
+                    value, amrex::AMRErrorTag::LESS, field, info));
             itexists = check_field_existence(field);
         } else if (ppr.countval("adjacent_difference_greater") > 0) {
             amrex::Real value;
             ppr.get("adjacent_difference_greater", value);
             std::string field;
             ppr.get("field_name", field);
-            m_err_tags.push_back(amrex::AMRErrorTag(
-                value, amrex::AMRErrorTag::GRAD, field, info));
+            m_err_tags.push_back(
+                amrex::AMRErrorTag(
+                    value, amrex::AMRErrorTag::GRAD, field, info));
             itexists = check_field_existence(field);
         } else if (realbox.ok()) {
             m_err_tags.push_back(amrex::AMRErrorTag(info));
