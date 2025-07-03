@@ -11,6 +11,7 @@ Constant::Constant()
 
     m_op.model_type = 1;
     pp.query("Mach_0", m_op.Mach_0);
+    pp.query("initial_density", m_op.initial_density);
     pp.query("initial_temperature", m_op.initial_temperature);
     pp.query("adiabatic_exponent", m_op.adiabatic_exponent);
     pp.query("mean_molecular_mass", m_op.m_bar);
@@ -27,6 +28,7 @@ Channel::Channel()
 
     m_op.model_type = 1;
     pp.query("Mach_ref", m_op.Mach_ref);
+    pp.query("initial_density", m_op.initial_density);
     pp.query("initial_temperature", m_op.initial_temperature);
     pp.query("adiabatic_exponent", m_op.adiabatic_exponent);
     pp.query("mean_molecular_mass", m_op.m_bar);
@@ -45,6 +47,7 @@ Parabolic::Parabolic()
 
     m_op.model_type = 1;
     pp.query("Mach_m", m_op.mach_m);
+    pp.query("initial_density", m_op.initial_density);
     pp.query("initial_temperature", m_op.initial_temperature);
     pp.query("adiabatic_exponent", m_op.adiabatic_exponent);
     pp.query("mean_molecular_mass", m_op.m_bar);
