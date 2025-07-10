@@ -39,7 +39,7 @@ struct Constant
             vel = velocity;
         }
 
-        AMREX_GPU_DEVICE void thermal_initialise(
+        AMREX_GPU_DEVICE void thermal_initialize(
             const amrex::IntVect& /*iv*/,
             amrex::GeometryData const& /*geom*/,
             amrex::Real& rho,
@@ -117,7 +117,7 @@ struct TaylorGreen
         }
 
         AMREX_GPU_DEVICE
-        void thermal_initialise(
+        void thermal_initialize(
             const amrex::IntVect& iv,
             amrex::GeometryData const& geom,
             amrex::Real& rho,
@@ -206,7 +206,7 @@ struct ViscosityTest
 #endif
         }
 
-        AMREX_GPU_DEVICE void thermal_initialise(
+        AMREX_GPU_DEVICE void thermal_initialize(
             const amrex::IntVect& iv,
             amrex::GeometryData const& geom,
             amrex::Real& rho,
@@ -290,7 +290,7 @@ struct ThermalDiffusivityTest
         }
 
         AMREX_GPU_DEVICE
-        void thermal_initialise(
+        void thermal_initialize(
             const amrex::IntVect& iv,
             amrex::GeometryData const& geom,
             amrex::Real& rho,
@@ -378,7 +378,7 @@ struct SodTest
         }
 
         AMREX_GPU_DEVICE
-        void thermal_initialise(
+        void thermal_initialize(
             const amrex::IntVect& iv,
             amrex::GeometryData const& geom,
             amrex::Real& rho,
@@ -486,7 +486,7 @@ public:
                         ic.R_u / constants::AIR_MOLAR_MASS;
                     amrex::Real gamma = 1.667;
 
-                    ic.thermal_initialise(
+                    ic.thermal_initialize(
                         iv, geom, rho, vel, temperature, specific_gas_constant,
                         gamma);
 
