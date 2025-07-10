@@ -239,15 +239,6 @@ struct BCFill
         data(iv, q) = set_equilibrium_value(
             rho_bc, vel_bc, RT, m_mesh_speed, m_weights[q], ev);
 
-        const int i_val = 0;
-        const int j_val = 8;
-        if (((iv[0] == i_val) && (iv[1] == j_val)) ||
-            ((iv[0] == i_val - 1) && (iv[1] == j_val)) ||
-            ((iv[0] == i_val + 1) && (iv[1] == j_val))) {
-            amrex::Print() << "rho_bc_out: " << iv << " " << rho_bc_out
-                           << std::endl;
-        }
-
         rho_bc_out = rho_bc;
     }
 
