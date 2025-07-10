@@ -183,9 +183,9 @@ struct BCFill
         amrex::GpuArray<amrex::Real, 6> flux_of_heat_flux = {
             rxx_eq, ryy_eq, rzz_eq, rxy_eq, rxz_eq, ryz_eq};
 
-        set_extended_grad_expansion_generic(
+        data(iv, q) = set_extended_grad_expansion_generic(
             two_rho_e, heat_flux, flux_of_heat_flux, m_mesh_speed, m_weights[q],
-            ev, m_theta0, m_zero_vec, 1.0, data(iv, q));
+            ev, m_theta0, m_zero_vec, 1.0);
     }
 
     AMREX_GPU_DEVICE
@@ -236,8 +236,8 @@ struct BCFill
         const amrex::Real rho_bc =
             (rho_out + rho_tan) / (1.0 - ndir * vel_bc[idir]);
 
-        set_equilibrium_value(
-            rho_bc, vel_bc, RT, m_mesh_speed, m_weights[q], ev, data(iv, q));
+        data(iv, q) = set_equilibrium_value(
+            rho_bc, vel_bc, RT, m_mesh_speed, m_weights[q], ev);
 
         rho_bc_out = rho_bc;
     }
@@ -287,8 +287,8 @@ struct BCFill
         amrex::RealVect vel_bc(AMREX_D_DECL(0.0, 0.0, 0.0));
         vel_bc[idir] = ndir * (1.0 - (rho_out + rho_tan) / rho_bc);
 
-        set_equilibrium_value(
-            rho_bc, vel_bc, RT, m_mesh_speed, m_weights[q], ev, data(iv, q));
+        data(iv, q) = set_equilibrium_value(
+            rho_bc, vel_bc, RT, m_mesh_speed, m_weights[q], ev);
 
         rho_bc_out = rho_out + rho_tan;
     }
@@ -340,9 +340,9 @@ struct BCFill
         amrex::GpuArray<amrex::Real, 6> flux_of_heat_flux = {
             rxx_eq, ryy_eq, rzz_eq, rxy_eq, rxz_eq, ryz_eq};
 
-        set_extended_grad_expansion_generic(
+        data(iv, q) = set_extended_grad_expansion_generic(
             two_rho_e, heat_flux, flux_of_heat_flux, m_mesh_speed, m_weights[q],
-            ev, m_theta0, m_zero_vec, 1.0, data(iv, q));
+            ev, m_theta0, m_zero_vec, 1.0);
     }
 
     AMREX_GPU_DEVICE
