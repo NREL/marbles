@@ -8,14 +8,13 @@
 #include "Constants.H"
 
 namespace lbm {
-AMREX_GPU_DEVICE AMREX_INLINE void set_equilibrium_value(
+AMREX_GPU_DEVICE AMREX_INLINE amrex::Real set_equilibrium_value(
     const amrex::Real& rho,
     const amrex::RealVect& vel,
     const amrex::Real& r_temperature,
     const amrex::Real& /*mesh_speed*/,
     const amrex::Real& /*wt*/,
-    const amrex::IntVect& ev,
-    amrex::Real& eq)
+    const amrex::IntVect& ev)
 {
     // Warning! Achtung! Strictly for D3Q27 only
     // This entropic equilibrium is very stable. Relaxes all 27 moments.
@@ -26,25 +25,21 @@ AMREX_GPU_DEVICE AMREX_INLINE void set_equilibrium_value(
 
     const amrex::Real pxx = vel[0] * vel[0] + r_temperature;
     const amrex::Real pyy = vel[1] * vel[1] + r_temperature;
-    amrex::Real pzz = 0.0;
-    if (AMREX_SPACEDIM == 3) {
-        pzz = vel[2] * vel[2] + r_temperature;
-    }
 
     const amrex::Real phix =
         ev[0] * 0.5 * vel[0] + std::abs(ev[0]) * (1.50 * pxx - 1.0) - pxx + 1.0;
     const amrex::Real phiy =
         ev[1] * 0.5 * vel[1] + std::abs(ev[1]) * (1.50 * pyy - 1.0) - pyy + 1.0;
-    amrex::Real phiz = 1.0;
-    if (AMREX_SPACEDIM == 3) {
-        phiz = ev[2] * 0.5 * vel[2] + std::abs(ev[2]) * (1.50 * pzz - 1.0) -
-               pzz + 1.0;
-    }
+#if AMREX_SPACEDIM == 3
+    const amrex::Real pzz = vel[2] * vel[2] + r_temperature;
+    const amrex::Real phiz =
+        ev[2] * 0.5 * vel[2] + std::abs(ev[2]) * (1.50 * pzz - 1.0) - pzz + 1.0;
+#endif
 
-    eq = rho * phix * phiy * phiz;
+    return rho * AMREX_D_TERM(phix, *phiy, *phiz);
 }
 
-AMREX_GPU_DEVICE AMREX_INLINE void set_extended_equilibrium_value(
+AMREX_GPU_DEVICE AMREX_INLINE amrex::Real set_extended_equilibrium_value(
     const amrex::Real& rho,
     const amrex::RealVect& vel,
     const amrex::Real& pxx,
@@ -52,24 +47,22 @@ AMREX_GPU_DEVICE AMREX_INLINE void set_extended_equilibrium_value(
     const amrex::Real& pzz,
     const amrex::Real& /*mesh_speed*/,
     const amrex::Real& /*wt*/,
-    const amrex::IntVect& ev,
-    amrex::Real& eq)
+    const amrex::IntVect& ev)
 {
     // Warning! Achtung! Strictly for D3Q27 only
     const amrex::Real phix =
         ev[0] * 0.5 * vel[0] + std::abs(ev[0]) * (1.50 * pxx - 1.0) - pxx + 1.0;
     const amrex::Real phiy =
         ev[1] * 0.5 * vel[1] + std::abs(ev[1]) * (1.50 * pyy - 1.0) - pyy + 1.0;
-    amrex::Real phiz = 1.0;
-    if (AMREX_SPACEDIM == 3) {
-        phiz = ev[2] * 0.5 * vel[2] + std::abs(ev[2]) * (1.50 * pzz - 1.0) -
-               pzz + 1.0;
-    }
+#if AMREX_SPACEDIM == 3
+    const amrex::Real phiz =
+        ev[2] * 0.5 * vel[2] + std::abs(ev[2]) * (1.50 * pzz - 1.0) - pzz + 1.0;
+#endif
 
-    eq = rho * phix * phiy * phiz;
+    return rho * AMREX_D_TERM(phix, *phiy, *phiz);
 }
 
-AMREX_GPU_DEVICE AMREX_INLINE void set_extended_grad_expansion_generic(
+AMREX_GPU_DEVICE AMREX_INLINE amrex::Real set_extended_grad_expansion_generic(
     const amrex::Real& rho,
     const amrex::RealVect& momentum,
     const amrex::GpuArray<amrex::Real, 6>& flux_of_momentum,
@@ -84,8 +77,7 @@ AMREX_GPU_DEVICE AMREX_INLINE void set_extended_grad_expansion_generic(
     const amrex::IntVect& ev,
     const amrex::Real& theta0,
     const amrex::RealVect& frame_velocity,
-    const amrex::Real& s,
-    amrex::Real& f)
+    const amrex::Real& s)
 {
     // Note: This is lattice independent, as long as the correct lattice
     // temperature theta0 is passed. theta0 = \sum_i w_i cx_i * cx_i
@@ -152,7 +144,7 @@ AMREX_GPU_DEVICE AMREX_INLINE void set_extended_grad_expansion_generic(
                                   uy * ((jz)-rho * uz) - uz * ((jy)-rho * uy)) *
                                  one_bystheta0 * one_bystheta0;);
 
-    f = rho + AMREX_D_TERM(a1x * ev[0], +a1y * ev[1], +a1z * ev[2]);
+    amrex::Real f = rho + AMREX_D_TERM(a1x * ev[0], +a1y * ev[1], +a1z * ev[2]);
 
     f +=
         0.5 *
@@ -165,12 +157,7 @@ AMREX_GPU_DEVICE AMREX_INLINE void set_extended_grad_expansion_generic(
                 2.0 * (ev[0] * ev[2] - 0) * a2xz +
                 2.0 * (ev[1] * ev[2] - 0) * a2yz));
 
-    f *= wt;
-}
-
-AMREX_GPU_DEVICE AMREX_INLINE void set_population_zero(amrex::Real& eq)
-{
-    eq = 0.0;
+    return f;
 }
 
 AMREX_GPU_DEVICE AMREX_INLINE amrex::Real get_energy(
@@ -275,22 +262,16 @@ AMREX_GPU_DEVICE AMREX_INLINE void get_equilibrium_moments(
 
     qEq[0] = 2.0 * rho * vel[0] * h;
     qEq[1] = 2.0 * rho * vel[1] * h;
-    if (AMREX_SPACEDIM == 3) {
-        qEq[2] = 2.0 * rho * vel[2] * h;
-    }
 
     RxxEq = 2.0 * rho * vel[0] * vel[0] * (h + (p / rho)) + 2.0 * p * h;
     RyyEq = 2.0 * rho * vel[1] * vel[1] * (h + (p / rho)) + 2.0 * p * h;
-    if (AMREX_SPACEDIM == 3) {
-        RzzEq = 2.0 * rho * vel[2] * vel[2] * (h + (p / rho)) + 2.0 * p * h;
-    }
     RxyEq = 2.0 * rho * vel[0] * vel[1] * (h + (p / rho)) + 0;
-    if (AMREX_SPACEDIM == 3) {
-        RxzEq = 2.0 * rho * vel[0] * vel[2] * (h + (p / rho)) + 0;
-    }
-    if (AMREX_SPACEDIM == 3) {
-        RyzEq = 2.0 * rho * vel[1] * vel[2] * (h + (p / rho)) + 0;
-    }
+#if AMREX_SPACEDIM == 3
+    qEq[2] = 2.0 * rho * vel[2] * h;
+    RzzEq = 2.0 * rho * vel[2] * vel[2] * (h + (p / rho)) + 2.0 * p * h;
+    RxzEq = 2.0 * rho * vel[0] * vel[2] * (h + (p / rho)) + 0;
+    RyzEq = 2.0 * rho * vel[1] * vel[2] * (h + (p / rho)) + 0;
+#endif
 }
 
 AMREX_GPU_DEVICE AMREX_INLINE amrex::Real gradient(
