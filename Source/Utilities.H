@@ -44,7 +44,7 @@ AMREX_GPU_DEVICE AMREX_INLINE amrex::Real set_extended_equilibrium_value(
     const amrex::RealVect& vel,
     const amrex::Real& pxx,
     const amrex::Real& pyy,
-    const amrex::Real& pzz,
+    const amrex::Real& AMREX_D_PICK(, /*pzz*/, pzz),
     const amrex::Real& /*mesh_speed*/,
     const amrex::Real& /*wt*/,
     const amrex::IntVect& ev)
@@ -73,7 +73,7 @@ AMREX_GPU_DEVICE AMREX_INLINE amrex::Real set_extended_grad_expansion_generic(
     const amrex::Real& pxz,
     const amrex::Real& pyz,*/
     const amrex::Real& /*mesh_speed*/,
-    const amrex::Real& wt,
+    const amrex::Real& /*wt*/,
     const amrex::IntVect& ev,
     const amrex::Real& theta0,
     const amrex::RealVect& frame_velocity,
@@ -249,10 +249,10 @@ AMREX_GPU_DEVICE AMREX_INLINE void get_equilibrium_moments(
     amrex::RealVect& qEq,
     amrex::Real& RxxEq,
     amrex::Real& RyyEq,
-    amrex::Real& RzzEq,
+    amrex::Real& AMREX_D_PICK(, /*RzzEq*/, RzzEq),
     amrex::Real& RxyEq,
-    amrex::Real& RxzEq,
-    amrex::Real& RyzEq)
+    amrex::Real& AMREX_D_PICK(, /*RxzEq*/, RxzEq),
+    amrex::Real& AMREX_D_PICK(, /*RyzEq*/, RyzEq))
 {
 
     amrex::Real energy = total_energy / (2.0 * rho);
