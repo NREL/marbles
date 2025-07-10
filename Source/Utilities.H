@@ -73,7 +73,7 @@ AMREX_GPU_DEVICE AMREX_INLINE amrex::Real set_extended_grad_expansion_generic(
     const amrex::Real& pxz,
     const amrex::Real& pyz,*/
     const amrex::Real& /*mesh_speed*/,
-    const amrex::Real& /*wt*/,
+    const amrex::Real& wt,
     const amrex::IntVect& ev,
     const amrex::Real& theta0,
     const amrex::RealVect& frame_velocity,
@@ -156,6 +156,8 @@ AMREX_GPU_DEVICE AMREX_INLINE amrex::Real set_extended_grad_expansion_generic(
             +(ev[2] * ev[2] - theta0) * a2zz +
                 2.0 * (ev[0] * ev[2] - 0) * a2xz +
                 2.0 * (ev[1] * ev[2] - 0) * a2yz));
+
+    f *= wt;
 
     return f;
 }
