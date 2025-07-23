@@ -11,7 +11,7 @@ amr.plot_int = 100
 amr.chk_int = 1000
 
 lbm.bc_lo = 2 1 0
-lbm.bc_hi = 2 1 0
+lbm.bc_hi = 5 1 0
 lbm.dx_outer = 0.5
 lbm.dt_outer = 0.5
 lbm.nu = 0.0050
