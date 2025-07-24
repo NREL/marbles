@@ -43,7 +43,6 @@ Parabolic::Parabolic()
     amrex::ParmParse pp("velocity_bc_parabolic");
     pp.query("normal_dir", m_op.normal_dir);
     pp.query("tangential_dir", m_op.tangential_dir);
-    pp.query("um", m_op.um);
 
     m_op.model_type = 1;
     pp.query("Mach_ref", m_op.Mach_ref);
