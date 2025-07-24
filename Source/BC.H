@@ -398,7 +398,7 @@ struct BCFill
                                     temperature(1.0 / 3.0);
                                 amrex::Real gamma(5.0 / 3.0);
 
-                                amrex::Real rho_bc(1.0);
+                                amrex::Real rho_bc(0.0);
 
                                 m_vel_bc_op(
                                     iv, idir, normal_dir, time, geom, rho_bc,
