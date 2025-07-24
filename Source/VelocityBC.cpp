@@ -7,7 +7,6 @@ Constant::Constant()
 {
     amrex::ParmParse pp("velocity_bc_constant");
     pp.query("dir", m_op.dir);
-    pp.query("u0", m_op.u0);
 
     m_op.model_type = 1;
     pp.query("Mach_ref", m_op.Mach_ref);
@@ -24,7 +23,6 @@ Constant::Constant()
 Channel::Channel()
 {
     amrex::ParmParse pp("velocity_bc_channel");
-    pp.query("u_ref", m_op.u_ref);
 
     m_op.model_type = 1;
     pp.query("Mach_ref", m_op.Mach_ref);

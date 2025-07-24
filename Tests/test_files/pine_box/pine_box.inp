@@ -22,7 +22,7 @@ lbm.save_streaming = 1
 
 lbm.velocity_bc_type = "constant"
 velocity_bc_constant.dir = 2
-velocity_bc_constant.u0 = 0.002
+ic_constant.mach_components = 0.002 0.0 0.0
 
 lbm.ic_type = "constant"
 ic_constant.density = 1.0
