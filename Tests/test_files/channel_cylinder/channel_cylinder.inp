@@ -1,44 +1,38 @@
 max_step = 1000
 
-# geometry parameters
 geometry.prob_lo = 0.0 0.0 0.0
-geometry.prob_hi = 96.0 16.0 16.0
-geometry.is_periodic = 0 0 0
+geometry.prob_hi = 128.0 32.0 4.0
+geometry.is_periodic = 0 0 1
 
-# timestepping
-amr.n_cell  = 96 16 16
+amr.n_cell  = 128 32 4
 amr.max_level = 0
-amr.max_grid_size = 8
-amr.plot_int = 10
-amr.chk_int = 10
+amr.max_grid_size = 4
+amr.plot_int = 100
+amr.chk_int = 1000
 
-lbm.bc_lo = 2 1 1
-lbm.bc_hi = 3 1 1
+lbm.bc_lo = 2 1 0
+lbm.bc_hi = 5 1 0
 lbm.dx_outer = 0.5
 lbm.dt_outer = 0.5
-#lbm.reynolds = 10.23
-lbm.nu = 0.01733333333333333
-lbm.save_streaming = 1
+lbm.nu = 0.0050
+lbm.save_streaming = 0
 
 lbm.velocity_bc_type = "channel"
-velocity_bc_channel.u_ref = 0.1
+velocity_bc_channel.initial_density = 1.0
+velocity_bc_channel.Mach_ref = 0.01
+velocity_bc_channel.initial_temperature = 0.03
 
 lbm.ic_type = "constant"
 ic_constant.density = 1.0
-ic_constant.velocity = 0.0 0.0 0.0
+ic_constant.initial_temperature = 0.03
+ic_constant.mach_components = 0.0 0.0 0.0
 
-#eb2.geom_type = "all_regular"
 eb2.geom_type = "cylinder"
 eb2.cylinder_radius = 2.0
 eb2.cylinder_center = 32.0 8.0 8.0
 eb2.cylinder_has_fluid_inside = 0
 eb2.cylinder_height = 256.0
 eb2.cylinder_direction = 1
-
-# eb2.geom_type = "sphere"
-# eb2.sphere_radius = 2.0
-# eb2.sphere_center = 32.0 8.0 8.0
-# eb2.sphere_has_fluid_inside = 0
 
 amrex.fpe_trap_invalid = 1
 amrex.fpe_trap_zero = 1

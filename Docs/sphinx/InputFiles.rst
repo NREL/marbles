@@ -48,7 +48,9 @@ Here is an example input file::
   lbm.save_streaming = 0
 
   lbm.velocity_bc_type = "channel"
-  velocity_bc_channel.u_ref = 0.1
+  velocity_bc_channel.initial_density = 1.0
+  velocity_bc_channel.Mach_ref = 0.01
+  velocity_bc_channel.initial_temperature = 0.03
 
   lbm.ic_type = "constant"
   ic_constant.density = 1.0

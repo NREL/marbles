@@ -22,7 +22,7 @@ lbm.nu = 0.20
 lbm.save_streaming = 0
 
 lbm.velocity_bc_type = "parabolic"
-velocity_bc_parabolic.Mach_m = 0.0025
+velocity_bc_parabolic.Mach_ref = 0.0025
 velocity_bc_parabolic.normal_dir = 0
 velocity_bc_parabolic.tangential_dir = 1
 

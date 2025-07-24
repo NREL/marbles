@@ -1,32 +1,36 @@
-max_step = 1000
+max_step = 10000
 
 geometry.prob_lo = 0.0 0.0 0.0
-geometry.prob_hi = 1.0 1.0 1.0
-geometry.is_periodic = 0 0 0
+geometry.prob_hi = 128.0 32.0 4.0
+geometry.is_periodic = 0 0 1
 
-amr.n_cell  = 32 32 32
+amr.n_cell  = 128 32 4
 amr.max_level = 0
-amr.max_grid_size = 16
-amr.plot_int = 10
-amr.chk_int = 10
+amr.max_grid_size = 4
+amr.plot_int = 100
+amr.chk_int = 1000
 
-lbm.bc_lo = 2 1 1
-lbm.bc_hi = 5 1 1
+lbm.bc_lo = 2 1 0
+lbm.bc_hi = 5 1 0
 lbm.dx_outer = 0.5
 lbm.dt_outer = 0.5
-#lbm.reynolds = 10.23
-lbm.nu = 0.20
+lbm.nu = 0.0050
 lbm.save_streaming = 0
 
 lbm.velocity_bc_type = "channel"
-velocity_bc_channel.Mach_ref = 0.001
+velocity_bc_channel.initial_density = 1.0
+velocity_bc_channel.Mach_ref = 0.01
+velocity_bc_channel.initial_temperature = 0.03
 
 lbm.ic_type = "constant"
 ic_constant.density = 1.0
-ic_constant.mach_components = 0.002 0.0 0.0
+ic_constant.initial_temperature = 0.03
+ic_constant.mach_components = 0.0 0.0 0.0
 
 eb2.geom_type="all_regular"
 
 amrex.fpe_trap_invalid = 1
 amrex.fpe_trap_zero = 1
 amrex.fpe_trap_overflow = 1
+amrex.the_arena_is_managed = 0
+amrex.abort_on_out_of_gpu_memory = 1
