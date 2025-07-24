@@ -17,19 +17,20 @@ lbm.dt_outer = 0.5
 lbm.nu = 0.0050
 lbm.save_streaming = 0
 
-lbm.velocity_bc_type = "constant"
-velocity_bc_constant.dir = 0
-velocity_bc_constant.initial_density = 1.0
-velocity_bc_constant.Mach_ref = 0.01
-velocity_bc_constant.initial_temperature = 0.03
+lbm.velocity_bc_type = "channel"
+velocity_bc_channel.initial_density = 1.0
+velocity_bc_channel.Mach_ref = 0.01
+velocity_bc_channel.initial_temperature = 0.03
 
 lbm.ic_type = "constant"
 ic_constant.density = 1.0
 ic_constant.initial_temperature = 0.03
-ic_constant.mach_components = 0.01 0.0 0.0
+ic_constant.mach_components = 0.0 0.0 0.0
 
 eb2.geom_type="all_regular"
 
 amrex.fpe_trap_invalid = 1
 amrex.fpe_trap_zero = 1
 amrex.fpe_trap_overflow = 1
+amrex.the_arena_is_managed = 0
+amrex.abort_on_out_of_gpu_memory = 1
