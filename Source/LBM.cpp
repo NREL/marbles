@@ -669,34 +669,32 @@ void LBM::macrodata_to_equilibrium(const int lev)
 
                 const auto& ev = evs[q];
 
-                amrex::Real temperature =
+                const amrex::Real temperature =
                     md_arr(iv, constants::TEMPERATURE_IDX);
 
-                amrex::Real omega =
+                const amrex::Real omega =
                     1.0 /
                     (nu / (specific_gas_constant * temperature * dt) + 0.5);
-                amrex::Real omega_one =
+                const amrex::Real omega_one =
                     1.0 /
                     (alpha / (specific_gas_constant * temperature * dt) + 0.5);
-                amrex::Real omega_one_by_omega = omega_one / omega;
-                amrex::Real omega_corr = (2.0 - omega) / (2.0 * omega * rho);
+                const amrex::Real omega_one_by_omega = omega_one / omega;
+                const amrex::Real omega_corr =
+                    (2.0 - omega) / (2.0 * omega * rho);
 
-                amrex::Real pxx_ext =
+                const amrex::Real pxx_ext =
                     vel[0] * vel[0] + specific_gas_constant * temperature +
                     dt * (omega_corr)*d_arr(iv, constants::D_Q_CORR_X_IDX);
-                amrex::Real pyy_ext =
+                const amrex::Real pyy_ext =
                     vel[1] * vel[1] + specific_gas_constant * temperature +
                     dt * (omega_corr)*d_arr(iv, constants::D_Q_CORR_Y_IDX);
-                amrex::Real pzz_ext(0.0);
-                if (AMREX_SPACEDIM == 3) {
-                    pzz_ext =
-                        vel[2] * vel[2] + specific_gas_constant * temperature +
-                        dt * (omega_corr)*d_arr(iv, constants::D_Q_CORR_Z_IDX);
-                }
+                const amrex::Real pzz_ext = AMREX_D_PICK(
+                    0.0, 0.0,
+                    vel[2] * vel[2] + specific_gas_constant * temperature +
+                        dt * (omega_corr)*d_arr(iv, constants::D_Q_CORR_Z_IDX));
 
-                set_extended_equilibrium_value(
-                    rho, vel, pxx_ext, pyy_ext, pzz_ext, l_mesh_speed, wt, ev,
-                    eq_arr(iv, q));
+                eq_arr(iv, q) = set_extended_equilibrium_value(
+                    rho, vel, pxx_ext, pyy_ext, pzz_ext, l_mesh_speed, wt, ev);
 
                 amrex::Real AMREX_D_DECL(qx_eq = 0.0, qy_eq = 0.0, qz_eq = 0.0);
                 amrex::Real rxx_eq(0.0), ryy_eq(0.0), rzz_eq(0.0), rxy_eq(0.0),
@@ -755,9 +753,9 @@ void LBM::macrodata_to_equilibrium(const int lev)
                 amrex::GpuArray<amrex::Real, 6> flux_of_heat_flux = {
                     rxx_eq, ryy_eq, rzz_eq, rxy_eq, rxz_eq, ryz_eq};
 
-                set_extended_grad_expansion_generic(
+                eq_arr_g(iv, q) = set_extended_grad_expansion_generic(
                     two_rho_e, heat_flux_mrt, flux_of_heat_flux, l_mesh_speed,
-                    wt, ev, theta0, zero_vec, 1.0, eq_arr_g(iv, q));
+                    wt, ev, theta0, zero_vec, 1.0);
             }
         });
     amrex::Gpu::synchronize();
@@ -849,16 +847,12 @@ void LBM::f_to_macrodata(const int lev)
 
                     pxx += ev[0] * ev[0] * f_arr(iv, q);
                     pyy += ev[1] * ev[1] * f_arr(iv, q);
-                    if (AMREX_SPACEDIM == 3) {
-                        pzz += ev[2] * ev[2] * f_arr(iv, q);
-                    }
                     pxy += ev[0] * ev[1] * f_arr(iv, q);
-                    if (AMREX_SPACEDIM == 3) {
-                        pxz += ev[0] * ev[2] * f_arr(iv, q);
-                    }
-                    if (AMREX_SPACEDIM == 3) {
-                        pyz += ev[1] * ev[2] * f_arr(iv, q);
-                    }
+#if AMREX_SPACEDIM == 3
+                    pzz += ev[2] * ev[2] * f_arr(iv, q);
+                    pxz += ev[0] * ev[2] * f_arr(iv, q);
+                    pyz += ev[1] * ev[2] * f_arr(iv, q);
+#endif
 
                     two_rho_e += g_arr(iv, q);
 
@@ -982,22 +976,15 @@ void LBM::compute_q_corrections(const int lev)
             const amrex::IntVect iv(AMREX_D_DECL(i, j, k));
 
             if (if_arr(iv, 0) == 1) {
-                const amrex::Real d_qxxx = gradient(
+                d_arr(iv, constants::D_Q_CORR_X_IDX) = gradient(
                     0, constants::Q_CORR_X_IDX, iv, idx, dbox, if_arr, md_arr);
-                const amrex::Real d_qyyy = gradient(
+                d_arr(iv, constants::D_Q_CORR_Y_IDX) = gradient(
                     1, constants::Q_CORR_Y_IDX, iv, idx, dbox, if_arr, md_arr);
 
-                amrex::Real d_qzzz = 0.0;
-
-                if (AMREX_SPACEDIM == 3) {
-                    d_qzzz = gradient(
-                        2, constants::Q_CORR_Z_IDX, iv, idx, dbox, if_arr,
-                        md_arr);
-                }
-
-                d_arr(iv, constants::D_Q_CORR_X_IDX) = d_qxxx;
-                d_arr(iv, constants::D_Q_CORR_Y_IDX) = d_qyyy;
-                d_arr(iv, constants::D_Q_CORR_Z_IDX) = d_qzzz;
+#if AMREX_SPACEDIM == 3
+                d_arr(iv, constants::D_Q_CORR_Z_IDX) = gradient(
+                    2, constants::Q_CORR_Z_IDX, iv, idx, dbox, if_arr, md_arr);
+#endif
             }
         });
     amrex::Gpu::synchronize();
@@ -1302,8 +1289,8 @@ void LBM::fill_f_inside_eb(const int lev)
         [=] AMREX_GPU_DEVICE(int nbx, int i, int j, int k, int q) noexcept {
             if (is_fluid_arrs[nbx](i, j, k, 0) == 0) {
 
-                set_population_zero(f_arrs[nbx](i, j, k, q));
-                set_population_zero(g_arrs[nbx](i, j, k, q));
+                f_arrs[nbx](i, j, k, q) = 0.0;
+                g_arrs[nbx](i, j, k, q) = 0.0;
             }
         });
 
