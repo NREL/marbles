@@ -215,8 +215,6 @@ struct BCFill
         // user-specified function
         data(iv, q) = set_equilibrium_value(
             rho_bc, vel_bc, RT, m_mesh_speed, m_weights[q], ev);
-
-        rho_bc_out = rho_bc;
     }
 
     AMREX_GPU_DEVICE
