@@ -406,7 +406,6 @@ struct BCFill
                                     gamma);
 
                                 if (m_is_energy_lattice) {
-
                                     velocity_bc_g(
                                         iv, q, ev, idir, normal_dir, rho_bc,
                                         vel_bc, specific_gas_constant,
