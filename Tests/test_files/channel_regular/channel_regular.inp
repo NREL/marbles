@@ -20,7 +20,7 @@ lbm.save_streaming = 0
 lbm.velocity_bc_type = "constant"
 velocity_bc_constant.dir = 0
 velocity_bc_constant.initial_density = 1.0
-velocity_bc_constant.Mach_0 = 0.01
+velocity_bc_constant.Mach_ref = 0.01
 velocity_bc_constant.initial_temperature = 0.03
 
 lbm.ic_type = "constant"

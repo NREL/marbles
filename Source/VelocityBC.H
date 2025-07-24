@@ -55,7 +55,7 @@ struct Constant
             std::sqrt(adiabatic_exponent * (R_u / m_bar) * initial_temperature);
 
         int model_type = 1;
-        amrex::Real Mach_0{0.005};
+        amrex::Real Mach_ref{0.005};
 
         AMREX_GPU_DEVICE
         void operator()(
@@ -156,7 +156,7 @@ struct Parabolic
             std::sqrt(adiabatic_exponent * (R_u / m_bar) * initial_temperature);
 
         int model_type = 1;
-        amrex::Real mach_m{0.05};
+        amrex::Real Mach_ref{0.05};
 
         AMREX_GPU_DEVICE
         void operator()(
