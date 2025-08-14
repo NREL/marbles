@@ -26,9 +26,12 @@ lbm.velocity_bc_type = "parabolic"
 velocity_bc_parabolic.Mach_ref = 0.015
 velocity_bc_parabolic.normal_dir = 0
 velocity_bc_parabolic.tangential_dir = 1
+velocity_bc_parabolic.initial_density = 1.0
+velocity_bc_parabolic.initial_temperature = 0.03
 
 lbm.ic_type = "constant"
 ic_constant.density = 1.0
+ic_constant.initial_temperature = 0.03
 ic_constant.velocity = 0.0 0.0 0.0
 
 eb2.geom_type = "cylinder"

@@ -14,8 +14,8 @@ amr.regrid_int = 1000000
 
 lbm.bc_lo = 2 1 0
 lbm.bc_hi = 5 1 0
-lbm.dx_outer = 0.5
-lbm.dt_outer = 0.5
+lbm.dx_outer = 1.0
+lbm.dt_outer = 1.0
 lbm.nu = 0.0050
 lbm.save_streaming = 0
 

@@ -14,8 +14,8 @@ amr.chk_int = 10
 
 lbm.bc_lo = 0 0 0
 lbm.bc_hi = 0 0 0
-lbm.dx_outer = 0.5
-lbm.dt_outer = 0.5
+lbm.dx_outer = 1.0
+lbm.dt_outer = 1.0
 #lbm.reynolds = 10.23
 lbm.nu = 0.1733333333333333
 lbm.save_streaming = 1
