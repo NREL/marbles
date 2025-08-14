@@ -88,9 +88,15 @@ add_test_r(channel_regular)
 add_test_r(tg)
 add_test_r(single_rotated_box)
 
-add_test_r(single_cylinder)
-add_test_r(channel_cylinder)
-add_test_r(channel_cylinder_amr)
+if(MARBLES_DIM EQUAL 2)
+  add_test_r(channel_cylinder_amr_2d)
+endif()
+
+if(MARBLES_DIM EQUAL 3)
+  add_test_r(single_cylinder)
+  add_test_r(channel_cylinder)
+  add_test_r(channel_cylinder_amr)
+endif()
 
 add_test_re(sod)
 add_test_re(sod_amr)
