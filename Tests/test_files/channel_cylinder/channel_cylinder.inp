@@ -7,6 +7,7 @@ geometry.is_periodic = 0 0 1
 amr.n_cell  = 128 32 4
 amr.max_level = 0
 amr.max_grid_size = 64
+amr.blocking_factor = 4
 amr.plot_int = 100
 amr.chk_int = 1000
 
