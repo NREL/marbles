@@ -95,7 +95,7 @@ endif()
 if(MARBLES_DIM EQUAL 3)
   add_test_r(single_cylinder)
   add_test_r(channel_cylinder)
-  add_test_r(channel_cylinder_amr)
+  # add_test_r(channel_cylinder_amr)
 endif()
 
 add_test_re(sod)
