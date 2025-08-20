@@ -6,14 +6,15 @@ geometry.is_periodic = 0 0 1
 
 amr.n_cell  = 128 32 4
 amr.max_level = 0
-amr.max_grid_size = 4
+amr.max_grid_size = 64
+amr.blocking_factor = 4
 amr.plot_int = 100
 amr.chk_int = 1000
 
 lbm.bc_lo = 2 1 0
 lbm.bc_hi = 5 1 0
-lbm.dx_outer = 0.5
-lbm.dt_outer = 0.5
+lbm.dx_outer = 1.0
+lbm.dt_outer = 1.0
 lbm.nu = 0.0050
 lbm.save_streaming = 0
 
