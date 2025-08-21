@@ -42,8 +42,8 @@ Here is an example input file::
   # LBM parameteris
   lbm.bc_lo = 2 0 1
   lbm.bc_hi = 3 0 1
-  lbm.dx_outer = 0.5
-  lbm.dt_outer = 0.5
+  lbm.dx_outer = 1.0
+  lbm.dt_outer = 1.0
   lbm.nu = 0.01733333333333333
   lbm.save_streaming = 0
 
