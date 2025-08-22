@@ -18,7 +18,17 @@ MARBLES: Multi-scale Adaptively Refined Boltzmann LatticE Solver
 .. |C++ Badge| image:: https://img.shields.io/badge/language-C%2B%2B17-blue
    :target: https://isocpp.org/
 
-
+MARBLES (Multi-scale Adaptively Refined Boltzmann LatticE Solver) is a
+computational fluid dynamics solver that leverages the lattice
+Boltzmann method (LBM) and block-structured adaptive mesh refinement
+(AMR) to simulate flows in complex media. MARBLES supports various
+parallel decomposition strategies, including the use of the Message
+Passing Interface (MPI) and OpenMP threading. All major GPU
+architectures (e.g., Intel, AMD, NVIDIA) are supported through the use
+of performance portability functionalities implemented in AMReX. The
+MARBLES software is released in NREL Software Record `SWR-23-37
+<https://doi.org/10.11578/dc.20231009.2>`_ “MARBLES (Multi-scale
+Adaptively Refined Boltzmann LatticE Solver)”.
 
 Getting Started
 ~~~~~~~~~~~~~~~
@@ -60,3 +70,8 @@ The full documentation for `MARBLES` exists in the Docs directory; at present th
 Or, using cmake ::
 
     $ cd Build && cmake -B build-docs ../Docs && cmake --build build-docs
+
+Funding
+~~~~~~~
+
+This work was authored by the National Renewable Energy Laboratory (NREL) for the U.S. Department of Energy (DOE) under Contract No. DE-AC36-08GO28308. This work was supported by the Laboratory Directed Research and Development (LDRD) Program at NREL. The views expressed in the article do not necessarily represent the views of the DOE or the U.S. Government. The U.S. Government retains and the publisher, by accepting the article for publication, acknowledges that the U.S. Government retains a nonexclusive, paid-up, irrevocable, worldwide license to publish or reproduce the published form of this work, or allow others to do so, for U.S. Government purposes. A portion of the research was performed using computational resources sponsored by the Department of Energy’s Office of Energy Efficiency and Renewable Energy and located at the National Renewable Energy Laboratory.
