@@ -78,13 +78,13 @@ Input and post processing files: `Tests/test_files/sodTest/`
 
 
 Flow around a cylinder in a channel
-----------------------
+-----------------------------------
 
 This test case solves flow around a cylinder confined in a channel and validates against the data from 
 "Schäfer, M.; Turek, S.; Durst, F.; Krause, E.; Rannacher, R. 
 Benchmark Computations of Laminar Flow Around a Cylinder, 1996. https://doi.org/10.1007/978-3-322-89849-4_39." The input files included with 
 MARBLES correspond to case 2D-2 of the "Schäfer et al." benchmark. The Strouhal number is found to be 0.28 from the simulation, in agreement 
-with the range of literature.
+with the range from literature.
 
 
 Input and post processing files: `Tests/test_files/cylinder_turek_2d2/`
