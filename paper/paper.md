@@ -22,10 +22,10 @@ authors:
     surname: Sitaraman
     orcid: 0000-0001-5304-1664
     affiliation: 1
-  - firstname: Ross
+  - firstname: Ross E.
     surname: Larsen
     orcid: 0000-0002-2928-9835
-    affiliation: 1
+    affiliation: 1,2
   - firstname: Jon
     surname: Rood
     orcid: 0000-0002-7513-3225
@@ -33,6 +33,8 @@ authors:
 affiliations:
   - name: Scalable Algorithms, Modeling and Simulation Group, National Renewable Energy Laboratory, USA
     index: 1
+  - name: Renewable and Sustainable Energy Institute, University of Colorado Boulder, Boulder, Colorado 80309
+    index: 2
 date: 5 October 2023
 bibliography: paper.bib
 ---
